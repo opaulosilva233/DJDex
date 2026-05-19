@@ -36,6 +36,10 @@ export default function App() {
     setSets((currentSets) => [novoSet, ...currentSets])
   }
 
+  function handleImportData(importedSets) {
+    setSets(importedSets)
+  }
+
   function handleEditSet(updatedSet) {
     setSets((currentSets) =>
       currentSets.map((set) => (set.id === updatedSet.id ? updatedSet : set)),
@@ -49,7 +53,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <div style={{ display: 'flex', height: '100vh' }}>
-        <Navbar />
+        <Navbar sets={sets} handleImportData={handleImportData} />
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
           <Routes>
