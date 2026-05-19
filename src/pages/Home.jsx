@@ -1,43 +1,60 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-
-function calculateAverageRating(sets) {
-	const ratedSets = sets.filter(
-		(set) => set.avaliacao !== null && set.avaliacao !== undefined,
-	)
-
-	if (ratedSets.length === 0) {
-		return 0
-	}
-
-	const totalRating = ratedSets.reduce((sum, set) => sum + Number(set.avaliacao), 0)
-
-	return totalRating / ratedSets.length
-}
-
-const pageStyle = {
-	display: 'grid',
-	gap: '24px',
-}
-
-const heroStyle = {
-	padding: '32px',
-	borderRadius: '24px',
-	background: 'linear-gradient(180deg, rgba(12, 18, 35, 0.95) 0%, rgba(8, 12, 24, 0.88) 100%)',
-	border: '1px solid rgba(255, 255, 255, 0.08)',
-	boxShadow: '0 24px 80px rgba(0, 0, 0, 0.32)',
-}
+import {
+	Bar,
+	BarChart,
+	CartesianGrid,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from 'recharts'
 
 export default function Home({ sets }) {
-	const averageRating = calculateAverageRating(sets)
+	const { totalSets, mediaAvaliacao, setsPorFestival } = useMemo(() => {
+		const totalSets = sets.length
+		const ratedSets = sets.filter(
+			(set) => set.avaliacao !== null && set.avaliacao !== undefined,
+		)
+
+		const totalAvaliacoes = ratedSets.reduce(
+			(sum, set) => sum + Number(set.avaliacao),
+			0,
+		)
+		const mediaAvaliacao =
+			ratedSets.length === 0 ? 0 : totalAvaliacoes / ratedSets.length
+
+		const contagemPorFestival = sets.reduce((accumulator, set) => {
+			if (!set.festival) {
+				return accumulator
+			}
+
+			const currentCount = accumulator.get(set.festival) ?? 0
+			accumulator.set(set.festival, currentCount + 1)
+
+			return accumulator
+		}, new Map())
+
+		const setsPorFestival = Array.from(contagemPorFestival, ([name, quantidade]) => ({
+			name,
+			quantidade,
+		}))
+
+		return {
+			totalSets,
+			mediaAvaliacao,
+			setsPorFestival,
+		}
+	}, [sets])
 
 	return (
-		<div style={pageStyle}>
-			<section style={heroStyle}>
+		<div style={{ display: 'grid', gap: '24px' }}>
+			<section>
 				<p className="eyebrow">DJDex</p>
-				<h1>RaveDex 🎧</h1>
+				<h1>Dashboard de Estatísticas</h1>
 				<p>
-					Explora os sets guardados, acompanha estatísticas rápidas e navega entre
-					as páginas principais da aplicação.
+					Resumo rápido dos sets guardados, com a distribuição por festival e a
+					média das avaliações.
 				</p>
 			</section>
 
@@ -49,12 +66,27 @@ export default function Home({ sets }) {
 				}}
 			>
 				<div className="glass-card">
-					<p className="card-label">Total de Sets Vistos</p>
-					<strong className="card-value">{sets.length}</strong>
+					<p className="card-label">Total de Sets</p>
+					<strong className="card-value">{totalSets}</strong>
 				</div>
 				<div className="glass-card">
 					<p className="card-label">Média de Avaliações</p>
-					<strong className="card-value">{averageRating.toFixed(1)}/10</strong>
+					<strong className="card-value">{mediaAvaliacao.toFixed(1)}/10</strong>
+				</div>
+			</section>
+
+			<section className="glass-card" style={{ padding: '24px' }}>
+				<h2 style={{ marginTop: 0 }}>Sets por Festival</h2>
+				<div style={{ width: '100%', height: '300px' }}>
+					<ResponsiveContainer width="100%" height="100%">
+						<BarChart data={setsPorFestival}>
+							<CartesianGrid strokeDasharray="3 3" />
+							<XAxis dataKey="name" />
+							<YAxis allowDecimals={false} />
+							<Tooltip />
+							<Bar dataKey="quantidade" fill="#8884d8" />
+						</BarChart>
+					</ResponsiveContainer>
 				</div>
 			</section>
 
