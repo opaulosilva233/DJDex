@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const initialFormState = {
 	dj: '',
@@ -9,8 +10,28 @@ const initialFormState = {
 	avaliacao: '',
 }
 
-export default function AddSetForm({ onAddSet }) {
+export default function AddSetForm({ initialData, handleAddSet, handleEditSet }) {
 	const [formData, setFormData] = useState(initialFormState)
+	const navigate = useNavigate()
+
+	useEffect(() => {
+		if (initialData) {
+			setFormData({
+				dj: initialData.nome ?? '',
+				festival: initialData.festival ?? '',
+				local: initialData.local ?? '',
+				data: initialData.data ?? '',
+				hora: initialData.hora ?? '',
+				avaliacao:
+					initialData.avaliacao === null || initialData.avaliacao === undefined
+						? ''
+						: String(initialData.avaliacao),
+			})
+			return
+		}
+
+		setFormData(initialFormState)
+	}, [initialData])
 
 	function handleChange(event) {
 		const { name, value } = event.target
@@ -23,9 +44,8 @@ export default function AddSetForm({ onAddSet }) {
 	function handleSubmit(event) {
 		event.preventDefault()
 
-		const novoSet = {
-			id: crypto.randomUUID(),
-			nome: formData.dj,
+		const payload = {
+			dj: formData.dj,
 			festival: formData.festival,
 			local: formData.local,
 			data: formData.data,
@@ -33,9 +53,34 @@ export default function AddSetForm({ onAddSet }) {
 			avaliacao: formData.avaliacao === '' ? null : Number(formData.avaliacao),
 		}
 
-		onAddSet(novoSet)
-		setFormData(initialFormState)
+		if (initialData) {
+			handleEditSet({
+				id: initialData.id,
+				nome: payload.dj,
+				festival: payload.festival,
+				local: payload.local,
+				data: payload.data,
+				hora: payload.hora,
+				avaliacao: payload.avaliacao,
+			})
+		} else {
+			handleAddSet({
+				id: crypto.randomUUID(),
+				nome: payload.dj,
+				festival: payload.festival,
+				local: payload.local,
+				data: payload.data,
+				hora: payload.hora,
+				avaliacao: payload.avaliacao,
+			})
+		}
+
+		navigate('/lista')
 	}
+
+	const isEditing = Boolean(initialData)
+	const formTitle = isEditing ? 'Editar set' : 'Adicionar novo set'
+	const submitLabel = isEditing ? 'Guardar alterações' : 'Guardar set'
 
 	const fieldStyle = {
 		padding: '10px 12px',
@@ -60,7 +105,7 @@ export default function AddSetForm({ onAddSet }) {
 				maxWidth: '720px',
 			}}
 		>
-			<h2 style={{ margin: 0 }}>Adicionar novo set</h2>
+			<h2 style={{ margin: 0 }}>{formTitle}</h2>
 			<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
 				<input name="dj" type="text" placeholder="DJ" value={formData.dj} onChange={handleChange} style={fieldStyle} required />
 				<input name="festival" type="text" placeholder="Festival" value={formData.festival} onChange={handleChange} style={fieldStyle} required />
@@ -82,7 +127,7 @@ export default function AddSetForm({ onAddSet }) {
 					cursor: 'pointer',
 				}}
 			>
-				Guardar set
+				{submitLabel}
 			</button>
 		</form>
 	)

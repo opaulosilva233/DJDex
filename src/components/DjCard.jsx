@@ -1,6 +1,9 @@
-import { Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function DjCard({ set, onDelete }) {
+  const navigate = useNavigate()
+
   return (
     <div
       style={{
@@ -20,9 +23,14 @@ export default function DjCard({ set, onDelete }) {
         <p>⭐ {set.avaliacao}/10</p>
       )}
 
-      <button type="button" onClick={() => onDelete(set.id)}>
-        <Trash2 size={16} />
-      </button>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button type="button" onClick={() => navigate(`/editar/${set.id}`)}>
+          <Pencil size={16} />
+        </button>
+        <button type="button" onClick={() => onDelete(set.id)}>
+          <Trash2 size={16} />
+        </button>
+      </div>
     </div>
   )
 }

@@ -36,6 +36,12 @@ export default function App() {
     setSets((currentSets) => [novoSet, ...currentSets])
   }
 
+  function handleEditSet(updatedSet) {
+    setSets((currentSets) =>
+      currentSets.map((set) => (set.id === updatedSet.id ? updatedSet : set)),
+    )
+  }
+
   function handleDeleteSet(id) {
     setSets((currentSets) => currentSets.filter((set) => set.id !== id))
   }
@@ -56,6 +62,16 @@ export default function App() {
             <Route
               path="/adicionar"
               element={<AddSetPage handleAddSet={handleAddSet} />}
+            />
+            <Route
+              path="/editar/:id"
+              element={
+                <AddSetPage
+                  sets={sets}
+                  handleAddSet={handleAddSet}
+                  handleEditSet={handleEditSet}
+                />
+              }
             />
           </Routes>
         </div>
