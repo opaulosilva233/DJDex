@@ -35,6 +35,10 @@ export default function App() {
     setSets((currentSets) => [novoSet, ...currentSets])
   }
 
+  function handleDeleteSet(id) {
+    setSets((currentSets) => currentSets.filter((set) => set.id !== id))
+  }
+
   return (
     <BrowserRouter>
       <div style={{ display: 'flex', height: '100vh' }}>
@@ -43,7 +47,10 @@ export default function App() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
           <Routes>
             <Route path="/" element={<Home sets={sets} />} />
-            <Route path="/lista" element={<SetList sets={sets} />} />
+            <Route
+              path="/lista"
+              element={<SetList sets={sets} onDeleteSet={handleDeleteSet} />}
+            />
             <Route
               path="/adicionar"
               element={<AddSetPage handleAddSet={handleAddSet} />}

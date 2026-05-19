@@ -1,4 +1,6 @@
-export default function DjCard({ set }) {
+import { Trash2 } from 'lucide-react'
+
+export default function DjCard({ set, onDelete }) {
   return (
     <div
       style={{
@@ -17,6 +19,10 @@ export default function DjCard({ set }) {
       {set.avaliacao !== undefined && set.avaliacao !== null && (
         <p>⭐ {set.avaliacao}/10</p>
       )}
+
+      <button type="button" onClick={() => onDelete(set.id)}>
+        <Trash2 size={16} />
+      </button>
     </div>
   )
 }
