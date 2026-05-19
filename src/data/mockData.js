@@ -24,5 +24,15 @@ export const djSets = [
 		local: 'Coimbra',
 		data: '26/05/2026',
 		hora: '19:45',
+		avaliacao: 9.1,
+	},
+	{
+		id: 4,
+		nome: 'Nova Flux',
+		festival: 'Solar Frequency',
+		local: 'Braga',
+		data: '27/05/2026',
+		hora: '23:15',
+		avaliacao: 8.5,
 	},
 ]
