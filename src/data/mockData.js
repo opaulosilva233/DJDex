@@ -1,0 +1,28 @@
+export const djSets = [
+	{
+		id: 1,
+		nome: 'Astra Nova',
+		festival: 'Neon Pulse',
+		local: 'Lisboa',
+		data: '24/05/2026',
+		hora: '22:30',
+		avaliacao: 9.4,
+	},
+	{
+		id: 2,
+		nome: 'Milo Vex',
+		festival: 'Rift Open Air',
+		local: 'Porto',
+		data: '25/05/2026',
+		hora: '01:00',
+		avaliacao: 8.8,
+	},
+	{
+		id: 3,
+		nome: 'Luna Drift',
+		festival: 'Bass Garden',
+		local: 'Coimbra',
+		data: '26/05/2026',
+		hora: '19:45',
+	},
+]

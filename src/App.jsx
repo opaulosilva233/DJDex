@@ -1,13 +1,28 @@
+import DjCard from './components/DjCard'
+import { djSets } from './data/mockData'
+
 export default function App() {
   return (
-    <main className="app-shell">
-      <section className="hero">
+    <main className="app-shell" style={{ padding: '24px' }}>
+      <section className="hero" style={{ marginBottom: '24px' }}>
         <p className="eyebrow">DJDex</p>
-        <h1>Gestao de DJs, Festivais e Sets ao vivo</h1>
+        <h1>RaveDex 🎧</h1>
         <p>
-          Uma base React com Vite pronta para correr em Docker, com HMR a
-          funcionar a partir do teu editor.
+          Explora os sets, festivais e horários dos DJs num formato simples e
+          visual.
         </p>
+      </section>
+
+      <section
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}
+      >
+        {djSets.map((set) => (
+          <DjCard key={set.id} set={set} />
+        ))}
       </section>
     </main>
   )
