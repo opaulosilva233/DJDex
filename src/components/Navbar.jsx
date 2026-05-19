@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 
-import { BarChart2, Download, Home, Loader2, ListMusic, PlusCircle, Upload } from 'lucide-react'
+import { BarChart2, Download, Home, Loader2, ListMusic, Moon, PlusCircle, Sun, Upload } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const sidebarStyle = {
@@ -92,11 +92,44 @@ const modalLoadingStyle = {
 	border: '1px solid rgba(255, 255, 255, 0.08)',
 }
 
-export default function Navbar({ sets, handleImportData }) {
+export default function Navbar({ sets, handleImportData, darkMode, toggleDarkMode }) {
 	const fileInputRef = useRef(null)
 	const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 	const [pendingImportFile, setPendingImportFile] = useState(null)
 	const [isImporting, setIsImporting] = useState(false)
+	const isDark = darkMode
+
+	const resolvedSidebarStyle = {
+		...sidebarStyle,
+		background: isDark ? '#1a1a1a' : '#f8fafc',
+		color: isDark ? '#ffffff' : '#0f172a',
+		borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.12)',
+	}
+
+	const resolvedLinkStyle = {
+		...linkStyle,
+		color: isDark ? '#ffffff' : '#0f172a',
+	}
+
+	const resolvedActionButtonStyle = {
+		...actionButtonStyle,
+		background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)',
+		border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.12)',
+		color: isDark ? '#ffffff' : '#0f172a',
+	}
+
+	const resolvedModalStyle = {
+		...modalStyle,
+		background: isDark ? '#232323' : '#ffffff',
+		border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(15, 23, 42, 0.12)',
+		color: isDark ? '#ffffff' : '#0f172a',
+	}
+
+	const resolvedModalLoadingStyle = {
+		...modalLoadingStyle,
+		background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(15, 23, 42, 0.04)',
+		border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.08)',
+	}
 
 	function exportData() {
 		const data = JSON.stringify(sets, null, 2)
@@ -166,37 +199,42 @@ export default function Navbar({ sets, handleImportData }) {
 	}
 
 	return (
-		<nav style={sidebarStyle}>
-			<Link to="/" style={{ ...linkStyle, fontSize: '1.15rem', marginBottom: '18px' }}>
+		<nav style={resolvedSidebarStyle}>
+			<Link to="/" style={{ ...resolvedLinkStyle, fontSize: '1.15rem', marginBottom: '18px' }}>
 				DJDex
 			</Link>
 
 			<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-				<Link to="/" style={linkStyle}>
+				<Link to="/" style={resolvedLinkStyle}>
 					<Home size={18} />
 					<span>Início</span>
 				</Link>
-				<Link to="/lista" style={linkStyle}>
+				<Link to="/lista" style={resolvedLinkStyle}>
 					<ListMusic size={18} />
 					<span>Lista de DJs</span>
 				</Link>
-				<Link to="/estatisticas" style={linkStyle}>
+				<Link to="/estatisticas" style={resolvedLinkStyle}>
 					<BarChart2 size={18} />
 					<span>Estatísticas</span>
 				</Link>
-				<Link to="/adicionar" style={linkStyle}>
+				<Link to="/adicionar" style={resolvedLinkStyle}>
 					<PlusCircle size={18} />
 					<span>Adicionar Set</span>
 				</Link>
 			</div>
 
 			<div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-				<button type="button" onClick={exportData} style={actionButtonStyle}>
+				<button type="button" onClick={toggleDarkMode} style={resolvedActionButtonStyle}>
+					{darkMode ? <Sun size={18} /> : <Moon size={18} />}
+					<span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
+				</button>
+
+				<button type="button" onClick={exportData} style={resolvedActionButtonStyle}>
 					<Download size={18} />
 					<span>Exportar backup</span>
 				</button>
 
-				<label style={actionButtonStyle}>
+				<label style={resolvedActionButtonStyle}>
 					<Upload size={18} />
 					<span>Importar backup</span>
 					<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
@@ -205,13 +243,13 @@ export default function Navbar({ sets, handleImportData }) {
 
 			{isImportModalOpen ? (
 				<div style={modalOverlayStyle} role="presentation" onClick={cancelImport}>
-					<div style={modalStyle} role="dialog" aria-modal="true" aria-labelledby="import-backup-title" onClick={(event) => event.stopPropagation()}>
+					<div style={resolvedModalStyle} role="dialog" aria-modal="true" aria-labelledby="import-backup-title" onClick={(event) => event.stopPropagation()}>
 						<div>
 							<h2 id="import-backup-title" style={{ margin: 0, fontSize: '1.1rem' }}>
 								{isImporting ? 'A importar backup' : 'Confirmar importação'}
 							</h2>
 							{isImporting ? (
-								<div style={{ ...modalLoadingStyle, marginTop: '12px' }}>
+								<div style={{ ...resolvedModalLoadingStyle, marginTop: '12px' }}>
 									<Loader2 size={18} className="spin-icon" />
 									<span style={{ color: 'rgba(255, 255, 255, 0.82)', lineHeight: 1.5 }}>
 										A importar o backup. Aguarda um momento.

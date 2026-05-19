@@ -6,11 +6,72 @@
 		linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
 }
 
+html.dark .app-shell {
+	background:
+		radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 26%),
+		linear-gradient(180deg, #020617 0%, #0f172a 100%);
+}
+
 .app-main {
 	flex: 1;
 	min-width: 0;
 	padding: 28px;
 	overflow-y: auto;
+}
+
+html.dark .eyebrow {
+	color: #94a3b8;
+}
+
+html.dark .section-header h1 {
+	color: #f8fafc;
+}
+
+html.dark .section-header p {
+	color: #cbd5e1;
+}
+
+html.dark .glass-card,
+html.dark .form-wrapper,
+html.dark .action-card,
+html.dark .sets-grid > div {
+	border-color: rgba(148, 163, 184, 0.18);
+	background: rgba(15, 23, 42, 0.82);
+	box-shadow: 0 18px 50px rgba(2, 6, 23, 0.35);
+}
+
+html.dark .card-label,
+html.dark .action-card small {
+	color: #94a3b8;
+}
+
+html.dark .card-value,
+html.dark .action-card span {
+	color: #f8fafc;
+}
+
+html.dark .sets-grid button {
+	border-color: rgba(148, 163, 184, 0.24);
+	background: rgba(30, 41, 59, 0.92);
+	color: #f8fafc;
+}
+
+html.dark .form-wrapper form {
+	background: rgba(15, 23, 42, 0.9);
+	box-shadow: 0 18px 50px rgba(2, 6, 23, 0.35);
+}
+
+html.dark .form-wrapper h2,
+html.dark .sets-grid h2,
+html.dark .sets-grid p {
+	color: #f8fafc;
+}
+
+html.dark .form-wrapper input,
+html.dark .page-section input {
+	border-color: rgba(148, 163, 184, 0.25);
+	background: rgba(15, 23, 42, 0.85);
+	color: #f8fafc;
 }
 
 .page-section {

@@ -5,15 +5,7 @@ export default function DjCard({ set, onDelete }) {
   const navigate = useNavigate()
 
   return (
-    <div
-      style={{
-        border: '1px solid #d9d9d9',
-        padding: '16px',
-        borderRadius: '12px',
-        width: '280px',
-        boxSizing: 'border-box',
-      }}
-    >
+    <div className="w-[280px] box-border rounded-xl border border-gray-200 bg-white p-4 text-gray-900 shadow-sm transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
       <h2 style={{ marginTop: 0 }}>{set.nome}</h2>
       <p><strong>Festival:</strong> {set.festival}</p>
       <p><strong>Local:</strong> {set.local}</p>

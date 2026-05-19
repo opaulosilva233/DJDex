@@ -29,9 +29,32 @@ export default function App() {
     }
   })
 
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === 'undefined') {
+      return true
+    }
+
+    const storedTheme = window.localStorage.getItem('ravedex_theme')
+
+    if (storedTheme === null) {
+      return true
+    }
+
+    try {
+      return JSON.parse(storedTheme)
+    } catch {
+      return true
+    }
+  })
+
   useEffect(() => {
     window.localStorage.setItem('ravedex_sets', JSON.stringify(sets))
   }, [sets])
+
+  useEffect(() => {
+    window.localStorage.setItem('ravedex_theme', JSON.stringify(darkMode))
+    document.documentElement.classList.toggle('dark', darkMode)
+  }, [darkMode])
 
   function handleAddSet(novoSet) {
     setSets((currentSets) => [novoSet, ...currentSets])
@@ -51,12 +74,21 @@ export default function App() {
     setSets((currentSets) => currentSets.filter((set) => set.id !== id))
   }
 
+  function toggleDarkMode() {
+    setDarkMode((currentDarkMode) => !currentDarkMode)
+  }
+
   return (
     <BrowserRouter>
-      <div style={{ display: 'flex', height: '100vh' }}>
-        <Navbar sets={sets} handleImportData={handleImportData} />
+      <div className="app-shell min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+        <Navbar
+          sets={sets}
+          handleImportData={handleImportData}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
+        <div className="app-main" style={{ overflowY: 'auto' }}>
           <Routes>
             <Route path="/" element={<Home sets={sets} />} />
             <Route
