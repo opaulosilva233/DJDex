@@ -37,10 +37,10 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="app-shell">
+      <div style={{ display: 'flex', height: '100vh' }}>
         <Navbar />
 
-        <main className="app-main">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
           <Routes>
             <Route path="/" element={<Home sets={sets} />} />
             <Route path="/lista" element={<SetList sets={sets} />} />
@@ -49,7 +49,7 @@ export default function App() {
               element={<AddSetPage handleAddSet={handleAddSet} />}
             />
           </Routes>
-        </main>
+        </div>
       </div>
     </BrowserRouter>
   )
