@@ -46,7 +46,6 @@ export default function App() {
       return true
     }
   })
-
   useEffect(() => {
     window.localStorage.setItem('ravedex_sets', JSON.stringify(sets))
   }, [sets])
@@ -74,8 +73,34 @@ export default function App() {
     setSets((currentSets) => currentSets.filter((set) => set.id !== id))
   }
 
-  function toggleDarkMode() {
-    setDarkMode((currentDarkMode) => !currentDarkMode)
+  function toggleDarkMode(e) {
+    if (typeof document.startViewTransition !== 'function') {
+      setDarkMode((currentDarkMode) => !currentDarkMode)
+      return
+    }
+
+    const { clientX, clientY } = e
+    const endRadius = Math.hypot(
+      Math.max(clientX, window.innerWidth - clientX),
+      Math.max(clientY, window.innerHeight - clientY),
+    )
+
+    const transition = document.startViewTransition(() => {
+      setDarkMode((currentDarkMode) => !currentDarkMode)
+    })
+
+    transition.ready.then(() => {
+      document.documentElement.animate(
+        {
+          clipPath: [`circle(0px at ${clientX}px ${clientY}px)`, `circle(${endRadius}px at ${clientX}px ${clientY}px)`],
+        },
+        {
+          duration: 500,
+          easing: 'ease-in-out',
+          pseudoElement: '::view-transition-new(root)',
+        },
+      )
+    })
   }
 
   return (
@@ -112,6 +137,7 @@ export default function App() {
             />
           </Routes>
         </div>
+
       </div>
     </BrowserRouter>
   )

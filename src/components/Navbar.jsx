@@ -35,6 +35,7 @@ const actionButtonStyle = {
 	border: '1px solid rgba(255, 255, 255, 0.08)',
 	cursor: 'pointer',
 	width: '100%',
+	transition: 'background-color 220ms ease, border-color 220ms ease, color 220ms ease, transform 220ms ease, box-shadow 220ms ease',
 }
 
 const modalOverlayStyle = {
@@ -224,8 +225,16 @@ export default function Navbar({ sets, handleImportData, darkMode, toggleDarkMod
 			</div>
 
 			<div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-				<button type="button" onClick={toggleDarkMode} style={resolvedActionButtonStyle}>
-					{darkMode ? <Sun size={18} /> : <Moon size={18} />}
+				<button type="button" onClick={(event) => toggleDarkMode(event)} style={resolvedActionButtonStyle}>
+					<span
+						style={{
+							display: 'inline-flex',
+							transform: darkMode ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.92)',
+							transition: 'transform 240ms ease',
+						}}
+					>
+						{darkMode ? <Sun size={18} /> : <Moon size={18} />}
+					</span>
 					<span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
 				</button>
 
