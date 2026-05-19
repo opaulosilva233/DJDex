@@ -1,6 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
-import { BarChart2, Download, Home, ListMusic, PlusCircle, Upload } from 'lucide-react'
+import { BarChart2, Download, Home, Loader2, ListMusic, PlusCircle, Upload } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const sidebarStyle = {
@@ -37,8 +37,66 @@ const actionButtonStyle = {
 	width: '100%',
 }
 
+const modalOverlayStyle = {
+	position: 'fixed',
+	inset: 0,
+	zIndex: 1000,
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'center',
+	background: 'rgba(0, 0, 0, 0.55)',
+	backdropFilter: 'blur(6px)',
+}
+
+const modalStyle = {
+	width: 'min(90vw, 420px)',
+	borderRadius: '20px',
+	padding: '24px',
+	background: '#232323',
+	border: '1px solid rgba(255, 255, 255, 0.1)',
+	boxShadow: '0 24px 80px rgba(0, 0, 0, 0.45)',
+	color: '#ffffff',
+	display: 'flex',
+	flexDirection: 'column',
+	gap: '16px',
+}
+
+const modalActionsStyle = {
+	display: 'flex',
+	justifyContent: 'flex-end',
+	gap: '12px',
+	flexWrap: 'wrap',
+}
+
+const modalCancelStyle = {
+	...actionButtonStyle,
+	width: 'auto',
+	paddingInline: '16px',
+}
+
+const modalConfirmStyle = {
+	...actionButtonStyle,
+	width: 'auto',
+	paddingInline: '16px',
+	background: 'rgba(255, 97, 97, 0.16)',
+	border: '1px solid rgba(255, 97, 97, 0.22)',
+}
+
+const modalLoadingStyle = {
+	display: 'flex',
+	alignItems: 'center',
+	gap: '12px',
+	padding: '14px 16px',
+	borderRadius: '14px',
+	background: 'rgba(255, 255, 255, 0.05)',
+	border: '1px solid rgba(255, 255, 255, 0.08)',
+}
+
 export default function Navbar({ sets, handleImportData }) {
 	const fileInputRef = useRef(null)
+	const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+	const [pendingImportFile, setPendingImportFile] = useState(null)
+	const [isImporting, setIsImporting] = useState(false)
 
 	function exportData() {
 		const data = JSON.stringify(sets, null, 2)
@@ -61,6 +119,32 @@ export default function Navbar({ sets, handleImportData }) {
 			return
 		}
 
+		setPendingImportFile(file)
+		setIsImportModalOpen(true)
+	}
+
+	function resetImportState() {
+		setIsImportModalOpen(false)
+		setPendingImportFile(null)
+		setIsImporting(false)
+
+		if (fileInputRef.current) {
+			fileInputRef.current.value = null
+		}
+	}
+
+	function cancelImport() {
+		resetImportState()
+	}
+
+	function confirmImport() {
+		if (!pendingImportFile) {
+			resetImportState()
+			return
+		}
+
+		setIsImporting(true)
+
 		const reader = new FileReader()
 
 		reader.onload = (loadEvent) => {
@@ -73,11 +157,12 @@ export default function Navbar({ sets, handleImportData }) {
 				}
 			} catch {
 				// Mantém o comportamento silencioso em caso de ficheiro inválido.
+			} finally {
+				resetImportState()
 			}
 		}
 
-		reader.readAsText(file)
-		event.target.value = ''
+		reader.readAsText(pendingImportFile)
 	}
 
 	return (
@@ -117,6 +202,39 @@ export default function Navbar({ sets, handleImportData }) {
 					<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
 				</label>
 			</div>
+
+			{isImportModalOpen ? (
+				<div style={modalOverlayStyle} role="presentation" onClick={cancelImport}>
+					<div style={modalStyle} role="dialog" aria-modal="true" aria-labelledby="import-backup-title" onClick={(event) => event.stopPropagation()}>
+						<div>
+							<h2 id="import-backup-title" style={{ margin: 0, fontSize: '1.1rem' }}>
+								{isImporting ? 'A importar backup' : 'Confirmar importação'}
+							</h2>
+							{isImporting ? (
+								<div style={{ ...modalLoadingStyle, marginTop: '12px' }}>
+									<Loader2 size={18} className="spin-icon" />
+									<span style={{ color: 'rgba(255, 255, 255, 0.82)', lineHeight: 1.5 }}>
+										A importar o backup. Aguarda um momento.
+									</span>
+								</div>
+							) : (
+								<p style={{ margin: '10px 0 0', color: 'rgba(255, 255, 255, 0.78)', lineHeight: 1.5 }}>
+									Atenção: Importar um backup vai substituir todos os teus dados atuais. Tens a certeza que queres continuar?
+								</p>
+							)}
+						</div>
+
+						<div style={modalActionsStyle}>
+							<button type="button" onClick={cancelImport} style={modalCancelStyle} disabled={isImporting}>
+								Cancelar
+							</button>
+							<button type="button" onClick={confirmImport} style={modalConfirmStyle} disabled={isImporting}>
+								{isImporting ? 'A importar...' : 'Continuar'}
+							</button>
+						</div>
+					</div>
+				</div>
+			) : null}
 		</nav>
 	)
 }
