@@ -84,22 +84,22 @@ export default function Stats({ sets }) {
 					gap: '20px',
 				}}
 			>
-				<section className="glass-card" style={{ padding: '24px' }}>
+				<section className="glass-card border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
 					<h2 style={{ marginBottom: '16px' }}>Top DJs</h2>
 					<div style={{ width: '100%', height: '300px' }}>
 						<ResponsiveContainer width="100%" height="100%">
 							<BarChart data={topDjs}>
-								<CartesianGrid strokeDasharray="3 3" />
-								<XAxis dataKey="name" tick={{ fill: 'rgba(243, 244, 246, 0.8)' }} />
-								<YAxis allowDecimals={false} tick={{ fill: 'rgba(243, 244, 246, 0.8)' }} />
-								<Tooltip />
+								<CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+								<XAxis dataKey="name" tick={{ fill: '#9ca3af' }} stroke="#64748b" />
+								<YAxis allowDecimals={false} tick={{ fill: '#9ca3af' }} stroke="#64748b" />
+								<Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }} />
 								<Bar dataKey="quantidade" fill="#7db3ff" radius={[8, 8, 0, 0]} />
 							</BarChart>
 						</ResponsiveContainer>
 					</div>
 				</section>
 
-				<section className="glass-card" style={{ padding: '24px' }}>
+				<section className="glass-card border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
 					<h2 style={{ marginBottom: '16px' }}>Sets por Festival</h2>
 					<div style={{ width: '100%', height: '300px' }}>
 						<ResponsiveContainer width="100%" height="100%">
@@ -117,7 +117,7 @@ export default function Stats({ sets }) {
 										<Cell key={`cell-${entry.name}`} fill={pieColors[index % pieColors.length]} />
 									))}
 								</Pie>
-								<Tooltip />
+								<Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }} />
 							</PieChart>
 						</ResponsiveContainer>
 					</div>

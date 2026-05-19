@@ -14,6 +14,15 @@ export default function AddSetForm({ initialData, handleAddSet, handleEditSet })
 	const [formData, setFormData] = useState(initialFormState)
 	const navigate = useNavigate()
 
+	const fields = [
+		{ name: 'dj', label: 'DJ', type: 'text', placeholder: 'DJ' },
+		{ name: 'festival', label: 'Festival', type: 'text', placeholder: 'Festival' },
+		{ name: 'local', label: 'Local', type: 'text', placeholder: 'Local' },
+		{ name: 'data', label: 'Data', type: 'date', placeholder: 'Data' },
+		{ name: 'hora', label: 'Hora', type: 'time', placeholder: 'Hora' },
+		{ name: 'avaliacao', label: 'Avaliação', type: 'number', placeholder: 'Avaliação', min: '0', max: '10' },
+	]
+
 	useEffect(() => {
 		if (initialData) {
 			setFormData({
@@ -81,51 +90,36 @@ export default function AddSetForm({ initialData, handleAddSet, handleEditSet })
 	const isEditing = Boolean(initialData)
 	const formTitle = isEditing ? 'Editar set' : 'Adicionar novo set'
 	const submitLabel = isEditing ? 'Guardar alterações' : 'Guardar set'
-
-	const fieldStyle = {
-		padding: '10px 12px',
-		borderRadius: '10px',
-		border: '1px solid #cfcfcf',
-		fontSize: '1rem',
-		fontFamily: 'inherit',
-	}
+	const inputClassName =
+		'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 dark:placeholder:text-slate-400 dark:focus:border-blue-500 dark:focus:ring-blue-500/20'
 
 	return (
 		<form
 			onSubmit={handleSubmit}
-			style={{
-				display: 'grid',
-				gap: '12px',
-				padding: '16px',
-				marginBottom: '24px',
-				borderRadius: '16px',
-				border: '1px solid #e3e3e3',
-				background: 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
-				boxShadow: '0 8px 24px rgba(0, 0, 0, 0.05)',
-				maxWidth: '720px',
-			}}
+			className="grid max-w-[720px] gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-none"
 		>
-			<h2 style={{ margin: 0 }}>{formTitle}</h2>
-			<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-				<input name="dj" type="text" placeholder="DJ" value={formData.dj} onChange={handleChange} style={fieldStyle} required />
-				<input name="festival" type="text" placeholder="Festival" value={formData.festival} onChange={handleChange} style={fieldStyle} required />
-				<input name="local" type="text" placeholder="Local" value={formData.local} onChange={handleChange} style={fieldStyle} required />
-				<input name="data" type="date" placeholder="Data" value={formData.data} onChange={handleChange} style={fieldStyle} required />
-				<input name="hora" type="time" placeholder="Hora" value={formData.hora} onChange={handleChange} style={fieldStyle} required />
-				<input name="avaliacao" type="number" min="0" max="10" placeholder="Avaliação" value={formData.avaliacao} onChange={handleChange} style={fieldStyle} required />
+			<h2 className="m-0 text-xl font-semibold text-slate-900 dark:text-gray-100">{formTitle}</h2>
+			<div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
+				{fields.map(({ name, label, type, placeholder, min, max }) => (
+					<label key={name} className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-200">
+						<span>{label}</span>
+						<input
+							name={name}
+							type={type}
+							placeholder={placeholder}
+							value={formData[name]}
+							onChange={handleChange}
+							min={min}
+							max={max}
+							className={inputClassName}
+							required
+						/>
+					</label>
+				))}
 			</div>
 			<button
 				type="submit"
-				style={{
-					justifySelf: 'start',
-					padding: '10px 16px',
-					borderRadius: '999px',
-					border: 'none',
-					background: '#111827',
-					color: '#fff',
-					fontWeight: 600,
-					cursor: 'pointer',
-				}}
+				className="justify-self-start rounded-full bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
 			>
 				{submitLabel}
 			</button>
