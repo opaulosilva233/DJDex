@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
-import AddSetForm from './components/AddSetForm'
-import DjCard from './components/DjCard'
+import Navbar from './components/Navbar'
+import AddSetPage from './pages/AddSetPage'
+import Home from './pages/Home'
+import SetList from './pages/SetList'
 import { djSets } from './data/mockData'
 
 export default function App() {
@@ -33,29 +36,21 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell" style={{ padding: '24px' }}>
-      <section className="hero" style={{ marginBottom: '24px' }}>
-        <p className="eyebrow">DJDex</p>
-        <h1>RaveDex 🎧</h1>
-        <p>
-          Explora os sets, festivais e horários dos DJs num formato simples e
-          visual.
-        </p>
-      </section>
+    <BrowserRouter>
+      <div className="app-shell">
+        <Navbar />
 
-      <AddSetForm onAddSet={handleAddSet} />
-
-      <section
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
-        {djSets.map((set) => (
-          <DjCard key={set.id} set={set} />
-        ))}
-      </section>
-    </main>
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<Home sets={sets} />} />
+            <Route path="/lista" element={<SetList sets={sets} />} />
+            <Route
+              path="/adicionar"
+              element={<AddSetPage handleAddSet={handleAddSet} />}
+            />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
   )
 }
