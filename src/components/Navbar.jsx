@@ -1,4 +1,4 @@
-import { Home, ListMusic, PlusCircle } from 'lucide-react'
+import { BarChart2, Home, ListMusic, PlusCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const sidebarStyle = {
@@ -40,6 +40,10 @@ export default function Navbar() {
 				<Link to="/lista" style={linkStyle}>
 					<ListMusic size={18} />
 					<span>Lista de DJs</span>
+				</Link>
+				<Link to="/estatisticas" style={linkStyle}>
+					<BarChart2 size={18} />
+					<span>Estatísticas</span>
 				</Link>
 				<Link to="/adicionar" style={linkStyle}>
 					<PlusCircle size={18} />

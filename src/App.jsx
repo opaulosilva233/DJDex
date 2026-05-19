@@ -5,6 +5,7 @@ import Navbar from './components/Navbar'
 import AddSetPage from './pages/AddSetPage'
 import Home from './pages/Home'
 import SetList from './pages/SetList'
+import Stats from './pages/Stats'
 import { djSets } from './data/mockData'
 
 export default function App() {
@@ -51,6 +52,7 @@ export default function App() {
               path="/lista"
               element={<SetList sets={sets} onDeleteSet={handleDeleteSet} />}
             />
+            <Route path="/estatisticas" element={<Stats sets={sets} />} />
             <Route
               path="/adicionar"
               element={<AddSetPage handleAddSet={handleAddSet} />}
