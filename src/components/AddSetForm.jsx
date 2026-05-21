@@ -9,15 +9,15 @@ const initialFormState = {
 	avaliacao: '',
 }
 
-export default function AddSetForm({ initialData, djs = [], festivais = [], handleAddSet, handleEditSet }) {
+export default function AddSetForm({ initialData, djs = [], festivais = [], generos = [], handleAddSet, handleEditSet }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const navigate = useNavigate()
 
 	useEffect(() => {
 		if (initialData) {
 			setFormData({
-				djId: initialData.djId ?? '',
-				festivalId: initialData.festivalId ?? '',
+				djId: initialData.djId ?? initialData.dj?.id ?? '',
+				festivalId: initialData.festivalId ?? initialData.festival?.id ?? '',
 				data: initialData.data ?? '',
 				hora: initialData.hora ?? '',
 				avaliacao:
@@ -30,6 +30,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], hand
 
 		setFormData(initialFormState)
 	}, [initialData])
+
+	const selectedDj = djs.find((dj) => dj.id === formData.djId)
+	const selectedDjGenres = generos.filter(
+		(genero) => Array.isArray(selectedDj?.generoIds) && selectedDj.generoIds.includes(genero.id),
+	)
 
 	function handleChange(event) {
 		const { name, value } = event.target
@@ -97,6 +102,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], hand
 							</option>
 						))}
 					</select>
+					{selectedDj && (
+						<p className="text-xs text-slate-500 dark:text-slate-400">
+							Géneros associados: {selectedDjGenres.length > 0 ? selectedDjGenres.map((genero) => genero.nome).join(', ') : 'Sem géneros definidos'}
+						</p>
+					)}
 				</label>
 
 				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">

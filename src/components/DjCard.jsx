@@ -55,7 +55,7 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
       )}
 
       <div style={{ display: 'flex', gap: '8px' }}>
-        <button type="button" onClick={() => navigate(`/editar/${set.id}`)}>
+        <button type="button" onClick={() => navigate(`/sets/editar/${set.id}`)}>
           <Pencil size={16} />
         </button>
         <button type="button" onClick={() => onDelete(set.id)}>
