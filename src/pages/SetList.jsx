@@ -1,135 +1,139 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { PlusCircle, Calendar, Users, Music4 } from 'lucide-react'
+import DjCard from '../components/DjCard'
 
 export default function SetList({ sets, djs = [], festivais = [], generos = [], onDeleteSet }) {
 	const navigate = useNavigate()
-	const [searchTerm, setSearchTerm] = useState('')
-	const [minRating, setMinRating] = useState(0)
 
-  const filteredSets = sets.filter((set) => {
+	// Estados dos filtros simplificados
+	const [djSearch, setDjSearch] = useState('')
+	const [festivalSearch, setFestivalSearch] = useState('')
+	const [selectedYear, setSelectedYear] = useState('')
+
+	// Lógica de filtragem unificada
+	const filteredSets = sets.filter((set) => {
 		const dj = djs.find((entry) => entry.id === set.djId)
 		const festival = festivais.find((entry) => entry.id === set.festivalId)
-		const search = searchTerm.toLowerCase()
-		const matchesName = (dj?.nome ?? '').toLowerCase().includes(search) || (festival?.nome ?? '').toLowerCase().includes(search)
-    const matchesRating = Number(set.avaliacao ?? 0) >= minRating
 
-    return matchesName && matchesRating
-  })
+		// Filtro por DJ (compara o ID selecionado ou o texto digitado)
+		const matchesDj = djSearch === '' ||
+			(dj?.id === djSearch) ||
+			(dj?.nome ?? '').toLowerCase().includes(djSearch.toLowerCase())
+
+		// Filtro por Festival (compara o ID selecionado ou o texto digitado)
+		const matchesFestival = festivalSearch === '' ||
+			(festival?.id === festivalSearch) ||
+			(festival?.nome ?? '').toLowerCase().includes(festivalSearch.toLowerCase())
+
+		// Filtro por Ano
+		const setYear = set.data ? set.data.split('-')[0] : (festival?.ano?.toString() ?? '')
+		const matchesYear = selectedYear === '' || setYear === selectedYear
+
+		return matchesDj && matchesFestival && matchesYear
+	})
+
+	// Extrair anos únicos para o filtro de data
+	const anosDisponiveis = Array.from(new Set(sets.map(s => s.data ? s.data.split('-')[0] : '').filter(Boolean)))
 
 	return (
-		<div className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent">
-			<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+		<div className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
+			
+			{/* Cabeçalho da Página */}
+			<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Sets Gravados</h1>
-					<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Todos os sets atualmente carregados na aplicação.</p>
+					<span className="text-xs font-bold uppercase tracking-widest text-purple-500 bg-purple-500/10 px-3 py-1 rounded-full w-fit">
+						Biblioteca
+					</span>
+					<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
+						Sets Gravados
+					</h1>
+					<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+						Todos os sets atualmente carregados na aplicação.
+					</p>
 				</div>
-				<button
-					type="button"
-					className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
-					onClick={() => navigate('/adicionar')}
-				>
-					<Plus size={16} />
-					<span>Adicionar Set</span>
-				</button>
-			</div>
-
-			<div className="grid gap-3 mb-6 md:grid-cols-2">
-				<input
-					type="text"
-					placeholder="Procurar DJ ou festival"
-					value={searchTerm}
-					onChange={(event) => setSearchTerm(event.target.value)}
-					className="rounded-xl border border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/30 backdrop-blur-md px-4 py-2.5 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
-				/>
-				<input
-					type="number"
-					min="0"
-					max="10"
-					placeholder="Avaliação mínima"
-					value={minRating}
-					onChange={(event) => setMinRating(Number(event.target.value))}
-					className="rounded-xl border border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/30 backdrop-blur-md px-4 py-2.5 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
-				/>
-			</div>
-
-			<div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 rounded-2xl shadow-xl overflow-x-auto p-4">
-				<div className="overflow-x-auto">
-					<table className="w-full border-collapse bg-transparent">
-						<thead className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200/30 dark:border-white/5">
-							<tr>
-								<th className="px-6 py-4 text-left">DJ</th>
-								<th className="px-6 py-4 text-left">Festival</th>
-								<th className="px-6 py-4 text-left">Data</th>
-								<th className="px-6 py-4 text-left">Hora</th>
-								<th className="px-6 py-4 text-left">Avaliação</th>
-								<th className="px-6 py-4 text-left">Ações</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filteredSets.length === 0 ? (
-								<tr>
-									<td colSpan={6} className="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-										Nenhum set encontrado para os filtros aplicados.
-									</td>
-								</tr>
-							) : (
-								filteredSets.map((set) => {
-									const dj = djs.find((entry) => entry.id === set.djId)
-									const festival = festivais.find((entry) => entry.id === set.festivalId)
-									const djGeneros = Array.isArray(dj?.generoIds)
-										? dj.generoIds
-											.map((generoId) => generos.find((genero) => genero.id === generoId)?.nome)
-											.filter(Boolean)
-										: []
-
-									return (
-										<tr
-											key={set.id}
-											className="hover:bg-purple-600/5 dark:hover:bg-purple-500/5 border-b border-slate-100/50 dark:border-white/5 last:border-0 transition-colors"
-										>
-											<td className="px-6 py-4 text-sm text-slate-800 dark:text-slate-200">
-												<div className="flex flex-col">
-													<span className="font-semibold text-slate-900 dark:text-white">{dj?.nome ?? 'DJ desconhecido'}</span>
-													{djGeneros.length > 0 && (
-														<span className="text-xs text-slate-500 dark:text-slate-400">{djGeneros.join(' · ')}</span>
-													)}
-												</div>
-											</td>
-											<td className="px-6 py-4 text-sm text-slate-800 dark:text-slate-200">{festival?.nome ?? 'Festival desconhecido'}</td>
-											<td className="px-6 py-4 text-sm text-slate-800 dark:text-slate-200">{set.data || '-'}</td>
-											<td className="px-6 py-4 text-sm text-slate-800 dark:text-slate-200">{set.hora || '-'}</td>
-											<td className="px-6 py-4 text-sm text-slate-800 dark:text-slate-200">
-												<span className="font-semibold text-amber-500">{Number(set.avaliacao ?? 0).toFixed(1)}</span>
-											</td>
-											<td className="px-6 py-4 text-sm text-slate-800 dark:text-slate-200">
-												<div className="flex items-center gap-2">
-													<button
-														type="button"
-														onClick={() => navigate(`/sets/editar/${set.id}`)}
-														className="text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 p-2 rounded-lg transition-colors"
-														aria-label={`Editar set de ${dj?.nome ?? 'DJ'}`}
-													>
-														<Pencil size={16} />
-													</button>
-													<button
-														type="button"
-														onClick={() => onDeleteSet(set.id)}
-														className="text-rose-400 hover:bg-rose-500/10 p-2 rounded-lg transition-colors"
-														aria-label={`Eliminar set de ${dj?.nome ?? 'DJ'}`}
-													>
-														<Trash2 size={16} />
-													</button>
-												</div>
-											</td>
-										</tr>
-									)
-								})
-							)}
-						</tbody>
-					</table>
+				<div>
+					<button
+						type="button"
+						className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
+						onClick={() => navigate('/adicionar')}
+					>
+						<PlusCircle size={16} />
+						Adicionar Set
+					</button>
 				</div>
 			</div>
+
+			{/* Barra de Filtros Inteligente (Glassmorphism) */}
+			<div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl shadow-xl flex flex-col gap-4">
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+					
+					{/* Filtro de DJ */}
+					<div className="flex flex-col">
+						<label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1.5">
+							<Users size={12} /> Pesquisar / Selecionar DJ
+						</label>
+						<select
+							value={djSearch}
+							onChange={(e) => setDjSearch(e.target.value)}
+							className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2.5 text-sm text-gray-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50"
+						>
+							<option value="">Todos os DJs</option>
+							{djs.map((dj) => (
+								<option key={dj.id} value={dj.id}>{dj.nome}</option>
+							))}
+						</select>
+					</div>
+
+					{/* Filtro de Festival */}
+					<div className="flex flex-col">
+						<label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1.5">
+							<Music4 size={12} /> Pesquisar / Selecionar Festival
+						</label>
+						<select
+							value={festivalSearch}
+							onChange={(e) => setFestivalSearch(e.target.value)}
+							className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2.5 text-sm text-gray-900 dark:border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50"
+						>
+							<option value="">Todos os Festivais</option>
+							{festivais.map((fest) => (
+								<option key={fest.id} value={fest.id}>{fest.nome}</option>
+							))}
+						</select>
+					</div>
+
+					{/* Filtro de Ano */}
+					<div className="flex flex-col">
+						<label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1.5">
+							<Calendar size={12} /> Filtrar por Ano
+						</label>
+						<select
+							value={selectedYear}
+							onChange={(e) => setSelectedYear(e.target.value)}
+							className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2.5 text-sm text-gray-900 dark:border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50"
+						>
+							<option value="">Todos os anos</option>
+							{anosDisponiveis.map((year) => (
+								<option key={year} value={year}>{year}</option>
+							))}
+						</select>
+					</div>
+
+				</div>
+			</div>
+
+			{/* Grelha de Cartões Organizada */}
+			{filteredSets.length > 0 ? (
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					{filteredSets.map((set) => (
+						<DjCard key={set.id} set={set} djs={djs} festivais={festivais} generos={generos} onDelete={onDeleteSet} />
+					))}
+				</div>
+			) : (
+				<div className="w-full p-12 text-center bg-white/10 dark:bg-slate-950/10 backdrop-blur-sm rounded-2xl border border-dashed border-slate-700/40">
+					<p className="text-sm text-slate-400">Nenhum set corresponde aos filtros selecionados.</p>
+				</div>
+			)}
 		</div>
 	)
 }
