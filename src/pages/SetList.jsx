@@ -18,7 +18,7 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
   })
 
 	return (
-		<section className="page-section flex-1 min-h-0 overflow-y-auto pr-1 bg-transparent">
+		<div className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent">
 			<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 				<div>
 					<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Sets Gravados</h1>
@@ -53,7 +53,7 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 				/>
 			</div>
 
-			<div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 rounded-2xl shadow-xl overflow-hidden p-2">
+			<div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 rounded-2xl shadow-xl overflow-x-auto p-4">
 				<div className="overflow-x-auto">
 					<table className="w-full border-collapse bg-transparent">
 						<thead className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200/30 dark:border-white/5">
@@ -130,6 +130,6 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 					</table>
 				</div>
 			</div>
-		</section>
+		</div>
 	)
 }
