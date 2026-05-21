@@ -2,33 +2,22 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const initialFormState = {
-	dj: '',
-	festival: '',
-	local: '',
+	djId: '',
+	festivalId: '',
 	data: '',
 	hora: '',
 	avaliacao: '',
 }
 
-export default function AddSetForm({ initialData, handleAddSet, handleEditSet }) {
+export default function AddSetForm({ initialData, djs = [], festivais = [], handleAddSet, handleEditSet }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const navigate = useNavigate()
-
-	const fields = [
-		{ name: 'dj', label: 'DJ', type: 'text', placeholder: 'DJ' },
-		{ name: 'festival', label: 'Festival', type: 'text', placeholder: 'Festival' },
-		{ name: 'local', label: 'Local', type: 'text', placeholder: 'Local' },
-		{ name: 'data', label: 'Data', type: 'date', placeholder: 'Data' },
-		{ name: 'hora', label: 'Hora', type: 'time', placeholder: 'Hora' },
-		{ name: 'avaliacao', label: 'Avaliação', type: 'number', placeholder: 'Avaliação', min: '0', max: '10' },
-	]
 
 	useEffect(() => {
 		if (initialData) {
 			setFormData({
-				dj: initialData.nome ?? '',
-				festival: initialData.festival ?? '',
-				local: initialData.local ?? '',
+				djId: initialData.djId ?? '',
+				festivalId: initialData.festivalId ?? '',
 				data: initialData.data ?? '',
 				hora: initialData.hora ?? '',
 				avaliacao:
@@ -54,9 +43,8 @@ export default function AddSetForm({ initialData, handleAddSet, handleEditSet })
 		event.preventDefault()
 
 		const payload = {
-			dj: formData.dj,
-			festival: formData.festival,
-			local: formData.local,
+			djId: formData.djId,
+			festivalId: formData.festivalId,
 			data: formData.data,
 			hora: formData.hora,
 			avaliacao: formData.avaliacao === '' ? null : Number(formData.avaliacao),
@@ -65,22 +53,12 @@ export default function AddSetForm({ initialData, handleAddSet, handleEditSet })
 		if (initialData) {
 			handleEditSet({
 				id: initialData.id,
-				nome: payload.dj,
-				festival: payload.festival,
-				local: payload.local,
-				data: payload.data,
-				hora: payload.hora,
-				avaliacao: payload.avaliacao,
+				...payload,
 			})
 		} else {
 			handleAddSet({
 				id: crypto.randomUUID(),
-				nome: payload.dj,
-				festival: payload.festival,
-				local: payload.local,
-				data: payload.data,
-				hora: payload.hora,
-				avaliacao: payload.avaliacao,
+				...payload,
 			})
 		}
 
@@ -107,22 +85,78 @@ export default function AddSetForm({ initialData, handleAddSet, handleEditSet })
 				</div>
 			</div>
 			<div className="grid w-full gap-4 lg:grid-cols-2 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
-				{fields.map(({ name, label, type, placeholder, min, max }) => (
-					<label key={name} className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
-						<span className="text-slate-700 dark:text-gray-100">{label}</span>
-						<input
-							name={name}
-							type={type}
-							placeholder={placeholder}
-							value={formData[name]}
-							onChange={handleChange}
-							min={min}
-							max={max}
-							className={inputClassName}
-							required
-						/>
-					</label>
-				))}
+				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
+					<span className="text-slate-700 dark:text-gray-100">DJ</span>
+					<select name="djId" value={formData.djId} onChange={handleChange} className={inputClassName} required>
+						<option value="" disabled>
+							Seleciona um DJ
+						</option>
+						{djs.map((dj) => (
+							<option key={dj.id} value={dj.id}>
+								{dj.nome}
+							</option>
+						))}
+					</select>
+				</label>
+
+				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
+					<span className="text-slate-700 dark:text-gray-100">Festival</span>
+					<select
+						name="festivalId"
+						value={formData.festivalId}
+						onChange={handleChange}
+						className={inputClassName}
+						required
+					>
+						<option value="" disabled>
+							Seleciona um Festival
+						</option>
+						{festivais.map((festival) => (
+							<option key={festival.id} value={festival.id}>
+								{festival.nome}
+							</option>
+						))}
+					</select>
+				</label>
+
+				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
+					<span className="text-slate-700 dark:text-gray-100">Data</span>
+					<input
+						name="data"
+						type="date"
+						value={formData.data}
+						onChange={handleChange}
+						className={inputClassName}
+						required
+					/>
+				</label>
+
+				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
+					<span className="text-slate-700 dark:text-gray-100">Hora</span>
+					<input
+						name="hora"
+						type="time"
+						value={formData.hora}
+						onChange={handleChange}
+						className={inputClassName}
+						required
+					/>
+				</label>
+
+				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
+					<span className="text-slate-700 dark:text-gray-100">Avaliação</span>
+					<input
+						name="avaliacao"
+						type="number"
+						placeholder="Avaliação"
+						value={formData.avaliacao}
+						onChange={handleChange}
+						min="0"
+						max="10"
+						className={inputClassName}
+						required
+					/>
+				</label>
 			</div>
 			<button
 				type="submit"

@@ -4,29 +4,53 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './App.css'
 import Navbar from './components/Navbar'
 import AddSetPage from './pages/AddSetPage'
+import AddDjPage from './pages/AddDjPage'
+import AddFestivalPage from './pages/AddFestivalPage'
 import Home from './pages/Home'
 import SetList from './pages/SetList'
 import Stats from './pages/Stats'
-import { djSets } from './data/mockData'
+import { djs as initialDjs, festivais as initialFestivais, sets as initialSets } from './data/mockData'
+
+const normalizeImageValue = (image) => (typeof image === 'string' && image.startsWith('data:image/') ? image : '')
+
+const initialRelationalDjs = initialDjs.map((dj) => ({
+  ...dj,
+  imagem: normalizeImageValue(dj.imagem),
+}))
+
+const initialRelationalFestivais = initialFestivais.map((festival) => ({
+  ...festival,
+  imagem: normalizeImageValue(festival.imagem),
+}))
+
+const initialRelationalSets = initialSets.map((set) => ({ ...set }))
+
+function readStoredCollection(storageKey, fallback) {
+  if (typeof window === 'undefined') {
+    return fallback
+  }
+
+  const storedCollection = window.localStorage.getItem(storageKey)
+
+  if (!storedCollection) {
+    return fallback
+  }
+
+  try {
+    const parsedCollection = JSON.parse(storedCollection)
+    return Array.isArray(parsedCollection) && parsedCollection.length > 0 ? parsedCollection : fallback
+  } catch {
+    return fallback
+  }
+}
 
 export default function App() {
+  const [djs, setDjs] = useState(() => readStoredCollection('ravedex_djs', initialRelationalDjs))
+  const [festivais, setFestivais] = useState(() =>
+    readStoredCollection('ravedex_festivais', initialRelationalFestivais),
+  )
   const [sets, setSets] = useState(() => {
-    if (typeof window === 'undefined') {
-      return djSets
-    }
-
-    const storedSets = window.localStorage.getItem('ravedex_sets')
-
-    if (!storedSets) {
-      return djSets
-    }
-
-    try {
-      const parsedSets = JSON.parse(storedSets)
-      return Array.isArray(parsedSets) ? parsedSets : djSets
-    } catch {
-      return djSets
-    }
+    return readStoredCollection('ravedex_sets', initialRelationalSets)
   })
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -47,6 +71,14 @@ export default function App() {
     }
   })
   useEffect(() => {
+    window.localStorage.setItem('ravedex_djs', JSON.stringify(djs))
+  }, [djs])
+
+  useEffect(() => {
+    window.localStorage.setItem('ravedex_festivais', JSON.stringify(festivais))
+  }, [festivais])
+
+  useEffect(() => {
     window.localStorage.setItem('ravedex_sets', JSON.stringify(sets))
   }, [sets])
 
@@ -55,12 +87,31 @@ export default function App() {
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
 
+  function handleAddDj(novoDj) {
+    setDjs((currentDjs) => [novoDj, ...currentDjs])
+  }
+
+  function handleAddFestival(novoFestival) {
+    setFestivais((currentFestivais) => [novoFestival, ...currentFestivais])
+  }
+
   function handleAddSet(novoSet) {
     setSets((currentSets) => [novoSet, ...currentSets])
   }
 
-  function handleImportData(importedSets) {
-    setSets(importedSets)
+  function handleImportAllData(importedData) {
+    if (Array.isArray(importedData)) {
+      setSets(importedData)
+      return
+    }
+
+    if (!importedData || typeof importedData !== 'object') {
+      return
+    }
+
+    setDjs(Array.isArray(importedData.djs) ? importedData.djs : [])
+    setFestivais(Array.isArray(importedData.festivais) ? importedData.festivais : [])
+    setSets(Array.isArray(importedData.sets) ? importedData.sets : [])
   }
 
   function handleEditSet(updatedSet) {
@@ -71,6 +122,16 @@ export default function App() {
 
   function handleDeleteSet(id) {
     setSets((currentSets) => currentSets.filter((set) => set.id !== id))
+  }
+
+  function handleDeleteDj(id) {
+    setDjs((currentDjs) => currentDjs.filter((dj) => dj.id !== id))
+    setSets((currentSets) => currentSets.filter((set) => set.djId !== id))
+  }
+
+  function handleDeleteFestival(id) {
+    setFestivais((currentFestivais) => currentFestivais.filter((festival) => festival.id !== id))
+    setSets((currentSets) => currentSets.filter((set) => set.festivalId !== id))
   }
 
   function toggleDarkMode(e) {
@@ -107,8 +168,10 @@ export default function App() {
     <BrowserRouter>
       <div className="app-shell h-screen overflow-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
         <Navbar
+          djs={djs}
+          festivais={festivais}
           sets={sets}
-          handleImportData={handleImportData}
+          handleImportAllData={handleImportAllData}
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
         />
@@ -116,23 +179,78 @@ export default function App() {
         <div className="app-main flex-1 overflow-hidden flex flex-col min-h-0">
           <div className="flex-1 min-h-0 overflow-hidden">
             <Routes>
-              <Route path="/" element={<Home sets={sets} />} />
+                <Route
+                  path="/"
+                  element={
+                    <Home
+                      sets={sets}
+                      djs={djs}
+                      festivais={festivais}
+                      handleDeleteSet={handleDeleteSet}
+                      handleDeleteDj={handleDeleteDj}
+                      handleDeleteFestival={handleDeleteFestival}
+                    />
+                  }
+                />
               <Route
                 path="/lista"
-                element={<SetList sets={sets} onDeleteSet={handleDeleteSet} />}
+                element={
+                  <SetList
+                    sets={sets}
+                    djs={djs}
+                    festivais={festivais}
+                    onDeleteSet={handleDeleteSet}
+                  />
+                }
               />
-              <Route path="/estatisticas" element={<Stats sets={sets} />} />
+                <Route
+                  path="/estatisticas"
+                  element={
+                    <Stats
+                      sets={sets}
+                      djs={djs}
+                      festivais={festivais}
+                      handleDeleteSet={handleDeleteSet}
+                      handleDeleteDj={handleDeleteDj}
+                      handleDeleteFestival={handleDeleteFestival}
+                    />
+                  }
+                />
               <Route
                 path="/adicionar"
-                element={<AddSetPage handleAddSet={handleAddSet} />}
+                element={
+                  <AddSetPage
+                    sets={sets}
+                    djs={djs}
+                    festivais={festivais}
+                    handleAddSet={handleAddSet}
+                    handleEditSet={handleEditSet}
+                  />
+                }
               />
               <Route
                 path="/editar/:id"
                 element={
                   <AddSetPage
                     sets={sets}
+                    djs={djs}
+                    festivais={festivais}
                     handleAddSet={handleAddSet}
                     handleEditSet={handleEditSet}
+                  />
+                }
+              />
+              <Route
+                path="/djs/adicionar"
+                element={<AddDjPage djs={djs} handleAddDj={handleAddDj} handleDeleteDj={handleDeleteDj} />}
+              />
+              <Route
+                path="/festivais/adicionar"
+                element={
+                  <AddFestivalPage
+                    festivais={festivais}
+                    handleAddFestival={handleAddFestival}
+                    handleDeleteFestival={handleDeleteFestival}
                   />
                 }
               />

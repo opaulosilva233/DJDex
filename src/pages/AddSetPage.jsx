@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom'
 
 import AddSetForm from '../components/AddSetForm'
 
-export default function AddSetPage({ sets = [], handleAddSet, handleEditSet }) {
+export default function AddSetPage({ sets = [], djs = [], festivais = [], handleAddSet, handleEditSet }) {
 	const { id } = useParams()
 	const initialData = id ? sets.find((set) => set.id === id) : undefined
 
@@ -24,6 +24,8 @@ export default function AddSetPage({ sets = [], handleAddSet, handleEditSet }) {
 			<div className="form-wrapper w-full flex-1 min-h-0 overflow-y-auto pr-1">
 				<AddSetForm
 					initialData={initialData}
+					djs={djs}
+					festivais={festivais}
 					handleAddSet={handleAddSet}
 					handleEditSet={handleEditSet}
 				/>

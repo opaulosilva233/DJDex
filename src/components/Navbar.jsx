@@ -93,7 +93,7 @@ const modalLoadingStyle = {
 	border: '1px solid rgba(255, 255, 255, 0.08)',
 }
 
-export default function Navbar({ sets, handleImportData, darkMode, toggleDarkMode }) {
+export default function Navbar({ djs, festivais, sets, handleImportAllData, darkMode, toggleDarkMode }) {
 	const fileInputRef = useRef(null)
 	const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 	const [pendingImportFile, setPendingImportFile] = useState(null)
@@ -133,7 +133,7 @@ export default function Navbar({ sets, handleImportData, darkMode, toggleDarkMod
 	}
 
 	function exportData() {
-		const data = JSON.stringify(sets, null, 2)
+		const data = JSON.stringify({ djs, festivais, sets }, null, 2)
 		const blob = new Blob([data], { type: 'application/json' })
 		const url = URL.createObjectURL(blob)
 		const link = document.createElement('a')
@@ -184,10 +184,10 @@ export default function Navbar({ sets, handleImportData, darkMode, toggleDarkMod
 		reader.onload = (loadEvent) => {
 			try {
 				const result = loadEvent.target?.result
-				const importedSets = JSON.parse(result)
+				const importedData = JSON.parse(result)
 
-				if (Array.isArray(importedSets)) {
-					handleImportData(importedSets)
+				if (Array.isArray(importedData) || importedData) {
+					handleImportAllData(importedData)
 				}
 			} catch {
 				// Mantém o comportamento silencioso em caso de ficheiro inválido.
@@ -221,6 +221,14 @@ export default function Navbar({ sets, handleImportData, darkMode, toggleDarkMod
 				<Link to="/adicionar" style={resolvedLinkStyle}>
 					<PlusCircle size={18} />
 					<span>Adicionar Set</span>
+				</Link>
+				<Link to="/djs/adicionar" style={resolvedLinkStyle}>
+					<PlusCircle size={18} />
+					<span>Adicionar DJ</span>
+				</Link>
+				<Link to="/festivais/adicionar" style={resolvedLinkStyle}>
+					<PlusCircle size={18} />
+					<span>Adicionar Festival</span>
 				</Link>
 			</div>
 

@@ -14,34 +14,41 @@ import {
 
 const pieColors = ['#7db3ff', '#5dd6c0', '#f7b267', '#f28482', '#cdb4db', '#90be6d']
 
-export default function Stats({ sets }) {
+export default function Stats({ sets, djs = [], festivais = [] }) {
 	const { topDjs, setsPorFestival } = useMemo(() => {
 		const contagemDjs = sets.reduce((accumulator, set) => {
-			if (!set.nome) {
-				return accumulator
-				}
+			const dj = djs.find((entry) => entry.id === set.djId)
 
-			const currentCount = accumulator.get(set.nome) ?? 0
-			accumulator.set(set.nome, currentCount + 1)
+			if (!dj) {
+				return accumulator
+			}
+
+			const currentCount = accumulator.get(dj.id) ?? { name: dj.nome, quantidade: 0 }
+			accumulator.set(dj.id, {
+				name: dj.nome,
+				quantidade: currentCount.quantidade + 1,
+			})
 
 			return accumulator
 		}, new Map())
 
 		const contagemFestivais = sets.reduce((accumulator, set) => {
-			if (!set.festival) {
+			const festival = festivais.find((entry) => entry.id === set.festivalId)
+
+			if (!festival) {
 				return accumulator
 			}
 
-			const currentCount = accumulator.get(set.festival) ?? 0
-			accumulator.set(set.festival, currentCount + 1)
+			const currentCount = accumulator.get(festival.id) ?? { name: festival.nome, quantidade: 0 }
+			accumulator.set(festival.id, {
+				name: festival.nome,
+				quantidade: currentCount.quantidade + 1,
+			})
 
 			return accumulator
 		}, new Map())
 
-		const topDjs = Array.from(contagemDjs, ([name, quantidade]) => ({
-			name,
-			quantidade,
-		})).sort((left, right) => {
+		const topDjs = Array.from(contagemDjs.values()).sort((left, right) => {
 			if (right.quantidade !== left.quantidade) {
 				return right.quantidade - left.quantidade
 			}
@@ -49,10 +56,7 @@ export default function Stats({ sets }) {
 			return left.name.localeCompare(right.name, 'pt')
 		})
 
-		const setsPorFestival = Array.from(contagemFestivais, ([name, quantidade]) => ({
-			name,
-			quantidade,
-		})).sort((left, right) => {
+		const setsPorFestival = Array.from(contagemFestivais.values()).sort((left, right) => {
 			if (right.quantidade !== left.quantidade) {
 				return right.quantidade - left.quantidade
 			}
@@ -64,7 +68,7 @@ export default function Stats({ sets }) {
 			topDjs,
 			setsPorFestival,
 		}
-	}, [sets])
+	}, [sets, djs, festivais])
 
 	return (
 		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden" style={{ display: 'grid', gap: '24px' }}>
