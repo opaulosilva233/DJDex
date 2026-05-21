@@ -6,13 +6,13 @@ export default function DjCard({ set, onDelete }) {
 
   return (
     <div className="w-[280px] box-border rounded-xl border border-gray-200 bg-white p-4 text-gray-900 shadow-sm transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
-      <h2 style={{ marginTop: 0 }}>{set.nome}</h2>
-      <p><strong>Festival:</strong> {set.festival}</p>
-      <p><strong>Local:</strong> {set.local}</p>
-      <p><strong>Data:</strong> {set.data}</p>
-      <p><strong>Hora:</strong> {set.hora}</p>
+      <h2 className="m-0 text-gray-900 dark:text-gray-100">{set.nome}</h2>
+      <p className="text-gray-900 dark:text-gray-100"><strong>Festival:</strong> {set.festival}</p>
+      <p className="text-gray-900 dark:text-gray-100"><strong>Local:</strong> {set.local}</p>
+      <p className="text-gray-900 dark:text-gray-100"><strong>Data:</strong> {set.data}</p>
+      <p className="text-gray-900 dark:text-gray-100"><strong>Hora:</strong> {set.hora}</p>
       {set.avaliacao !== undefined && set.avaliacao !== null && (
-        <p>⭐ {set.avaliacao}/10</p>
+        <p className="text-gray-900 dark:text-gray-100">⭐ {set.avaliacao}/10</p>
       )}
 
       <div style={{ display: 'flex', gap: '8px' }}>

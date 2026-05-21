@@ -105,7 +105,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="app-shell min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      <div className="app-shell h-screen overflow-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
         <Navbar
           sets={sets}
           handleImportData={handleImportData}
@@ -113,31 +113,32 @@ export default function App() {
           toggleDarkMode={toggleDarkMode}
         />
 
-        <div className="app-main" style={{ overflowY: 'auto' }}>
-          <Routes>
-            <Route path="/" element={<Home sets={sets} />} />
-            <Route
-              path="/lista"
-              element={<SetList sets={sets} onDeleteSet={handleDeleteSet} />}
-            />
-            <Route path="/estatisticas" element={<Stats sets={sets} />} />
-            <Route
-              path="/adicionar"
-              element={<AddSetPage handleAddSet={handleAddSet} />}
-            />
-            <Route
-              path="/editar/:id"
-              element={
-                <AddSetPage
-                  sets={sets}
-                  handleAddSet={handleAddSet}
-                  handleEditSet={handleEditSet}
-                />
-              }
-            />
-          </Routes>
+        <div className="app-main flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Routes>
+              <Route path="/" element={<Home sets={sets} />} />
+              <Route
+                path="/lista"
+                element={<SetList sets={sets} onDeleteSet={handleDeleteSet} />}
+              />
+              <Route path="/estatisticas" element={<Stats sets={sets} />} />
+              <Route
+                path="/adicionar"
+                element={<AddSetPage handleAddSet={handleAddSet} />}
+              />
+              <Route
+                path="/editar/:id"
+                element={
+                  <AddSetPage
+                    sets={sets}
+                    handleAddSet={handleAddSet}
+                    handleEditSet={handleEditSet}
+                  />
+                }
+              />
+            </Routes>
+          </div>
         </div>
-
       </div>
     </BrowserRouter>
   )

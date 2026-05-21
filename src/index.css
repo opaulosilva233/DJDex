@@ -18,7 +18,7 @@
   }
 
   body {
-    @apply min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply h-screen overflow-hidden bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
     margin: 0;
     transition: background-color 280ms ease, color 280ms ease;
   }
@@ -38,7 +38,7 @@
   }
 
   #root {
-    @apply min-h-screen;
+    @apply h-screen overflow-hidden;
   }
 
   *,

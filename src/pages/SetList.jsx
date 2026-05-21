@@ -14,11 +14,11 @@ export default function SetList({ sets, onDeleteSet }) {
   })
 
 	return (
-		<section className="page-section">
+		<section className="page-section flex-1 min-h-0 overflow-y-auto pr-1">
 			<div className="section-header">
-				<p className="eyebrow">Biblioteca</p>
-				<h1>Lista de DJs</h1>
-				<p>Todos os sets atualmente carregados na aplicação.</p>
+				<p className="eyebrow dark:text-gray-400">Biblioteca</p>
+				<h1 className="dark:text-gray-100">Lista de DJs</h1>
+				<p className="dark:text-slate-300">Todos os sets atualmente carregados na aplicação.</p>
 			</div>
 
 			<div style={{ display: 'grid', gap: '12px', marginBottom: '20px' }}>
@@ -27,6 +27,7 @@ export default function SetList({ sets, onDeleteSet }) {
 					placeholder="Procurar DJ pelo nome"
 					value={searchTerm}
 					onChange={(event) => setSearchTerm(event.target.value)}
+					className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-gray-900 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 dark:placeholder:text-slate-400"
 				/>
 				<input
 					type="number"
@@ -35,6 +36,7 @@ export default function SetList({ sets, onDeleteSet }) {
 					placeholder="Avaliação mínima"
 					value={minRating}
 					onChange={(event) => setMinRating(Number(event.target.value))}
+					className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-gray-900 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 dark:placeholder:text-slate-400"
 				/>
 			</div>
 

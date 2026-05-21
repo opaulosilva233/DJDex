@@ -96,13 +96,20 @@ export default function AddSetForm({ initialData, handleAddSet, handleEditSet })
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="grid max-w-[720px] gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-none"
+			className="grid w-full max-w-none gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-none"
 		>
-			<h2 className="m-0 text-xl font-semibold text-slate-900 dark:text-gray-100">{formTitle}</h2>
-			<div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
+			<div className="flex items-center justify-between gap-4">
+				<div>
+					<h2 className="m-0 text-xl font-semibold text-slate-900 dark:text-gray-100">{formTitle}</h2>
+					<p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
+						Preenche os campos abaixo para guardar ou atualizar o set.
+					</p>
+				</div>
+			</div>
+			<div className="grid w-full gap-4 lg:grid-cols-2 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
 				{fields.map(({ name, label, type, placeholder, min, max }) => (
-					<label key={name} className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-200">
-						<span>{label}</span>
+					<label key={name} className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
+						<span className="text-slate-700 dark:text-gray-100">{label}</span>
 						<input
 							name={name}
 							type={type}
@@ -119,7 +126,7 @@ export default function AddSetForm({ initialData, handleAddSet, handleEditSet })
 			</div>
 			<button
 				type="submit"
-				className="justify-self-start rounded-full bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+				className="justify-self-start rounded-full bg-slate-900 px-5 py-2.5 font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
 			>
 				{submitLabel}
 			</button>

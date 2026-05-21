@@ -67,40 +67,41 @@ export default function Stats({ sets }) {
 	}, [sets])
 
 	return (
-		<section style={{ display: 'grid', gap: '24px' }}>
-			<div className="section-header">
-				<p className="eyebrow">Análise</p>
-				<h1>Estatísticas</h1>
-				<p>
+		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden" style={{ display: 'grid', gap: '24px' }}>
+			<div className="section-header shrink-0">
+				<p className="eyebrow dark:text-gray-400">Análise</p>
+				<h1 className="dark:text-gray-100">Estatísticas</h1>
+				<p className="dark:text-slate-300">
 					Leitura detalhada da coleção, com destaque para os DJs mais vistos e a
 					distribuição dos sets por festival.
 				</p>
 			</div>
 
 			<div
+				className="flex-1 min-h-0 overflow-y-auto pr-1"
 				style={{
 					display: 'grid',
 					gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
 					gap: '20px',
 				}}
 			>
-				<section className="glass-card border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
-					<h2 style={{ marginBottom: '16px' }}>Top DJs</h2>
+				<section className="glass-card min-h-0 border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
+					<h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-gray-100">Top DJs</h2>
 					<div style={{ width: '100%', height: '300px' }}>
 						<ResponsiveContainer width="100%" height="100%">
 							<BarChart data={topDjs}>
 								<CartesianGrid strokeDasharray="3 3" stroke="#475569" />
 								<XAxis dataKey="name" tick={{ fill: '#9ca3af' }} stroke="#64748b" />
 								<YAxis allowDecimals={false} tick={{ fill: '#9ca3af' }} stroke="#64748b" />
-								<Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }} />
+								<Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }} itemStyle={{ color: '#f8fafc' }} />
 								<Bar dataKey="quantidade" fill="#7db3ff" radius={[8, 8, 0, 0]} />
 							</BarChart>
 						</ResponsiveContainer>
 					</div>
 				</section>
 
-				<section className="glass-card border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
-					<h2 style={{ marginBottom: '16px' }}>Sets por Festival</h2>
+				<section className="glass-card min-h-0 border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
+					<h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-gray-100">Sets por Festival</h2>
 					<div style={{ width: '100%', height: '300px' }}>
 						<ResponsiveContainer width="100%" height="100%">
 							<PieChart>
@@ -117,7 +118,7 @@ export default function Stats({ sets }) {
 										<Cell key={`cell-${entry.name}`} fill={pieColors[index % pieColors.length]} />
 									))}
 								</Pie>
-								<Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }} />
+								<Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc', borderRadius: '0.5rem' }} itemStyle={{ color: '#f8fafc' }} />
 							</PieChart>
 						</ResponsiveContainer>
 					</div>
