@@ -19,7 +19,7 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
   })
 
 	return (
-		<section className="page-section flex-1 min-h-0 overflow-y-auto pr-1">
+		<section className="page-section flex-1 min-h-0 overflow-y-auto pr-1 bg-transparent">
 			<div className="section-header flex items-center justify-between">
 				<div>
 					<p className="eyebrow dark:text-gray-400">Biblioteca</p>

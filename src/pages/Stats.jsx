@@ -71,7 +71,7 @@ export default function Stats({ sets, djs = [], festivais = [] }) {
 	}, [sets, djs, festivais])
 
 	return (
-		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden" style={{ display: 'grid', gap: '24px' }}>
+		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden bg-transparent" style={{ display: 'grid', gap: '24px' }}>
 			<div className="section-header shrink-0">
 				<p className="eyebrow dark:text-gray-400">Análise</p>
 				<h1 className="dark:text-gray-100">Estatísticas</h1>
@@ -89,7 +89,7 @@ export default function Stats({ sets, djs = [], festivais = [] }) {
 					gap: '20px',
 				}}
 			>
-				<section className="glass-card min-h-0 border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
+				<section className="min-h-0 rounded-2xl border border-slate-800/50 bg-slate-950/40 p-6 shadow-xl backdrop-blur-md" style={{ padding: '24px' }}>
 					<h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-gray-100">Top DJs</h2>
 					<div style={{ width: '100%', height: '300px' }}>
 						<ResponsiveContainer width="100%" height="100%">
@@ -104,7 +104,7 @@ export default function Stats({ sets, djs = [], festivais = [] }) {
 					</div>
 				</section>
 
-				<section className="glass-card min-h-0 border border-slate-200 dark:border-slate-700 dark:bg-slate-800" style={{ padding: '24px' }}>
+				<section className="min-h-0 rounded-2xl border border-slate-800/50 bg-slate-950/40 p-6 shadow-xl backdrop-blur-md" style={{ padding: '24px' }}>
 					<h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-gray-100">Sets por Festival</h2>
 					<div style={{ width: '100%', height: '300px' }}>
 						<ResponsiveContainer width="100%" height="100%">

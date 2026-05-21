@@ -4,7 +4,7 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
   const navigate = useNavigate()
 
   return (
-    <section className="page-section flex-1 min-h-0 overflow-y-auto pr-1">
+    <section className="page-section flex-1 min-h-0 overflow-y-auto pr-1 bg-transparent">
       <div className="section-header flex items-center justify-between">
         <div>
           <p className="eyebrow dark:text-gray-400">Catálogo</p>
@@ -26,7 +26,7 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
         {festivais.length === 0 && <p className="dark:text-slate-400">Ainda não existem festivais.</p>}
         <div className="grid gap-4">
           {festivais.map((f) => (
-            <div key={f.id} className="glass-card flex items-center justify-between">
+            <div key={f.id} className="flex items-center justify-between rounded-2xl border border-slate-800/50 bg-slate-950/40 p-5 shadow-xl backdrop-blur-md">
               <div>
                 <h2 className="m-0 text-lg font-semibold dark:text-gray-100">{f.nome}</h2>
                 <p className="text-sm text-slate-600 dark:text-slate-300">{f.local} — {f.ano}</p>

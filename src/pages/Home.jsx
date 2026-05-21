@@ -52,15 +52,7 @@ export default function Home({ generos = [], sets = [], djs = [], festivais = []
 	]
 
 	return (
-		<div className="w-full min-h-full p-8 relative flex flex-col z-10 bg-transparent">
-			{/* Contentor Fixo de Luzes de Fundo Néon */}
-			<div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-				{/* Esfera 1 - Roxa bem mais intensa */}
-				<div className="absolute top-[10%] left-[5%] w-[450px] h-[450px] bg-purple-600/30 dark:bg-purple-500/35 rounded-full blur-[90px] animate-aurora-1" />
-
-				{/* Esfera 2 - Ciano / Índigo elétrica */}
-				<div className="absolute bottom-[15%] right-[10%] w-[500px] h-[500px] bg-cyan-600/25 dark:bg-indigo-500/35 rounded-full blur-[100px] animate-aurora-2" />
-			</div>
+		<div className="w-full p-8 flex flex-col gap-8">
 
 			<div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 text-slate-900 dark:text-slate-100">
 				<section className="space-y-4">

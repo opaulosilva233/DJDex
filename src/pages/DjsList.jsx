@@ -4,7 +4,7 @@ export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
   const navigate = useNavigate()
 
   return (
-    <section className="page-section flex-1 min-h-0 overflow-y-auto pr-1">
+    <section className="page-section flex-1 min-h-0 overflow-y-auto pr-1 bg-transparent">
       <div className="section-header flex items-center justify-between">
         <div>
           <p className="eyebrow dark:text-gray-400">Catálogo</p>
@@ -26,7 +26,7 @@ export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
         <div className="sets-grid">
           {djs.length === 0 && <p className="dark:text-slate-400">Ainda não existem DJs.</p>}
           {djs.map((dj) => (
-            <div key={dj.id} className="glass-card flex items-start gap-4">
+            <div key={dj.id} className="flex items-start gap-4 rounded-2xl border border-slate-800/50 bg-slate-950/40 p-5 shadow-xl backdrop-blur-md">
               <img src={dj.imagem || '/images/default-dj.png'} alt={dj.nome} className="h-16 w-16 rounded-full object-cover" />
               <div className="flex-1">
                 <h2 className="m-0 text-lg font-semibold dark:text-gray-100">{dj.nome}</h2>
