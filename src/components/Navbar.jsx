@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 
-import { BarChart2, Download, Home, Loader2, ListMusic, Moon, PlusCircle, Sun, Upload } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Compass, Download, Home, ListMusic, Loader2, Moon, Sun, Tag, Upload, User } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
 
 const sidebarStyle = {
 	height: '100vh',
@@ -15,27 +15,29 @@ const sidebarStyle = {
 	flexShrink: 0,
 }
 
-const linkStyle = {
-	color: '#ffffff',
-	textDecoration: 'none',
-	fontWeight: 600,
-	padding: '12px 14px',
-	borderRadius: '12px',
-	display: 'flex',
-	alignItems: 'center',
-	gap: '12px',
-	transition: 'background-color 160ms ease, transform 160ms ease',
+const sectionTitleStyle = 'px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500'
+
+const navIconStyle = 'shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-1'
+
+function getNavLinkClassName({ isActive }) {
+	return [
+		'group flex items-center gap-3 rounded-xl border-l-4 py-3 pr-4 text-sm transition-all duration-200',
+		isActive
+			? 'border-purple-500 bg-purple-600/10 pl-3 font-medium text-purple-400'
+			: 'border-transparent pl-4 text-slate-400 hover:bg-slate-800/40 hover:text-white',
+	].join(' ')
 }
 
+function getActionButtonClassName(isDark, extraClassName = '') {
+	const toneClassName = isDark
+		? 'border-white/10 bg-white/5 text-white hover:bg-white/10 hover:shadow-[0_12px_28px_rgba(0,0,0,0.24)]'
+		: 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]'
 
-const actionButtonStyle = {
-	...linkStyle,
-	justifyContent: 'center',
-	background: 'rgba(255, 255, 255, 0.06)',
-	border: '1px solid rgba(255, 255, 255, 0.08)',
-	cursor: 'pointer',
-	width: '100%',
-	transition: 'background-color 220ms ease, border-color 220ms ease, color 220ms ease, transform 220ms ease, box-shadow 220ms ease',
+	return [
+		'group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
+		toneClassName,
+		extraClassName,
+	].join(' ')
 }
 
 const modalOverlayStyle = {
@@ -69,16 +71,17 @@ const modalActionsStyle = {
 	flexWrap: 'wrap',
 }
 
-const modalCancelStyle = {
-	...actionButtonStyle,
+const modalButtonBaseStyle = {
 	width: 'auto',
 	paddingInline: '16px',
 }
 
+const modalCancelStyle = {
+	...modalButtonBaseStyle,
+}
+
 const modalConfirmStyle = {
-	...actionButtonStyle,
-	width: 'auto',
-	paddingInline: '16px',
+	...modalButtonBaseStyle,
 	background: 'rgba(255, 97, 97, 0.16)',
 	border: '1px solid rgba(255, 97, 97, 0.22)',
 }
@@ -107,17 +110,8 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 		borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.12)',
 	}
 
-	const resolvedLinkStyle = {
-		...linkStyle,
-		color: isDark ? '#ffffff' : '#0f172a',
-	}
-
-	const resolvedActionButtonStyle = {
-		...actionButtonStyle,
-		background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)',
-		border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.12)',
-		color: isDark ? '#ffffff' : '#0f172a',
-	}
+	const actionButtonClassName = getActionButtonClassName(isDark)
+	const modalActionButtonClassName = getActionButtonClassName(isDark, 'hover:brightness-110')
 
 	const resolvedModalStyle = {
 		...modalStyle,
@@ -144,6 +138,10 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 		link.click()
 		link.remove()
 		URL.revokeObjectURL(url)
+	}
+
+	function openImportPicker() {
+		fileInputRef.current?.click()
 	}
 
 	function importData(event) {
@@ -201,62 +199,71 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 
 	return (
 		<nav style={resolvedSidebarStyle}>
-			<Link to="/" style={{ ...resolvedLinkStyle, fontSize: '1.15rem', marginBottom: '18px' }}>
-				DJDex
-			</Link>
-
-			<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-				<Link to="/" style={resolvedLinkStyle}>
-					<Home size={18} />
-					<span>Início</span>
-				</Link>
-				<Link to="/lista" style={resolvedLinkStyle}>
-					<ListMusic size={18} />
-					<span>Sets Gravados</span>
-				</Link>
-				<Link to="/estatisticas" style={resolvedLinkStyle}>
-					<BarChart2 size={18} />
-					<span>Estatísticas</span>
-				</Link>
-
-				<Link to="/djs" style={resolvedLinkStyle}>
-					<ListMusic size={18} />
-					<span>DJs</span>
-				</Link>
-				<Link to="/generos" style={resolvedLinkStyle}>
-					<ListMusic size={18} />
-					<span>Géneros</span>
-				</Link>
-				<Link to="/festivais" style={resolvedLinkStyle}>
-					<ListMusic size={18} />
-					<span>Festivais</span>
-				</Link>
+			<div style={{ marginBottom: '20px', padding: '0 4px' }}>
+				<div style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.04em' }}>DJDex</div>
+				<p style={{ margin: '6px 0 0', color: isDark ? 'rgba(148, 163, 184, 0.9)' : 'rgba(71, 85, 105, 0.9)', fontSize: '0.82rem' }}>
+					Painel de gestão musical
+				</p>
 			</div>
 
-			<div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-				<button type="button" onClick={(event) => toggleDarkMode(event)} style={resolvedActionButtonStyle}>
-					<span
-						style={{
-							display: 'inline-flex',
-							transform: darkMode ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.92)',
-							transition: 'transform 240ms ease',
-						}}
-					>
-						{darkMode ? <Sun size={18} /> : <Moon size={18} />}
-					</span>
-					<span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
-				</button>
+			<div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+				<section>
+					<h2 className={sectionTitleStyle}>GERAL</h2>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+						<NavLink to="/" end className={getNavLinkClassName}>
+							<Home size={18} className={navIconStyle} />
+							<span>Início</span>
+						</NavLink>
+						<NavLink to="/lista" className={getNavLinkClassName}>
+							<ListMusic size={18} className={navIconStyle} />
+							<span>Histórico de Sets</span>
+						</NavLink>
+					</div>
+				</section>
 
-				<button type="button" onClick={exportData} style={resolvedActionButtonStyle}>
-					<Download size={18} />
-					<span>Exportar backup</span>
-				</button>
+				<section>
+					<h2 className={sectionTitleStyle}>BIBLIOTECA</h2>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+						<NavLink to="/djs" className={getNavLinkClassName}>
+							<User size={18} className={navIconStyle} />
+							<span>DJs</span>
+						</NavLink>
+						<NavLink to="/festivais" className={getNavLinkClassName}>
+							<Compass size={18} className={navIconStyle} />
+							<span>Festivais</span>
+						</NavLink>
+						<NavLink to="/generos" className={getNavLinkClassName}>
+							<Tag size={18} className={navIconStyle} />
+							<span>Géneros</span>
+						</NavLink>
+					</div>
+				</section>
 
-				<label style={resolvedActionButtonStyle}>
-					<Upload size={18} />
-					<span>Importar backup</span>
-					<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
-				</label>
+				<section style={{ marginTop: 'auto' }}>
+					<h2 className={sectionTitleStyle}>SISTEMA</h2>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+						<button type="button" onClick={(event) => toggleDarkMode(event)} className={actionButtonClassName}>
+							<span
+								className="inline-flex transition-transform duration-300 ease-out group-hover:translate-x-1"
+								style={{ transform: darkMode ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.92)' }}
+							>
+								{darkMode ? <Sun size={18} /> : <Moon size={18} />}
+							</span>
+							<span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
+						</button>
+
+						<button type="button" onClick={exportData} className={modalActionButtonClassName}>
+							<Download size={18} className={navIconStyle} />
+							<span>Exportar backup</span>
+						</button>
+
+						<button type="button" onClick={openImportPicker} className={modalActionButtonClassName}>
+							<Upload size={18} className={navIconStyle} />
+							<span>Importar backup</span>
+						</button>
+						<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
+					</div>
+				</section>
 			</div>
 
 			{isImportModalOpen ? (
@@ -268,7 +275,7 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 							</h2>
 							{isImporting ? (
 								<div style={{ ...resolvedModalLoadingStyle, marginTop: '12px' }}>
-									<Loader2 size={18} className="spin-icon" />
+									<Loader2 size={18} className="animate-spin" />
 									<span style={{ color: 'rgba(255, 255, 255, 0.82)', lineHeight: 1.5 }}>
 										A importar o backup. Aguarda um momento.
 									</span>
@@ -281,10 +288,10 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 						</div>
 
 						<div style={modalActionsStyle}>
-							<button type="button" onClick={cancelImport} style={modalCancelStyle} disabled={isImporting}>
+							<button type="button" onClick={cancelImport} style={modalCancelStyle} disabled={isImporting} className={modalActionButtonClassName}>
 								Cancelar
 							</button>
-							<button type="button" onClick={confirmImport} style={modalConfirmStyle} disabled={isImporting}>
+							<button type="button" onClick={confirmImport} style={modalConfirmStyle} disabled={isImporting} className={modalActionButtonClassName}>
 								{isImporting ? 'A importar...' : 'Continuar'}
 							</button>
 						</div>
