@@ -226,7 +226,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="app-shell h-screen overflow-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      <div className="app-shell h-screen w-screen overflow-hidden flex bg-slate-50 dark:bg-[#0b0f19]">
         <Navbar
           generos={generos}
           djs={djs}
@@ -237,8 +237,8 @@ export default function App() {
           toggleDarkMode={toggleDarkMode}
         />
 
-        <div className="app-main flex-1 overflow-hidden flex flex-col min-h-0">
-          <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="app-main flex-1 h-full relative flex flex-col min-w-0">
+          <div className="flex-1 h-full overflow-y-auto relative">
             <Routes>
               <Route
                 path="/"
