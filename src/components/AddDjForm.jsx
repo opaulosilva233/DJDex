@@ -5,12 +5,12 @@ import { compressImage } from '../utils/imageHelper'
 
 const initialFormState = {
 	nome: '',
-	genero: '',
 	biografia: '',
 	imagem: '',
+	generoIds: [],
 }
 
-export default function AddDjForm({ handleAddDj }) {
+export default function AddDjForm({ handleAddDj, generos = [] }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [isCompressing, setIsCompressing] = useState(false)
 	const navigate = useNavigate()
@@ -20,6 +20,17 @@ export default function AddDjForm({ handleAddDj }) {
 		setFormData((currentFormData) => ({
 			...currentFormData,
 			[name]: value,
+		}))
+	}
+
+	function handleGeneroToggle(event) {
+		const { value, checked } = event.target
+
+		setFormData((currentFormData) => ({
+			...currentFormData,
+			generoIds: checked
+				? [...currentFormData.generoIds, value]
+				: currentFormData.generoIds.filter((generoId) => generoId !== value),
 		}))
 	}
 
@@ -53,9 +64,9 @@ export default function AddDjForm({ handleAddDj }) {
 		handleAddDj({
 			id: crypto.randomUUID(),
 			nome: formData.nome,
-			genero: formData.genero,
 			biografia: formData.biografia,
 			imagem: formData.imagem,
+			generoIds: formData.generoIds,
 		})
 
 		setFormData(initialFormState)
@@ -83,17 +94,6 @@ export default function AddDjForm({ handleAddDj }) {
 					<input name="nome" value={formData.nome} onChange={handleChange} className={inputClassName} required />
 				</label>
 
-				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
-					<span className="text-slate-700 dark:text-gray-100">Género</span>
-					<input
-						name="genero"
-						value={formData.genero}
-						onChange={handleChange}
-						className={inputClassName}
-						required
-					/>
-				</label>
-
 				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100 lg:col-span-2">
 					<span className="text-slate-700 dark:text-gray-100">Biografia</span>
 					<textarea
@@ -104,6 +104,34 @@ export default function AddDjForm({ handleAddDj }) {
 						required
 						rows={4}
 					/>
+				</label>
+
+				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100 lg:col-span-2">
+					<span className="text-slate-700 dark:text-gray-100">Géneros</span>
+					<div className="flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40">
+						{generos.map((genero) => {
+							const isChecked = formData.generoIds.includes(genero.id)
+
+							return (
+								<label
+									key={genero.id}
+									className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100"
+								>
+									<input
+										type="checkbox"
+										value={genero.id}
+										checked={isChecked}
+										onChange={handleGeneroToggle}
+										className="h-4 w-4 rounded border-slate-300 text-blue-500 focus:ring-blue-500"
+									/>
+									<span>{genero.nome}</span>
+								</label>
+							)
+						})}
+						{generos.length === 0 && (
+							<p className="text-sm text-slate-500 dark:text-slate-400">Ainda não existem géneros guardados.</p>
+						)}
+					</div>
 				</label>
 
 				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100 lg:col-span-2">

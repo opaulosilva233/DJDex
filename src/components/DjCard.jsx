@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom'
 const fallbackImageDataUrl =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" rx="80" fill="%23e2e8f0"/><circle cx="80" cy="64" r="28" fill="%2394a3b8"/><path d="M28 136c11-21 31-32 52-32s41 11 52 32" fill="%2394a3b8"/></svg>'
 
-export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
+export default function DjCard({ set, djs = [], festivais = [], generos = [], onDelete }) {
   const navigate = useNavigate()
   const dj = djs.find((entry) => entry.id === set.djId)
   const festival = festivais.find((entry) => entry.id === set.festivalId)
+  const djGeneros = generos.filter((genero) => Array.isArray(dj?.generoIds) && dj.generoIds.includes(genero.id))
   const djImagemSrc = dj?.imagem || '/images/default-dj.png'
 
   function handleImageError(event) {
@@ -28,7 +29,20 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
         />
         <div>
           <h2 className="m-0 text-gray-900 dark:text-gray-100">{dj?.nome ?? 'DJ desconhecido'}</h2>
-          <p className="m-0 text-sm text-gray-500 dark:text-gray-300">{dj?.genero ?? 'Sem género definido'}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {djGeneros.length > 0 ? (
+              djGeneros.map((genero) => (
+                <span
+                  key={genero.id}
+                  className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300"
+                >
+                  {genero.nome}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm text-gray-500 dark:text-gray-300">Sem géneros definidos</span>
+            )}
+          </div>
         </div>
       </div>
       <p className="text-gray-900 dark:text-gray-100"><strong>Festival:</strong> {festival?.nome ?? 'Festival desconhecido'}</p>

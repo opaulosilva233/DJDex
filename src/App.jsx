@@ -7,22 +7,19 @@ import AddSetPage from './pages/AddSetPage'
 import AddDjPage from './pages/AddDjPage'
 import AddFestivalPage from './pages/AddFestivalPage'
 import Home from './pages/Home'
+import AddGeneroPage from './pages/AddGeneroPage'
 import SetList from './pages/SetList'
 import Stats from './pages/Stats'
-import { djs as initialDjs, festivais as initialFestivais, sets as initialSets } from './data/mockData'
+import {
+  djs as initialDjs,
+  festivais as initialFestivais,
+  generos as initialGeneros,
+  sets as initialSets,
+} from './data/mockData'
 
-const normalizeImageValue = (image) => (typeof image === 'string' && image.startsWith('data:image/') ? image : '')
-
-const initialRelationalDjs = initialDjs.map((dj) => ({
-  ...dj,
-  imagem: normalizeImageValue(dj.imagem),
-}))
-
-const initialRelationalFestivais = initialFestivais.map((festival) => ({
-  ...festival,
-  imagem: normalizeImageValue(festival.imagem),
-}))
-
+const initialRelationalGeneros = initialGeneros.map((genero) => ({ ...genero }))
+const initialRelationalDjs = initialDjs.map((dj) => ({ ...dj }))
+const initialRelationalFestivais = initialFestivais.map((festival) => ({ ...festival }))
 const initialRelationalSets = initialSets.map((set) => ({ ...set }))
 
 function readStoredCollection(storageKey, fallback) {
@@ -38,13 +35,14 @@ function readStoredCollection(storageKey, fallback) {
 
   try {
     const parsedCollection = JSON.parse(storedCollection)
-    return Array.isArray(parsedCollection) && parsedCollection.length > 0 ? parsedCollection : fallback
+    return Array.isArray(parsedCollection) ? parsedCollection : fallback
   } catch {
     return fallback
   }
 }
 
 export default function App() {
+  const [generos, setGeneros] = useState(() => readStoredCollection('ravedex_generos', initialRelationalGeneros))
   const [djs, setDjs] = useState(() => readStoredCollection('ravedex_djs', initialRelationalDjs))
   const [festivais, setFestivais] = useState(() =>
     readStoredCollection('ravedex_festivais', initialRelationalFestivais),
@@ -71,6 +69,10 @@ export default function App() {
     }
   })
   useEffect(() => {
+    window.localStorage.setItem('ravedex_generos', JSON.stringify(generos))
+  }, [generos])
+
+  useEffect(() => {
     window.localStorage.setItem('ravedex_djs', JSON.stringify(djs))
   }, [djs])
 
@@ -86,6 +88,10 @@ export default function App() {
     window.localStorage.setItem('ravedex_theme', JSON.stringify(darkMode))
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
+
+  function handleAddGenero(novoGenero) {
+    setGeneros((currentGeneros) => [novoGenero, ...currentGeneros])
+  }
 
   function handleAddDj(novoDj) {
     setDjs((currentDjs) => [novoDj, ...currentDjs])
@@ -109,6 +115,7 @@ export default function App() {
       return
     }
 
+    setGeneros(Array.isArray(importedData.generos) ? importedData.generos : [])
     setDjs(Array.isArray(importedData.djs) ? importedData.djs : [])
     setFestivais(Array.isArray(importedData.festivais) ? importedData.festivais : [])
     setSets(Array.isArray(importedData.sets) ? importedData.sets : [])
@@ -122,6 +129,16 @@ export default function App() {
 
   function handleDeleteSet(id) {
     setSets((currentSets) => currentSets.filter((set) => set.id !== id))
+  }
+
+  function handleDeleteGenero(id) {
+    setGeneros((currentGeneros) => currentGeneros.filter((genero) => genero.id !== id))
+    setDjs((currentDjs) =>
+      currentDjs.map((dj) => ({
+        ...dj,
+        generoIds: Array.isArray(dj.generoIds) ? dj.generoIds.filter((generoId) => generoId !== id) : [],
+      })),
+    )
   }
 
   function handleDeleteDj(id) {
@@ -168,6 +185,7 @@ export default function App() {
     <BrowserRouter>
       <div className="app-shell h-screen overflow-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
         <Navbar
+          generos={generos}
           djs={djs}
           festivais={festivais}
           sets={sets}
@@ -183,12 +201,14 @@ export default function App() {
                   path="/"
                   element={
                     <Home
+                      generos={generos}
                       sets={sets}
                       djs={djs}
                       festivais={festivais}
                       handleDeleteSet={handleDeleteSet}
                       handleDeleteDj={handleDeleteDj}
                       handleDeleteFestival={handleDeleteFestival}
+                      handleDeleteGenero={handleDeleteGenero}
                     />
                   }
                 />
@@ -197,6 +217,7 @@ export default function App() {
                 element={
                   <SetList
                     sets={sets}
+                    generos={generos}
                     djs={djs}
                     festivais={festivais}
                     onDeleteSet={handleDeleteSet}
@@ -207,12 +228,14 @@ export default function App() {
                   path="/estatisticas"
                   element={
                     <Stats
+                      generos={generos}
                       sets={sets}
                       djs={djs}
                       festivais={festivais}
                       handleDeleteSet={handleDeleteSet}
                       handleDeleteDj={handleDeleteDj}
                       handleDeleteFestival={handleDeleteFestival}
+                      handleDeleteGenero={handleDeleteGenero}
                     />
                   }
                 />
@@ -221,6 +244,7 @@ export default function App() {
                 element={
                   <AddSetPage
                     sets={sets}
+                    generos={generos}
                     djs={djs}
                     festivais={festivais}
                     handleAddSet={handleAddSet}
@@ -233,6 +257,7 @@ export default function App() {
                 element={
                   <AddSetPage
                     sets={sets}
+                    generos={generos}
                     djs={djs}
                     festivais={festivais}
                     handleAddSet={handleAddSet}
@@ -242,8 +267,25 @@ export default function App() {
               />
               <Route
                 path="/djs/adicionar"
-                element={<AddDjPage djs={djs} handleAddDj={handleAddDj} handleDeleteDj={handleDeleteDj} />}
+                  element={
+                    <AddDjPage
+                      generos={generos}
+                      djs={djs}
+                      handleAddDj={handleAddDj}
+                      handleDeleteDj={handleDeleteDj}
+                    />
+                  }
               />
+                <Route
+                  path="/generos/adicionar"
+                  element={
+                    <AddGeneroPage
+                      generos={generos}
+                      handleAddGenero={handleAddGenero}
+                      handleDeleteGenero={handleDeleteGenero}
+                    />
+                  }
+                />
               <Route
                 path="/festivais/adicionar"
                 element={

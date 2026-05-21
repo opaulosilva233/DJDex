@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 
-export default function Home({ sets = [], djs = [], festivais = [] }) {
+export default function Home({ generos = [], sets = [], djs = [], festivais = [] }) {
 	const totalSets = sets.length
 	const totalDjs = djs.length
 	const totalFestivais = festivais.length
+	const totalGeneros = generos.length
 
 	return (
 		<div className="page-section">
@@ -31,6 +32,10 @@ export default function Home({ sets = [], djs = [], festivais = [] }) {
 				<Link className="action-card" to="/djs/adicionar">
 					<span>Adicionar DJ</span>
 					<small>Gerir {totalDjs} DJs com imagem local</small>
+				</Link>
+				<Link className="action-card" to="/generos/adicionar">
+					<span>Adicionar Género</span>
+					<small>Gerir {totalGeneros} géneros no catálogo</small>
 				</Link>
 				<Link className="action-card" to="/festivais/adicionar">
 					<span>Adicionar Festival</span>

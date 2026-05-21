@@ -1,66 +1,73 @@
+export const generos = [
+	{ id: 'g1', nome: 'Hardstyle' },
+	{ id: 'g2', nome: 'Rawstyle' },
+	{ id: 'g3', nome: 'Hardcore' },
+	{ id: 'g4', nome: 'Frenchcore' },
+]
+
 export const djs = [
 	{
-		id: crypto.randomUUID(),
+		id: 'd1',
 		nome: 'Sefa',
-		genero: 'Hardstyle',
 		biografia: 'Referência do hardstyle melódico, conhecido por sets intensos e emotivos.',
-		imagem: 'sefa.jpg',
+		imagem: '',
+		generoIds: ['g1', 'g4'],
 	},
 	{
-		id: crypto.randomUUID(),
+		id: 'd2',
 		nome: 'Rebelion',
-		genero: 'Raw Hardstyle',
 		biografia: 'Dupla neerlandesa com energia crua e drops pesados para grandes palcos.',
-		imagem: 'rebelion.jpg',
+		imagem: '',
+		generoIds: ['g2'],
 	},
 ]
 
 export const festivais = [
 	{
-		id: crypto.randomUUID(),
+		id: 'f1',
 		nome: 'Neon Pulse',
 		local: 'Lisboa',
 		ano: 2026,
-		imagem: 'neon-pulse.png',
+		imagem: '',
 	},
 	{
-		id: crypto.randomUUID(),
+		id: 'f2',
 		nome: 'Rift Open Air',
 		local: 'Porto',
 		ano: 2026,
-		imagem: 'rift-open-air.png',
+		imagem: '',
 	},
 ]
 
 export const sets = [
 	{
-		id: crypto.randomUUID(),
-		djId: djs[0].id,
-		festivalId: festivais[0].id,
+		id: 's1',
+		djId: 'd1',
+		festivalId: 'f1',
 		data: '2026-05-24',
 		hora: '22:30',
 		avaliacao: 9.4,
 	},
 	{
-		id: crypto.randomUUID(),
-		djId: djs[1].id,
-		festivalId: festivais[1].id,
+		id: 's2',
+		djId: 'd2',
+		festivalId: 'f2',
 		data: '2026-05-25',
 		hora: '01:00',
 		avaliacao: 8.8,
 	},
 	{
-		id: crypto.randomUUID(),
-		djId: djs[0].id,
-		festivalId: festivais[1].id,
+		id: 's3',
+		djId: 'd1',
+		festivalId: 'f2',
 		data: '2026-05-26',
 		hora: '19:45',
 		avaliacao: 9.1,
 	},
 	{
-		id: crypto.randomUUID(),
-		djId: djs[1].id,
-		festivalId: festivais[0].id,
+		id: 's4',
+		djId: 'd2',
+		festivalId: 'f1',
 		data: '2026-05-27',
 		hora: '23:15',
 		avaliacao: 8.5,

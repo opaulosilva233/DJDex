@@ -1,6 +1,6 @@
 import AddDjForm from '../components/AddDjForm'
 
-export default function AddDjPage({ handleAddDj }) {
+export default function AddDjPage({ handleAddDj, generos = [] }) {
 	return (
 		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden">
 			<div className="section-header shrink-0">
@@ -10,7 +10,7 @@ export default function AddDjPage({ handleAddDj }) {
 			</div>
 
 			<div className="form-wrapper w-full flex-1 min-h-0 overflow-y-auto pr-1">
-				<AddDjForm handleAddDj={handleAddDj} />
+				<AddDjForm handleAddDj={handleAddDj} generos={generos} />
 			</div>
 		</section>
 	)

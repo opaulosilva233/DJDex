@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import DjCard from '../components/DjCard'
 
-export default function SetList({ sets, djs = [], festivais = [], onDeleteSet }) {
+export default function SetList({ sets, djs = [], festivais = [], generos = [], onDeleteSet }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [minRating, setMinRating] = useState(0)
 
@@ -45,7 +45,7 @@ export default function SetList({ sets, djs = [], festivais = [], onDeleteSet })
 
 			<div className="sets-grid">
 				{filteredSets.map((set) => (
-					<DjCard key={set.id} set={set} djs={djs} festivais={festivais} onDelete={onDeleteSet} />
+					<DjCard key={set.id} set={set} djs={djs} festivais={festivais} generos={generos} onDelete={onDeleteSet} />
 				))}
 			</div>
 		</section>
