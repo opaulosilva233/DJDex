@@ -40,6 +40,22 @@ function getActionButtonClassName(isDark, extraClassName = '') {
 	].join(' ')
 }
 
+function getSecondaryActionClassName(isDark) {
+	return [
+		'flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors',
+		isDark
+			? 'text-slate-500 hover:bg-slate-800/30 hover:text-slate-300'
+			: 'text-slate-500 hover:bg-slate-200/70 hover:text-slate-700',
+	].join(' ')
+}
+
+function getThemeButtonClassName(isDark) {
+	return [
+		'group flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:text-purple-400 hover:bg-purple-500/10 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
+		isDark ? 'bg-slate-800/60 text-slate-400' : 'bg-slate-200/80 text-slate-600',
+	].join(' ')
+}
+
 const modalOverlayStyle = {
 	position: 'fixed',
 	inset: 0,
@@ -110,8 +126,9 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 		borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.12)',
 	}
 
-	const actionButtonClassName = getActionButtonClassName(isDark)
 	const modalActionButtonClassName = getActionButtonClassName(isDark, 'hover:brightness-110')
+	const secondaryActionClassName = getSecondaryActionClassName(isDark)
+	const themeButtonClassName = getThemeButtonClassName(isDark)
 
 	const resolvedModalStyle = {
 		...modalStyle,
@@ -241,27 +258,27 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 
 				<section style={{ marginTop: 'auto' }}>
 					<h2 className={sectionTitleStyle}>SISTEMA</h2>
-					<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-						<button type="button" onClick={(event) => toggleDarkMode(event)} className={actionButtonClassName}>
-							<span
-								className="inline-flex transition-transform duration-300 ease-out group-hover:translate-x-1"
-								style={{ transform: darkMode ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.92)' }}
-							>
-								{darkMode ? <Sun size={18} /> : <Moon size={18} />}
-							</span>
-							<span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
-						</button>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+						<div className="flex justify-start">
+							<button type="button" onClick={(event) => toggleDarkMode(event)} className={themeButtonClassName} aria-label={darkMode ? 'Mudar para modo claro' : 'Mudar para modo escuro'}>
+								<span className="transition-transform duration-300 group-hover:rotate-12 group-active:rotate-12">
+									{darkMode ? <Sun size={18} /> : <Moon size={18} />}
+								</span>
+							</button>
+						</div>
 
-						<button type="button" onClick={exportData} className={modalActionButtonClassName}>
-							<Download size={18} className={navIconStyle} />
-							<span>Exportar backup</span>
-						</button>
+						<div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-800/60 pt-4">
+							<button type="button" onClick={exportData} className={secondaryActionClassName}>
+								<Download size={14} className="shrink-0" />
+								<span>Exportar</span>
+							</button>
 
-						<button type="button" onClick={openImportPicker} className={modalActionButtonClassName}>
-							<Upload size={18} className={navIconStyle} />
-							<span>Importar backup</span>
-						</button>
-						<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
+							<button type="button" onClick={openImportPicker} className={secondaryActionClassName}>
+								<Upload size={14} className="shrink-0" />
+								<span>Importar</span>
+							</button>
+							<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
+						</div>
 					</div>
 				</section>
 			</div>
