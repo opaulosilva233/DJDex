@@ -80,43 +80,39 @@
 
 @keyframes aurora-1 {
   0% {
-    transform: translate3d(0px, 0px, 0) scale(1);
+    transform: translate3d(-50px, -50px, 0) scale(1);
   }
 
-  33% {
-    transform: translate3d(120px, 80px, 0) scale(1.3);
-  }
-
-  66% {
-    transform: translate3d(-60px, 40px, 0) scale(0.85);
+  50% {
+    transform: translate3d(200px, 150px, 0) scale(1.4);
   }
 
   100% {
-    transform: translate3d(0px, 0px, 0) scale(1);
+    transform: translate3d(-50px, -50px, 0) scale(1);
   }
 }
 
 @keyframes aurora-2 {
   0% {
-    transform: translate3d(0px, 0px, 0) scale(1.1);
+    transform: translate3d(50px, 100px, 0) scale(1.2);
   }
 
   50% {
-    transform: translate3d(-100px, -60px, 0) scale(0.8);
+    transform: translate3d(-180px, -80px, 0) scale(0.8);
   }
 
   100% {
-    transform: translate3d(0px, 0px, 0) scale(1.1);
+    transform: translate3d(50px, 100px, 0) scale(1.2);
   }
 }
 
 .animate-aurora-1 {
-  animation: aurora-1 15s infinite alternate ease-in-out;
+  animation: aurora-1 10s infinite ease-in-out;
   will-change: transform;
 }
 
 .animate-aurora-2 {
-  animation: aurora-2 20s infinite alternate ease-in-out;
+  animation: aurora-2 12s infinite ease-in-out;
   will-change: transform;
 }
 

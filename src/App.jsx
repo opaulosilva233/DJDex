@@ -238,7 +238,7 @@ export default function App() {
         />
 
         <div className="app-main flex-1 h-full relative flex flex-col min-w-0">
-          <div className="flex-1 h-full overflow-y-auto relative">
+          <div className="flex-1 h-full overflow-y-auto relative bg-transparent">
             <Routes>
               <Route
                 path="/"

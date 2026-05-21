@@ -11,7 +11,6 @@ const sidebarStyle = {
 	padding: '20px',
 	background: '#1a1a1a',
 	color: '#ffffff',
-	borderRight: '1px solid rgba(255, 255, 255, 0.08)',
 	flexShrink: 0,
 }
 
@@ -116,7 +115,6 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 		...sidebarStyle,
 		background: isDark ? '#1a1a1a' : '#f8fafc',
 		color: isDark ? '#ffffff' : '#0f172a',
-		borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.12)',
 	}
 
 	const modalActionButtonClassName = getActionButtonClassName(isDark, 'hover:brightness-110')
