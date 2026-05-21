@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import DjCard from '../components/DjCard'
 
 export default function SetList({ sets, djs = [], festivais = [], generos = [], onDeleteSet }) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [minRating, setMinRating] = useState(0)
+	const navigate = useNavigate()
+	const [searchTerm, setSearchTerm] = useState('')
+	const [minRating, setMinRating] = useState(0)
 
   const filteredSets = sets.filter((set) => {
 		const dj = djs.find((entry) => entry.id === set.djId)
@@ -18,10 +20,21 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 
 	return (
 		<section className="page-section flex-1 min-h-0 overflow-y-auto pr-1">
-			<div className="section-header">
-				<p className="eyebrow dark:text-gray-400">Biblioteca</p>
-				<h1 className="dark:text-gray-100">Lista de DJs</h1>
-				<p className="dark:text-slate-300">Todos os sets atualmente carregados na aplicação.</p>
+			<div className="section-header flex items-center justify-between">
+				<div>
+					<p className="eyebrow dark:text-gray-400">Biblioteca</p>
+					<h1 className="dark:text-gray-100">Sets Gravados</h1>
+					<p className="dark:text-slate-300">Todos os sets atualmente carregados na aplicação.</p>
+				</div>
+				<div>
+					<button
+						type="button"
+						className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+						onClick={() => navigate('/adicionar')}
+					>
+						Adicionar Set
+					</button>
+				</div>
 			</div>
 
 			<div style={{ display: 'grid', gap: '12px', marginBottom: '20px' }}>

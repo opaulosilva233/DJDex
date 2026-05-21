@@ -212,27 +212,24 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 				</Link>
 				<Link to="/lista" style={resolvedLinkStyle}>
 					<ListMusic size={18} />
-					<span>Lista de DJs</span>
+					<span>Sets Gravados</span>
 				</Link>
 				<Link to="/estatisticas" style={resolvedLinkStyle}>
 					<BarChart2 size={18} />
 					<span>Estatísticas</span>
 				</Link>
-				<Link to="/adicionar" style={resolvedLinkStyle}>
-					<PlusCircle size={18} />
-					<span>Adicionar Set</span>
+
+				<Link to="/djs" style={resolvedLinkStyle}>
+					<ListMusic size={18} />
+					<span>DJs</span>
 				</Link>
-				<Link to="/djs/adicionar" style={resolvedLinkStyle}>
-					<PlusCircle size={18} />
-					<span>Adicionar DJ</span>
+				<Link to="/generos" style={resolvedLinkStyle}>
+					<ListMusic size={18} />
+					<span>Géneros</span>
 				</Link>
-				<Link to="/generos/adicionar" style={resolvedLinkStyle}>
-					<PlusCircle size={18} />
-					<span>Adicionar Género</span>
-				</Link>
-				<Link to="/festivais/adicionar" style={resolvedLinkStyle}>
-					<PlusCircle size={18} />
-					<span>Adicionar Festival</span>
+				<Link to="/festivais" style={resolvedLinkStyle}>
+					<ListMusic size={18} />
+					<span>Festivais</span>
 				</Link>
 			</div>
 

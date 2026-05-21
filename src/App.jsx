@@ -10,6 +10,9 @@ import Home from './pages/Home'
 import AddGeneroPage from './pages/AddGeneroPage'
 import SetList from './pages/SetList'
 import Stats from './pages/Stats'
+import DjsList from './pages/DjsList'
+import GenerosList from './pages/GenerosList'
+import FestivaisList from './pages/FestivaisList'
 import {
   djs as initialDjs,
   festivais as initialFestivais,
@@ -221,6 +224,34 @@ export default function App() {
                     djs={djs}
                     festivais={festivais}
                     onDeleteSet={handleDeleteSet}
+                  />
+                }
+              />
+              <Route
+                path="/djs"
+                element={
+                  <DjsList
+                    djs={djs}
+                    generos={generos}
+                    handleDeleteDj={handleDeleteDj}
+                  />
+                }
+              />
+              <Route
+                path="/generos"
+                element={
+                  <GenerosList
+                    generos={generos}
+                    handleDeleteGenero={handleDeleteGenero}
+                  />
+                }
+              />
+              <Route
+                path="/festivais"
+                element={
+                  <FestivaisList
+                    festivais={festivais}
+                    handleDeleteFestival={handleDeleteFestival}
                   />
                 }
               />
