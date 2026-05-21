@@ -226,7 +226,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="h-screen w-screen overflow-hidden flex bg-[#0b0f19]">
+      <div className="h-screen w-screen overflow-hidden flex bg-[#060913] font-sans antialiased">
         <Navbar
           generos={generos}
           djs={djs}
@@ -237,15 +237,14 @@ export default function App() {
           toggleDarkMode={toggleDarkMode}
         />
 
-        <div className="app-main flex-1 h-full relative flex flex-col min-w-0">
-          <div className="flex-1 h-full overflow-y-auto relative bg-transparent">
-            <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-              <div className="absolute top-[10%] left-[5%] w-[450px] h-[450px] bg-purple-600/30 dark:bg-purple-500/35 rounded-full blur-[90px] animate-aurora-1" />
-              <div className="absolute bottom-[15%] right-[10%] w-[500px] h-[500px] bg-cyan-600/25 dark:bg-indigo-500/35 rounded-full blur-[100px] animate-aurora-2" />
-            </div>
+        <div className="flex-1 h-full overflow-y-auto relative bg-transparent">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-purple-600/20 dark:bg-purple-500/15 rounded-full blur-[110px] animate-aurora-1" />
+            <div className="absolute bottom-[10%] right-[-10%] w-[650px] h-[650px] bg-cyan-600/20 dark:bg-indigo-500/15 rounded-full blur-[130px] animate-aurora-2" />
+          </div>
 
-            <div className="relative z-10 w-full min-h-full">
-              <Routes>
+          <div className="relative z-10 w-full min-h-full">
+            <Routes>
               <Route
                 path="/"
                 element={
@@ -384,8 +383,7 @@ export default function App() {
                   />
                 }
               />
-              </Routes>
-            </div>
+            </Routes>
           </div>
         </div>
       </div>

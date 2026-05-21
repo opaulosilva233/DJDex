@@ -1,133 +1,125 @@
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CalendarPlus, Disc3, LayoutGrid, ListMusic, PlusCircle, Star, Users } from 'lucide-react'
+import { ListMusic, Users, Star, Compass, FolderKanban } from 'lucide-react'
 
-export default function Home({ generos = [], sets = [], djs = [], festivais = [] }) {
-	const navigate = useNavigate()
-	const totalSets = sets.length
-	const totalDjs = djs.length
-	const totalFestivais = festivais.length
-	const totalGeneros = generos.length
-	const averageRating =
-		sets.length > 0
-			? sets.reduce((sum, set) => sum + (Number(set.avaliacao) || 0), 0) / sets.length
-			: 0
+export default function Home({ sets = [], djs = [], festivais = [], generos = [] }) {
+  const navigate = useNavigate()
 
-	const quickActions = [
-		{
-			label: 'Ver Lista',
-			description: `Consultar os ${totalSets} sets guardados`,
-			icon: LayoutGrid,
-			onClick: () => navigate('/lista'),
-		},
-		{
-			label: 'Adicionar Set',
-			description: 'Registar um novo set na coleção',
-			icon: PlusCircle,
-			onClick: () => navigate('/adicionar'),
-		},
-		{
-			label: 'Adicionar DJ',
-			description: `Gerir ${totalDjs} DJs no catálogo`,
-			icon: Users,
-			onClick: () => navigate('/djs/adicionar'),
-		},
-		{
-			label: 'Adicionar Género',
-			description: `Gerir ${totalGeneros} géneros musicais`,
-			icon: Disc3,
-			onClick: () => navigate('/generos/adicionar'),
-		},
-		{
-			label: 'Adicionar Festival',
-			description: `Gerir ${totalFestivais} festivais no sistema`,
-			icon: CalendarPlus,
-			onClick: () => navigate('/festivais/adicionar'),
-		},
-		{
-			label: 'Estatísticas',
-			description: 'Explorar métricas e tendências do catálogo',
-			icon: Star,
-			onClick: () => navigate('/estatisticas'),
-		},
-	]
+  // Cálculo da média de avaliações
+  const mediaAvaliacao = sets.length > 0
+    ? (sets.reduce((acc, curr) => acc + Number(curr.avaliacao || 0), 0) / sets.length).toFixed(1)
+    : '0.0'
 
-	return (
-		<div className="w-full p-8 flex flex-col gap-8">
+  return (
+    <div className="w-full p-8 md:p-12 flex flex-col gap-12">
 
-			<div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 text-slate-900 dark:text-slate-100">
-				<section className="space-y-4">
-					<p className="inline-flex items-center rounded-full border border-slate-200/50 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-purple-700 backdrop-blur-md shadow-xl dark:border-slate-800/50 dark:bg-slate-900/40 dark:text-purple-300 dark:shadow-2xl">
-						DJDex live console
-					</p>
-					<div className="max-w-3xl space-y-3">
-						<h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-							Bem-vindo ao DJDex, o cockpit da tua coleção eletrónica.
-						</h1>
-						<p className="text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
-							Organiza sets, DJs, géneros e festivais num dashboard dinâmico, com métricas em tempo real e
-							ações rápidas para acelerar o fluxo de trabalho.
-						</p>
-					</div>
-				</section>
+      {/* Cabeçalho de Alto Impacto */}
+      <div className="flex flex-col gap-3 max-w-3xl">
+        <span className="text-xs font-bold uppercase tracking-widest text-purple-500 bg-purple-500/10 px-3 py-1 rounded-full w-fit">
+          DJDex Live Console
+        </span>
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+          O cockpit da tua <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">coleção eletrónica</span>.
+        </h1>
+        <p className="text-base text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
+          Gere os teus sets favoritos, cataloga DJs, mapeia festivais de norte a sul do país e organiza as vertentes mais pesadas da tua biblioteca musical num único painel analítico.
+        </p>
+      </div>
 
-				<section className="grid grid-cols-1 gap-6 mb-10 md:grid-cols-3">
-					<div className="flex items-center justify-between rounded-2xl border border-slate-200/50 bg-white/5 p-5 shadow-xl backdrop-blur-md dark:border-slate-800/50 dark:bg-slate-900/40 dark:shadow-2xl">
-						<div>
-							<p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total de Sets</p>
-							<p className="mt-2 text-3xl font-semibold">{totalSets}</p>
-						</div>
-						<ListMusic className="h-10 w-10 text-purple-500" />
-					</div>
+      {/* Grelha de Métricas (Morfismo Premium) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Total Sets */}
+        <div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl flex items-center justify-between shadow-xl transition-all hover:border-purple-500/30 group">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total de Sets</span>
+            <span className="text-4xl font-black text-slate-900 dark:text-white">{sets.length}</span>
+          </div>
+          <div className="p-4 rounded-xl bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform">
+            <ListMusic size={24} />
+          </div>
+        </div>
 
-					<div className="flex items-center justify-between rounded-2xl border border-slate-200/50 bg-white/5 p-5 shadow-xl backdrop-blur-md dark:border-slate-800/50 dark:bg-slate-900/40 dark:shadow-2xl">
-						<div>
-							<p className="text-sm font-medium text-slate-500 dark:text-slate-400">DJs no Catálogo</p>
-							<p className="mt-2 text-3xl font-semibold">{totalDjs}</p>
-						</div>
-						<Users className="h-10 w-10 text-blue-500" />
-					</div>
+        {/* DJs Catalogados */}
+        <div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl flex items-center justify-between shadow-xl transition-all hover:border-blue-500/30 group">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">DJs no Catálogo</span>
+            <span className="text-4xl font-black text-slate-900 dark:text-white">{djs.length}</span>
+          </div>
+          <div className="p-4 rounded-xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
+            <Users size={24} />
+          </div>
+        </div>
 
-					<div className="flex items-center justify-between rounded-2xl border border-slate-200/50 bg-white/5 p-5 shadow-xl backdrop-blur-md dark:border-slate-800/50 dark:bg-slate-900/40 dark:shadow-2xl">
-						<div>
-							<p className="text-sm font-medium text-slate-500 dark:text-slate-400">Média das Raves</p>
-							<p className="mt-2 text-3xl font-semibold">
-								{averageRating.toFixed(1)} <span className="text-lg text-slate-500 dark:text-slate-400">/ 10</span>
-							</p>
-						</div>
-						<Star className="h-10 w-10 text-amber-500" />
-					</div>
-				</section>
+        {/* Média de Avaliações */}
+        <div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl flex items-center justify-between shadow-xl transition-all hover:border-amber-500/30 group">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Média das Raves</span>
+            <span className="text-4xl font-black text-slate-900 dark:text-white">
+              {mediaAvaliacao} <span className="text-sm font-normal text-slate-500">/10</span>
+            </span>
+          </div>
+          <div className="p-4 rounded-xl bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
+            <Star size={24} className="fill-amber-500/20" />
+          </div>
+        </div>
+      </div>
 
-				<section className="space-y-5">
-					<div className="flex items-end justify-between gap-4">
-						<div>
-							<p className="text-sm font-semibold uppercase tracking-[0.22em] text-purple-600 dark:text-purple-300">
-								Atalhos
-							</p>
-							<h2 className="mt-2 text-2xl font-semibold tracking-tight">Ações Rápidas</h2>
-						</div>
-					</div>
+      {/* Secção de Atalhos e Fluxos de Trabalho */}
+      <div className="flex flex-col gap-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+          Ações e Fluxos Rápidos
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Botão Ver Histórico */}
+          <button
+            onClick={() => navigate('/lista')}
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-purple-600/10 border border-slate-800/40 hover:border-purple-500/40 transition-all duration-300 group hover:-translate-y-1"
+          >
+            <FolderKanban className="text-purple-400" size={20} />
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-slate-900 dark:text-white">Explorar Histórico</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Consultar a base de sets gravados</span>
+            </div>
+          </button>
 
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-						{quickActions.map(({ label, description, icon: Icon, onClick }) => (
-							<button
-								key={label}
-								type="button"
-								onClick={onClick}
-								className="group flex w-full items-center justify-between gap-4 rounded-3xl border border-slate-200/50 bg-white/5 px-5 py-5 text-left shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-slate-200/70 hover:bg-white/10 hover:shadow-2xl dark:border-slate-800/50 dark:bg-slate-900/40 dark:hover:border-slate-700/80 dark:hover:bg-slate-900/55"
-							>
-								<div className="space-y-1">
-									<p className="text-lg font-semibold">{label}</p>
-									<p className="text-sm leading-6 text-slate-500 transition-colors group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200">
-										{description}
-									</p>
-								</div>
-								<Icon className="h-6 w-6 shrink-0 text-purple-500 transition-all duration-300 group-hover:scale-110 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
-							</button>
-						))}
-					</div>
-				</section>
-			</div>
-		</div>
-	)
+          {/* Botão Gerir DJs */}
+          <button
+            onClick={() => navigate('/djs')}
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-blue-600/10 border border-slate-800/40 hover:border-blue-500/40 transition-all duration-300 group hover:-translate-y-1"
+          >
+            <Users className="text-blue-400" size={20} />
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-slate-900 dark:text-white">Gerir DJs</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Adicionar ou detalhar artistas</span>
+            </div>
+          </button>
+
+          {/* Botão Gerir Festivais */}
+          <button
+            onClick={() => navigate('/festivais')}
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-cyan-600/10 border border-slate-800/40 hover:border-cyan-500/40 transition-all duration-300 group hover:-translate-y-1"
+          >
+            <Compass className="text-cyan-400" size={20} />
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-slate-900 dark:text-white">Mapear Festivais</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configurar locais e edições</span>
+            </div>
+          </button>
+
+          {/* Botão Gerir Estatísticas */}
+          <button
+            onClick={() => navigate('/estatisticas')}
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-emerald-600/10 border border-slate-800/40 hover:border-emerald-500/40 transition-all duration-300 group hover:-translate-y-1"
+          >
+            <Star className="text-emerald-400" size={20} />
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-slate-900 dark:text-white">Métricas Avançadas</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ver gráficos e distribuições</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  )
 }
