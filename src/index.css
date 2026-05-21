@@ -80,40 +80,59 @@
 
 @keyframes aurora-1 {
   0% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate3d(0px, 0px, 0) scale(1);
   }
 
   33% {
-    transform: translate(100px, 150px) scale(1.2);
+    transform: translate3d(120px, 80px, 0) scale(1.3);
   }
 
   66% {
-    transform: translate(-50px, 200px) scale(0.8);
+    transform: translate3d(-60px, 40px, 0) scale(0.85);
   }
 
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate3d(0px, 0px, 0) scale(1);
   }
 }
 
 @keyframes aurora-2 {
   0% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate3d(0px, 0px, 0) scale(1.1);
   }
 
   50% {
-    transform: translate(-120px, 80px) scale(1.3);
+    transform: translate3d(-100px, -60px, 0) scale(0.8);
   }
 
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate3d(0px, 0px, 0) scale(1.1);
   }
 }
 
 .animate-aurora-1 {
-  animation: aurora-1 18s infinite alternate ease-in-out;
+  animation: aurora-1 15s infinite alternate ease-in-out;
+  will-change: transform;
 }
 
 .animate-aurora-2 {
-  animation: aurora-2 22s infinite alternate ease-in-out;
+  animation: aurora-2 20s infinite alternate ease-in-out;
+  will-change: transform;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.6);
 }

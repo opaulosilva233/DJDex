@@ -52,10 +52,10 @@ export default function Home({ generos = [], sets = [], djs = [], festivais = []
 	]
 
 	return (
-		<div className="w-full min-h-full p-8 relative flex flex-col z-10 isolate">
-			<div className="fixed inset-0 pointer-events-none overflow-hidden z-0 mix-blend-screen">
-				<div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-purple-600/25 blur-[120px] animate-aurora-1 opacity-90 dark:bg-purple-500/20" />
-				<div className="absolute bottom-10 right-10 h-[450px] w-[450px] rounded-full bg-indigo-600/25 blur-[140px] animate-aurora-2 opacity-90 dark:bg-indigo-500/15" />
+		<div className="w-full min-h-full p-8 relative flex flex-col z-10 bg-transparent isolate">
+			<div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+				<div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-purple-600/20 blur-[100px] animate-aurora-1 dark:bg-purple-500/15" />
+				<div className="absolute bottom-[10%] right-[-5%] h-[550px] w-[550px] rounded-full bg-indigo-600/25 blur-[120px] animate-aurora-2 dark:bg-indigo-500/10" />
 			</div>
 
 			<div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 text-slate-900 dark:text-slate-100">
