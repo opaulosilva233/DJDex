@@ -49,13 +49,6 @@ function getSecondaryActionClassName(isDark) {
 	].join(' ')
 }
 
-function getThemeButtonClassName(isDark) {
-	return [
-		'group flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:text-purple-400 hover:bg-purple-500/10 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
-		isDark ? 'bg-slate-800/60 text-slate-400' : 'bg-slate-200/80 text-slate-600',
-	].join(' ')
-}
-
 const modalOverlayStyle = {
 	position: 'fixed',
 	inset: 0,
@@ -128,7 +121,6 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 
 	const modalActionButtonClassName = getActionButtonClassName(isDark, 'hover:brightness-110')
 	const secondaryActionClassName = getSecondaryActionClassName(isDark)
-	const themeButtonClassName = getThemeButtonClassName(isDark)
 
 	const resolvedModalStyle = {
 		...modalStyle,
@@ -259,13 +251,57 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 				<section style={{ marginTop: 'auto' }}>
 					<h2 className={sectionTitleStyle}>SISTEMA</h2>
 					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-						<div className="flex justify-start">
-							<button type="button" onClick={(event) => toggleDarkMode(event)} className={themeButtonClassName} aria-label={darkMode ? 'Mudar para modo claro' : 'Mudar para modo escuro'}>
-								<span className="transition-transform duration-300 group-hover:rotate-12 group-active:rotate-12">
-									{darkMode ? <Sun size={18} /> : <Moon size={18} />}
-								</span>
-							</button>
-						</div>
+								<button
+									type="button"
+									onClick={(event) => toggleDarkMode(event)}
+									aria-label={darkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+									aria-pressed={darkMode}
+									className={[
+										'group w-full h-11 rounded-xl relative flex items-center justify-between px-3 cursor-pointer select-none overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
+										darkMode
+											? 'bg-gradient-to-r from-purple-950/40 to-indigo-900/40 border border-purple-500/20 text-slate-100 shadow-[0_14px_34px_rgba(15,23,42,0.22)]'
+											: 'bg-gradient-to-r from-amber-500/20 to-orange-600/10 border border-amber-500/30 text-slate-900 shadow-[0_14px_34px_rgba(251,146,60,0.10)]',
+									].join(' ')}
+								>
+									<span
+										className={[
+											'relative z-10 transition-all duration-300',
+											darkMode
+												? 'text-slate-600'
+												: 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]',
+										].join(' ')}
+									>
+										<Sun size={16} />
+									</span>
+
+									<span className="pointer-events-none absolute left-1/2 z-0 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-slate-500/50">
+										CROSSFADE
+									</span>
+
+									<span
+										className={[
+											'relative z-10 transition-all duration-300',
+											darkMode
+												? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]'
+												: 'text-slate-400',
+										].join(' ')}
+									>
+										<Moon size={16} />
+									</span>
+
+									<div
+										className={[
+											'absolute top-1 bottom-1 w-[calc(50%-8px)] rounded-lg transition-all duration-300 ease-out shadow-md flex items-center justify-center',
+											darkMode ? 'left-[calc(50%+4px)] bg-slate-800 border border-purple-500/40' : 'left-1 bg-white border border-amber-200',
+										].join(' ')}
+									>
+										<div className="flex h-3 w-full items-center justify-center gap-0.5 opacity-60">
+											<span className="h-2.5 w-px rounded-full bg-slate-400/70" />
+											<span className="h-2.5 w-px rounded-full bg-slate-400/70" />
+											<span className="h-2.5 w-px rounded-full bg-slate-400/70" />
+										</div>
+									</div>
+								</button>
 
 						<div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-800/60 pt-4">
 							<button type="button" onClick={exportData} className={secondaryActionClassName}>
