@@ -111,7 +111,7 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
   }
 
   return (
-    <article className="group relative w-[320px] overflow-hidden rounded-[1.6rem] border border-white/10 bg-slate-950/60 p-5 text-slate-100 shadow-[0_18px_55px_rgba(2,6,23,0.42)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:border-cyan-400/40 hover:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_26px_80px_rgba(168,85,247,0.28)] focus-within:border-cyan-400/40">
+    <article className="group relative justify-self-center w-full max-w-[420px] overflow-hidden rounded-[1.6rem] border border-white/10 bg-slate-950/60 p-5 text-slate-100 shadow-[0_18px_55px_rgba(2,6,23,0.42)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:border-cyan-400/40 hover:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_26px_80px_rgba(168,85,247,0.28)] focus-within:border-cyan-400/40">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.08),transparent_36%),linear-gradient(145deg,rgba(255,255,255,0.05),transparent_35%,rgba(168,85,247,0.04))] opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute -left-16 top-6 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute -top-20 right-[-3.5rem] h-44 w-44 rounded-full bg-purple-500/15 blur-3xl opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
@@ -135,7 +135,7 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
         </button>
       </div>
 
-      <div className="relative flex h-full flex-col gap-5 pr-12 pt-1">
+      <div className="relative flex h-full flex-col gap-5 pr-4 pt-1 md:pr-2">
         <div className="flex min-w-0 items-start gap-4">
           <img
             src={djImagemSrc}
@@ -155,14 +155,16 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-sm">
-          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-200">
+          <div className="grid grid-cols-[1fr_auto] items-center gap-3 text-sm text-slate-200">
             <Clock size={14} className="text-cyan-300" />
-            <span className="font-semibold tracking-wide">{startTime}</span>
-            <span className="text-slate-500">-</span>
-            <span className="font-semibold tracking-wide">{resolvedEndTime}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-semibold tracking-wide">{startTime}</span>
+              <span className="text-slate-500">-</span>
+              <span className="font-semibold tracking-wide">{resolvedEndTime}</span>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-end justify-between gap-4">
+          <div className="mt-3 grid grid-cols-[1fr_auto] items-end gap-4">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
                 Duração
@@ -180,8 +182,8 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
         </div>
 
         <div className="mt-auto rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
-          <div className="flex items-center justify-between gap-4">
-            <div>
+          <div className="grid grid-cols-[1fr_auto] items-center gap-4">
+            <div className="min-w-0">
               <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
                 Data
               </div>
@@ -201,7 +203,7 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
             </div>
 
             {set.avaliacao !== undefined && set.avaliacao !== null && (
-              <div className="text-right">
+              <div className="text-right justify-self-end">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
                   Avaliação
                 </div>
