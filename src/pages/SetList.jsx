@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PlusCircle, Calendar, Users, Music4 } from 'lucide-react'
+import { PlusCircle, Users, Music4 } from 'lucide-react'
 import DjCard from '../components/DjCard'
 
 export default function SetList({ sets, djs = [], festivais = [], generos = [], onDeleteSet }) {
@@ -18,6 +18,16 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 	const djAutocompleteRef = useRef(null)
 	const festivalAutocompleteRef = useRef(null)
 
+	const getFestivalYear = (festival) => {
+		if (!festival) return ''
+
+		const explicitYear = String(festival.ano ?? '').trim()
+		if (explicitYear !== '') return explicitYear.slice(0, 4)
+
+		const fullDate = String(festival.data ?? festival.date ?? '').trim()
+		return fullDate.length >= 4 ? fullDate.slice(0, 4) : ''
+	}
+
 	// Lógica de filtragem unificada
 	const filteredSets = sets.filter((set) => {
 		const dj = djs.find((entry) => entry.id === set.djId)
@@ -27,17 +37,26 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 
 		const matchesFestival = festivalSearch === '' || (festival?.nome ?? '').toLowerCase().includes(festivalSearch.toLowerCase())
 
-		// Filtro por Ano
-		const setYear = set.data ? set.data.split('-')[0] : (festival?.ano?.toString() ?? '')
-		const matchesYear = selectedYear === '' || setYear === selectedYear
+		const normalizedSelectedYear = selectedYear.trim()
+		const festivalYear = getFestivalYear(festival)
+		const matchesDate = normalizedSelectedYear === '' || festivalYear.includes(normalizedSelectedYear)
 
-		return matchesDj && matchesFestival && matchesYear
+		return matchesDj && matchesFestival && matchesDate
 	})
-
-	// Extrair anos únicos para o filtro de data
-	const anosDisponiveis = Array.from(new Set(sets.map(s => s.data ? s.data.split('-')[0] : '').filter(Boolean)))
 	const nomesDjs = Array.from(new Set(djs.map((dj) => dj.nome).filter(Boolean)))
 	const nomesFestivais = Array.from(new Set(festivais.map((festival) => festival.nome).filter(Boolean)))
+	const anosDisponiveis = useMemo(() => {
+		return Array.from(
+			new Set(
+				sets
+					.map((set) => {
+						const festival = festivais.find((entry) => entry.id === set.festivalId)
+						return getFestivalYear(festival)
+					})
+					.filter((year) => year !== '' && /^\d{4}$/.test(year)),
+			),
+		).sort((anoA, anoB) => Number(anoB) - Number(anoA))
+	}, [festivais, sets])
 
 	const djOptions = useMemo(() => {
 		const term = djSearch.trim().toLowerCase()
@@ -270,21 +289,24 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 						</div>
 					</div>
 
-					{/* Filtro de Ano */}
+					{/* Filtro de Data */}
 					<div className="flex flex-col">
 						<label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1.5">
-							<Calendar size={12} /> Filtrar por Ano
+							Filtrar por Ano
 						</label>
-						<select
+						<input
+							type="text"
+							list="anos-lista"
+							placeholder="Todos os anos"
 							value={selectedYear}
 							onChange={(e) => setSelectedYear(e.target.value)}
-							className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2.5 text-sm text-gray-900 dark:border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50"
-						>
-							<option value="">Todos os anos</option>
+							className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all"
+						/>
+						<datalist id="anos-lista">
 							{anosDisponiveis.map((year) => (
-								<option key={year} value={year}>{year}</option>
+								<option key={year} value={year} />
 							))}
-						</select>
+						</datalist>
 					</div>
 
 				</div>
