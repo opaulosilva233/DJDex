@@ -51,9 +51,27 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
       <div className="pointer-events-none absolute -left-16 top-6 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute -top-20 right-[-3.5rem] h-44 w-44 rounded-full bg-purple-500/15 blur-3xl opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute inset-x-8 bottom-0 h-16 rounded-full bg-fuchsia-500/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute right-3 top-3 z-20 flex items-center gap-2 opacity-40 transition-opacity duration-200 group-hover:opacity-100">
+        <button
+          type="button"
+          onClick={() => navigate(`/sets/editar/${set.id}`)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/50 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-200 focus-visible:border-cyan-400/40 focus-visible:bg-cyan-400/10 focus-visible:text-cyan-200"
+          aria-label="Editar set"
+        >
+          <Pencil size={15} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete(set.id)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/50 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-200 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-200"
+          aria-label="Eliminar set"
+        >
+          <Trash2 size={15} />
+        </button>
+      </div>
 
       <div className="relative flex h-full flex-col gap-5">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-4 pr-14">
           <img
             src={djImagemSrc}
             alt={dj?.nome ?? 'DJ'}
@@ -62,23 +80,14 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
           />
 
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-slate-400">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/10 text-cyan-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
-                <UserRound size={13} className="text-cyan-300" />
-              </span>
-              <span>Artista</span>
-            </div>
-
             <h2 className="truncate text-xl font-bold tracking-wide text-white">
               {set.nome ?? dj?.nome ?? 'Set sem nome'}
             </h2>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm font-medium text-cyan-200">
-                {dj?.nome ?? 'DJ desconhecido'}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300">
-                {festival?.nome ?? 'Festival desconhecido'}
+            <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-cyan-300">
+              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
+                <UserRound size={13} className="text-cyan-300" />
+                <span className="truncate text-cyan-400">{dj?.nome ?? 'DJ desconhecido'}</span>
               </span>
             </div>
           </div>
@@ -102,19 +111,25 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
         </div>
 
         <div className="grid gap-2 rounded-2xl border border-white/5 bg-black/20 p-4">
-          <div className="flex items-center gap-2 text-sm text-slate-300">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm">
             <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-purple-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
               <MapPin size={14} className="text-purple-300" />
             </span>
-            <span>{festival?.local ?? 'Local desconhecido'}</span>
+            <span>{festival?.nome ?? 'Festival desconhecido'}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-300">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-purple-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
-              <CalendarDays size={14} className="text-purple-300" />
-            </span>
-            <span>{formattedDate}</span>
-            <span className="text-slate-500">•</span>
-            <span>{set.hora ?? '--:--'}</span>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm">
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-purple-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
+                <CalendarDays size={14} className="text-purple-300" />
+              </span>
+              <span>{formattedDate}</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm">
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-purple-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
+                <CalendarDays size={14} className="text-purple-300" />
+              </span>
+              <span>{set.hora ?? '--:--'}</span>
+            </div>
           </div>
         </div>
 
@@ -132,13 +147,7 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
                 <span className="ml-1 text-sm font-semibold text-slate-500">/10</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_18px_rgba(217,70,239,0.48)] transition-all duration-500 ease-out group-hover:brightness-110"
-                  style={{ width: `${scorePercent}%` }}
-                />
-              </div>
+            <div className="flex items-center gap-3 pb-1">
               <div className="grid grid-cols-5 gap-1">
                 {Array.from({ length: 5 }).map((_, index) => {
                   const filled = scoreValue >= index * 2 + 2
@@ -152,33 +161,16 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
                 })}
               </div>
             </div>
+            <div className="-mx-4 -mb-4 mt-1 overflow-hidden rounded-b-2xl border-t border-white/5 bg-slate-900/50">
+              <div className="h-2.5 overflow-hidden bg-slate-800/80 ring-1 ring-white/5">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_18px_rgba(217,70,239,0.48)] transition-all duration-500 ease-out group-hover:brightness-110"
+                  style={{ width: `${scorePercent}%` }}
+                />
+              </div>
+            </div>
           </div>
         )}
-
-        <div className="mt-auto flex items-end justify-between gap-3 pt-1">
-          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-            {formattedDate}
-          </p>
-
-          <div className="flex items-center gap-2 opacity-70 transition-all duration-200 group-hover:opacity-100">
-            <button
-              type="button"
-              onClick={() => navigate(`/sets/editar/${set.id}`)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-200 focus-visible:border-cyan-400/40 focus-visible:bg-cyan-400/10 focus-visible:text-cyan-200"
-              aria-label="Editar set"
-            >
-              <Pencil size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete(set.id)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-200 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-200"
-              aria-label="Eliminar set"
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
-        </div>
       </div>
     </article>
   )
