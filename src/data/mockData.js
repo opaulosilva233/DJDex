@@ -45,12 +45,14 @@ export const sets = [
 		djId: 'd1',
 		festivalId: 'f1',
 		data: '2026-05-24',
+		data: '2026-05-24',
 		hora: '22:30',
 		avaliacao: 9.4,
 	},
 	{
 		id: 's2',
 		djId: 'd2',
+		data: '2026-05-25',
 		festivalId: 'f2',
 		data: '2026-05-25',
 		hora: '01:00',
@@ -58,6 +60,7 @@ export const sets = [
 	},
 	{
 		id: 's3',
+		data: '2025-07-15',
 		djId: 'd1',
 		festivalId: 'f2',
 		data: '2026-05-26',
@@ -65,6 +68,7 @@ export const sets = [
 		avaliacao: 9.1,
 	},
 	{
+		data: '2025-08-03',
 		id: 's4',
 		djId: 'd2',
 		festivalId: 'f1',

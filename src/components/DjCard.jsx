@@ -47,7 +47,6 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
       </div>
       <p className="text-gray-900 dark:text-gray-100"><strong>Festival:</strong> {festival?.nome ?? 'Festival desconhecido'}</p>
       <p className="text-gray-900 dark:text-gray-100"><strong>Local:</strong> {festival?.local ?? 'Local desconhecido'}</p>
-      <p className="text-gray-900 dark:text-gray-100"><strong>Ano:</strong> {festival?.ano ?? 'Ano desconhecido'}</p>
       <p className="text-gray-900 dark:text-gray-100"><strong>Data:</strong> {set.data}</p>
       <p className="text-gray-900 dark:text-gray-100"><strong>Hora:</strong> {set.hora}</p>
       {set.avaliacao !== undefined && set.avaliacao !== null && (
