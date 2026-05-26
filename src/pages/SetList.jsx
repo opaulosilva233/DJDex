@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PlusCircle, Calendar, Users, Music4 } from 'lucide-react'
 import DjCard from '../components/DjCard'
@@ -10,21 +10,22 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 	const [djSearch, setDjSearch] = useState('')
 	const [festivalSearch, setFestivalSearch] = useState('')
 	const [selectedYear, setSelectedYear] = useState('')
+	const [isDjOpen, setIsDjOpen] = useState(false)
+	const [isFestivalOpen, setIsFestivalOpen] = useState(false)
+	const [activeDjIndex, setActiveDjIndex] = useState(-1)
+	const [activeFestivalIndex, setActiveFestivalIndex] = useState(-1)
+
+	const djAutocompleteRef = useRef(null)
+	const festivalAutocompleteRef = useRef(null)
 
 	// Lógica de filtragem unificada
 	const filteredSets = sets.filter((set) => {
 		const dj = djs.find((entry) => entry.id === set.djId)
 		const festival = festivais.find((entry) => entry.id === set.festivalId)
 
-		// Filtro por DJ (compara o ID selecionado ou o texto digitado)
-		const matchesDj = djSearch === '' ||
-			(dj?.id === djSearch) ||
-			(dj?.nome ?? '').toLowerCase().includes(djSearch.toLowerCase())
+		const matchesDj = djSearch === '' || (dj?.nome ?? '').toLowerCase().includes(djSearch.toLowerCase())
 
-		// Filtro por Festival (compara o ID selecionado ou o texto digitado)
-		const matchesFestival = festivalSearch === '' ||
-			(festival?.id === festivalSearch) ||
-			(festival?.nome ?? '').toLowerCase().includes(festivalSearch.toLowerCase())
+		const matchesFestival = festivalSearch === '' || (festival?.nome ?? '').toLowerCase().includes(festivalSearch.toLowerCase())
 
 		// Filtro por Ano
 		const setYear = set.data ? set.data.split('-')[0] : (festival?.ano?.toString() ?? '')
@@ -35,6 +36,123 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 
 	// Extrair anos únicos para o filtro de data
 	const anosDisponiveis = Array.from(new Set(sets.map(s => s.data ? s.data.split('-')[0] : '').filter(Boolean)))
+	const nomesDjs = Array.from(new Set(djs.map((dj) => dj.nome).filter(Boolean)))
+	const nomesFestivais = Array.from(new Set(festivais.map((festival) => festival.nome).filter(Boolean)))
+
+	const djOptions = useMemo(() => {
+		const term = djSearch.trim().toLowerCase()
+		if (term === '') return nomesDjs.slice(0, 8)
+		return nomesDjs.filter((nome) => nome.toLowerCase().includes(term)).slice(0, 8)
+	}, [nomesDjs, djSearch])
+
+	const festivalOptions = useMemo(() => {
+		const term = festivalSearch.trim().toLowerCase()
+		if (term === '') return nomesFestivais.slice(0, 8)
+		return nomesFestivais.filter((nome) => nome.toLowerCase().includes(term)).slice(0, 8)
+	}, [nomesFestivais, festivalSearch])
+
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (djAutocompleteRef.current && !djAutocompleteRef.current.contains(event.target)) {
+				setIsDjOpen(false)
+				setActiveDjIndex(-1)
+			}
+
+			if (festivalAutocompleteRef.current && !festivalAutocompleteRef.current.contains(event.target)) {
+				setIsFestivalOpen(false)
+				setActiveFestivalIndex(-1)
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside)
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside)
+		}
+	}, [])
+
+	const handleDjKeyDown = (event) => {
+		if (event.key === 'ArrowDown') {
+			event.preventDefault()
+			if (!isDjOpen) {
+				setIsDjOpen(true)
+				setActiveDjIndex(0)
+				return
+			}
+
+			setActiveDjIndex((prev) => {
+				if (djOptions.length === 0) return -1
+				return prev < djOptions.length - 1 ? prev + 1 : 0
+			})
+		}
+
+		if (event.key === 'ArrowUp') {
+			event.preventDefault()
+			if (!isDjOpen) {
+				setIsDjOpen(true)
+				setActiveDjIndex(djOptions.length > 0 ? djOptions.length - 1 : -1)
+				return
+			}
+
+			setActiveDjIndex((prev) => {
+				if (djOptions.length === 0) return -1
+				return prev > 0 ? prev - 1 : djOptions.length - 1
+			})
+		}
+
+		if (event.key === 'Enter' && isDjOpen && activeDjIndex >= 0 && djOptions[activeDjIndex]) {
+			event.preventDefault()
+			setDjSearch(djOptions[activeDjIndex])
+			setIsDjOpen(false)
+			setActiveDjIndex(-1)
+		}
+
+		if (event.key === 'Escape') {
+			setIsDjOpen(false)
+			setActiveDjIndex(-1)
+		}
+	}
+
+	const handleFestivalKeyDown = (event) => {
+		if (event.key === 'ArrowDown') {
+			event.preventDefault()
+			if (!isFestivalOpen) {
+				setIsFestivalOpen(true)
+				setActiveFestivalIndex(0)
+				return
+			}
+
+			setActiveFestivalIndex((prev) => {
+				if (festivalOptions.length === 0) return -1
+				return prev < festivalOptions.length - 1 ? prev + 1 : 0
+			})
+		}
+
+		if (event.key === 'ArrowUp') {
+			event.preventDefault()
+			if (!isFestivalOpen) {
+				setIsFestivalOpen(true)
+				setActiveFestivalIndex(festivalOptions.length > 0 ? festivalOptions.length - 1 : -1)
+				return
+			}
+
+			setActiveFestivalIndex((prev) => {
+				if (festivalOptions.length === 0) return -1
+				return prev > 0 ? prev - 1 : festivalOptions.length - 1
+			})
+		}
+
+		if (event.key === 'Enter' && isFestivalOpen && activeFestivalIndex >= 0 && festivalOptions[activeFestivalIndex]) {
+			event.preventDefault()
+			setFestivalSearch(festivalOptions[activeFestivalIndex])
+			setIsFestivalOpen(false)
+			setActiveFestivalIndex(-1)
+		}
+
+		if (event.key === 'Escape') {
+			setIsFestivalOpen(false)
+			setActiveFestivalIndex(-1)
+		}
+	}
 
 	return (
 		<div className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
@@ -69,37 +187,87 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 					
 					{/* Filtro de DJ */}
-					<div className="flex flex-col">
+					<div className="flex flex-col" ref={djAutocompleteRef}>
 						<label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1.5">
 							<Users size={12} /> Pesquisar / Selecionar DJ
 						</label>
-						<select
-							value={djSearch}
-							onChange={(e) => setDjSearch(e.target.value)}
-							className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2.5 text-sm text-gray-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50"
-						>
-							<option value="">Todos os DJs</option>
-							{djs.map((dj) => (
-								<option key={dj.id} value={dj.id}>{dj.nome}</option>
-							))}
-						</select>
+						<div className="relative">
+							<input
+								type="text"
+								placeholder="Digita o nome do DJ..."
+								value={djSearch}
+								onChange={(e) => {
+									setDjSearch(e.target.value)
+									setIsDjOpen(true)
+									setActiveDjIndex(-1)
+								}}
+								onFocus={() => setIsDjOpen(true)}
+								onKeyDown={handleDjKeyDown}
+								className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all"
+							/>
+							{isDjOpen && djOptions.length > 0 && (
+								<ul className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white/95 py-1 shadow-lg backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+									{djOptions.map((nome, index) => (
+										<li key={nome}>
+											<button
+												type="button"
+												onMouseDown={(event) => {
+													event.preventDefault()
+													setDjSearch(nome)
+													setIsDjOpen(false)
+													setActiveDjIndex(-1)
+												}}
+												className={`w-full px-3 py-2 text-left text-sm transition-colors ${activeDjIndex === index ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-100' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800/80'}`}
+											>
+												{nome}
+											</button>
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
 					</div>
 
 					{/* Filtro de Festival */}
-					<div className="flex flex-col">
+					<div className="flex flex-col" ref={festivalAutocompleteRef}>
 						<label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1.5">
 							<Music4 size={12} /> Pesquisar / Selecionar Festival
 						</label>
-						<select
-							value={festivalSearch}
-							onChange={(e) => setFestivalSearch(e.target.value)}
-							className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2.5 text-sm text-gray-900 dark:border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50"
-						>
-							<option value="">Todos os Festivais</option>
-							{festivais.map((fest) => (
-								<option key={fest.id} value={fest.id}>{fest.nome}</option>
-							))}
-						</select>
+						<div className="relative">
+							<input
+								type="text"
+								placeholder="Digita o nome do festival..."
+								value={festivalSearch}
+								onChange={(e) => {
+									setFestivalSearch(e.target.value)
+									setIsFestivalOpen(true)
+									setActiveFestivalIndex(-1)
+								}}
+								onFocus={() => setIsFestivalOpen(true)}
+								onKeyDown={handleFestivalKeyDown}
+								className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-100 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all"
+							/>
+							{isFestivalOpen && festivalOptions.length > 0 && (
+								<ul className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white/95 py-1 shadow-lg backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+									{festivalOptions.map((nome, index) => (
+										<li key={nome}>
+											<button
+												type="button"
+												onMouseDown={(event) => {
+													event.preventDefault()
+													setFestivalSearch(nome)
+													setIsFestivalOpen(false)
+													setActiveFestivalIndex(-1)
+												}}
+												className={`w-full px-3 py-2 text-left text-sm transition-colors ${activeFestivalIndex === index ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-100' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800/80'}`}
+											>
+												{nome}
+											</button>
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
 					</div>
 
 					{/* Filtro de Ano */}
