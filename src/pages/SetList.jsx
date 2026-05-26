@@ -29,7 +29,7 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 	}
 
 	// Lógica de filtragem unificada
-	const filteredSets = sets.filter((set) => {
+	const filteredSets = (sets ?? []).filter((set) => {
 		const dj = djs.find((entry) => entry.id === set.djId)
 		const festival = festivais.find((entry) => entry.id === set.festivalId)
 
@@ -48,7 +48,7 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 	const anosDisponiveis = useMemo(() => {
 		return Array.from(
 			new Set(
-				sets
+				(sets ?? [])
 					.map((set) => {
 						const festival = festivais.find((entry) => entry.id === set.festivalId)
 						return getFestivalYear(festival)
