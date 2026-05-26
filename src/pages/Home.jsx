@@ -73,7 +73,7 @@ export default function Home({ sets = [], djs = [], festivais = [], generos = []
           {/* Botão Ver Histórico */}
           <button
             onClick={() => navigate('/lista')}
-            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-purple-600/10 border border-slate-800/40 hover:border-purple-500/40 transition-all duration-300 group hover:-translate-y-1"
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-white/70 hover:bg-purple-600/10 border border-slate-200/70 hover:border-purple-500/40 transition-all duration-300 group hover:-translate-y-1 dark:bg-slate-950/20 dark:border-slate-800/40"
           >
             <FolderKanban className="text-purple-400" size={20} />
             <div className="flex flex-col">
@@ -85,7 +85,7 @@ export default function Home({ sets = [], djs = [], festivais = [], generos = []
           {/* Botão Gerir DJs */}
           <button
             onClick={() => navigate('/djs')}
-            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-blue-600/10 border border-slate-800/40 hover:border-blue-500/40 transition-all duration-300 group hover:-translate-y-1"
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-white/70 hover:bg-blue-600/10 border border-slate-200/70 hover:border-blue-500/40 transition-all duration-300 group hover:-translate-y-1 dark:bg-slate-950/20 dark:border-slate-800/40"
           >
             <Users className="text-blue-400" size={20} />
             <div className="flex flex-col">
@@ -97,7 +97,7 @@ export default function Home({ sets = [], djs = [], festivais = [], generos = []
           {/* Botão Gerir Festivais */}
           <button
             onClick={() => navigate('/festivais')}
-            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-cyan-600/10 border border-slate-800/40 hover:border-cyan-500/40 transition-all duration-300 group hover:-translate-y-1"
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-white/70 hover:bg-cyan-600/10 border border-slate-200/70 hover:border-cyan-500/40 transition-all duration-300 group hover:-translate-y-1 dark:bg-slate-950/20 dark:border-slate-800/40"
           >
             <Compass className="text-cyan-400" size={20} />
             <div className="flex flex-col">
@@ -109,7 +109,7 @@ export default function Home({ sets = [], djs = [], festivais = [], generos = []
           {/* Botão Gerir Estatísticas */}
           <button
             onClick={() => navigate('/estatisticas')}
-            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-slate-950/20 hover:bg-emerald-600/10 border border-slate-800/40 hover:border-emerald-500/40 transition-all duration-300 group hover:-translate-y-1"
+            className="flex flex-col gap-3 p-5 rounded-xl text-left bg-white/70 hover:bg-emerald-600/10 border border-slate-200/70 hover:border-emerald-500/40 transition-all duration-300 group hover:-translate-y-1 dark:bg-slate-950/20 dark:border-slate-800/40"
           >
             <Star className="text-emerald-400" size={20} />
             <div className="flex flex-col">

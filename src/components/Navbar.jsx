@@ -18,12 +18,16 @@ const sectionTitleStyle = 'px-4 mb-2 text-xs font-semibold uppercase tracking-wi
 
 const navIconStyle = 'shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-1'
 
-function getNavLinkClassName({ isActive }) {
+function getNavLinkClassName(isActive, isDark) {
 	return [
 		'group flex items-center gap-3 rounded-xl border-l-4 py-3 pr-4 text-sm transition-all duration-200',
 		isActive
-			? 'border-purple-500 bg-purple-600/10 pl-3 font-medium text-purple-400'
-			: 'border-transparent pl-4 text-slate-400 hover:bg-slate-800/40 hover:text-white',
+			? isDark
+				? 'border-purple-500 bg-purple-600/10 pl-3 font-medium text-purple-400'
+				: 'border-purple-500 bg-purple-500/10 pl-3 font-medium text-purple-700'
+			: isDark
+				? 'border-transparent pl-4 text-slate-400 hover:bg-slate-800/40 hover:text-white'
+				: 'border-transparent pl-4 text-slate-500 hover:bg-slate-100 hover:text-slate-900',
 	].join(' ')
 }
 
@@ -217,11 +221,11 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 				<section>
 					<h2 className={sectionTitleStyle}>GERAL</h2>
 					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-						<NavLink to="/" end className={getNavLinkClassName}>
+						<NavLink to="/" end className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
 							<Home size={18} className={navIconStyle} />
 							<span>Início</span>
 						</NavLink>
-						<NavLink to="/lista" className={getNavLinkClassName}>
+						<NavLink to="/lista" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
 							<ListMusic size={18} className={navIconStyle} />
 							<span>Histórico de Sets</span>
 						</NavLink>
@@ -231,15 +235,15 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 				<section>
 					<h2 className={sectionTitleStyle}>BIBLIOTECA</h2>
 					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-						<NavLink to="/djs" className={getNavLinkClassName}>
+						<NavLink to="/djs" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
 							<User size={18} className={navIconStyle} />
 							<span>DJs</span>
 						</NavLink>
-						<NavLink to="/festivais" className={getNavLinkClassName}>
+						<NavLink to="/festivais" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
 							<Compass size={18} className={navIconStyle} />
 							<span>Festivais</span>
 						</NavLink>
-						<NavLink to="/generos" className={getNavLinkClassName}>
+						<NavLink to="/generos" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
 							<Tag size={18} className={navIconStyle} />
 							<span>Géneros</span>
 						</NavLink>
@@ -301,7 +305,7 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 									</div>
 								</button>
 
-						<div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-800/60 pt-4">
+						<div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200/70 pt-4 dark:border-slate-800/60">
 							<button type="button" onClick={exportData} className={secondaryActionClassName}>
 								<Download size={14} className="shrink-0" />
 								<span>Exportar</span>
