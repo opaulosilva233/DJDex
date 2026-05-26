@@ -1,4 +1,4 @@
-import { Clock, Pencil, Star, Trash2 } from 'lucide-react'
+import { Clock, Pencil, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const fallbackImageDataUrl =
@@ -6,29 +6,30 @@ const fallbackImageDataUrl =
 
 function getDateTicketParts(value) {
   if (!value) {
-    return { day: '--', monthYear: 'data indisponível' }
+    return { day: '--', month: '---', year: '----' }
   }
 
   const parts = String(value).split('-')
   if (parts.length !== 3) {
-    return { day: '--', monthYear: String(value) }
+    return { day: '--', month: '---', year: '----' }
   }
 
   const [year, month, day] = parts
   const date = new Date(Number(year), Number(month) - 1, Number(day))
 
   if (Number.isNaN(date.getTime())) {
-    return { day: '--', monthYear: String(value) }
+    return { day: '--', month: '---', year: '----' }
   }
 
-  const formatted = new Intl.DateTimeFormat('pt-PT', {
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
+  const monthLabel = new Intl.DateTimeFormat('pt-PT', { month: 'short' })
+    .format(date)
+    .replace('.', '')
+    .toUpperCase()
 
   return {
     day,
-    monthYear: formatted.toUpperCase(),
+    month: monthLabel,
+    year,
   }
 }
 
@@ -38,11 +39,10 @@ function formatScore(value) {
   return Number.isInteger(score) ? String(score) : score.toFixed(1)
 }
 
-export default function DjCard({ set, djs = [], festivais = [], generos = [], onDelete }) {
+export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
   const navigate = useNavigate()
   const dj = djs.find((entry) => entry.id === set.djId)
   const festival = festivais.find((entry) => entry.id === set.festivalId)
-  const djGeneros = generos.filter((genero) => Array.isArray(dj?.generoIds) && dj.generoIds.includes(genero.id))
   const djImagemSrc = dj?.imagem || '/images/default-dj.png'
   const scoreValue = Number(set.avaliacao ?? 0)
   const scorePercent = Math.max(0, Math.min(100, scoreValue * 10))
@@ -111,16 +111,16 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
   }
 
   return (
-    <article className="group relative w-[320px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40 p-5 text-slate-100 shadow-[0_18px_55px_rgba(2,6,23,0.42)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:border-cyan-400/40 hover:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_26px_80px_rgba(168,85,247,0.28)]">
+    <article className="group relative w-[320px] overflow-hidden rounded-[1.6rem] border border-white/10 bg-slate-950/60 p-5 text-slate-100 shadow-[0_18px_55px_rgba(2,6,23,0.42)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:border-cyan-400/40 hover:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_26px_80px_rgba(168,85,247,0.28)] focus-within:border-cyan-400/40">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.08),transparent_36%),linear-gradient(145deg,rgba(255,255,255,0.05),transparent_35%,rgba(168,85,247,0.04))] opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute -left-16 top-6 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute -top-20 right-[-3.5rem] h-44 w-44 rounded-full bg-purple-500/15 blur-3xl opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute inset-x-8 bottom-0 h-16 rounded-full bg-fuchsia-500/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      <div className="absolute right-3 top-3 z-20 flex items-center gap-2 opacity-50 transition-opacity duration-200 group-hover:opacity-100">
+      <div className="absolute right-4 top-4 z-20 flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
         <button
           type="button"
           onClick={() => navigate(`/sets/editar/${set.id}`)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/50 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-200 focus-visible:border-cyan-400/40 focus-visible:bg-cyan-400/10 focus-visible:text-cyan-200"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/55 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-200 focus-visible:border-cyan-400/40 focus-visible:bg-cyan-400/10 focus-visible:text-cyan-200"
           aria-label="Editar set"
         >
           <Pencil size={15} />
@@ -128,124 +128,97 @@ export default function DjCard({ set, djs = [], festivais = [], generos = [], on
         <button
           type="button"
           onClick={() => onDelete(set.id)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/50 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-200 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-200"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/55 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-200 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-200"
           aria-label="Eliminar set"
         >
           <Trash2 size={15} />
         </button>
       </div>
 
-      <div className="relative flex h-full flex-col gap-5">
-        <div className="space-y-4 pr-14">
-          <div className="flex min-w-0 items-start gap-4">
-            <img
-              src={djImagemSrc}
-              alt={dj?.nome ?? 'DJ'}
-              onError={handleImageError}
-              className="h-20 w-20 shrink-0 rounded-2xl object-cover ring-1 ring-white/10 shadow-lg shadow-black/30"
-            />
+      <div className="relative flex h-full flex-col gap-5 pr-12 pt-1">
+        <div className="flex min-w-0 items-start gap-4">
+          <img
+            src={djImagemSrc}
+            alt={dj?.nome ?? 'DJ'}
+            onError={handleImageError}
+            className="h-20 w-20 shrink-0 rounded-full border border-white/10 object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.35)]"
+          />
 
-            <div className="min-w-0 space-y-1 pt-1">
-              <h2 className="truncate text-lg font-bold tracking-wide text-white">
-                {dj?.nome ?? 'DJ desconhecido'}
-              </h2>
-              <p className="truncate text-base font-semibold text-white/90">
-                {set.nome ?? 'Set sem nome'}
-              </p>
-              <p className="truncate text-sm font-medium text-purple-300/80">
-                {festival?.nome ?? 'Festival desconhecido'}
-              </p>
-            </div>
+          <div className="min-w-0 pt-1">
+            <h2 className="truncate text-xl font-black leading-none text-white">
+              {dj?.nome ?? 'DJ desconhecido'}
+            </h2>
+            <p className="mt-2 truncate text-sm font-medium text-purple-400/80">
+              {festival?.nome ?? 'Festival desconhecido'}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-200">
+            <Clock size={14} className="text-cyan-300" />
+            <span className="font-semibold tracking-wide">{startTime}</span>
+            <span className="text-slate-500">-</span>
+            <span className="font-semibold tracking-wide">{resolvedEndTime}</span>
           </div>
 
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-sm">
-              <div className="text-right leading-none">
-                <div className="text-3xl font-black leading-none text-cyan-400 dark:text-purple-400">
+          <div className="mt-3 flex items-end justify-between gap-4">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                Duração
+              </div>
+              <div className="mt-1 text-lg font-black text-cyan-300">{durationLabel}</div>
+            </div>
+
+            <div className="flex items-end gap-1.5 pb-1">
+              <span className="h-4 w-1.5 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-gradient-to-t from-purple-500 via-fuchsia-400 to-cyan-300" />
+              <span className="h-6 w-1.5 animate-[pulse_1.25s_ease-in-out_infinite] rounded-full bg-gradient-to-t from-cyan-500 via-cyan-300 to-purple-400 [animation-delay:120ms]" />
+              <span className="h-3 w-1.5 animate-[pulse_0.95s_ease-in-out_infinite] rounded-full bg-gradient-to-t from-purple-400 via-violet-300 to-cyan-300 [animation-delay:240ms]" />
+              <span className="h-5 w-1.5 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-gradient-to-t from-cyan-400 via-fuchsia-300 to-purple-500 [animation-delay:360ms]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-auto rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                Data
+              </div>
+              <div className="mt-2 flex items-start gap-3">
+                <span className="text-3xl font-extrabold leading-none text-cyan-400">
                   {dateTicket.day}
+                </span>
+                <span className="mt-0.5 flex flex-col leading-none">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-300">
+                    {dateTicket.month}
+                  </span>
+                  <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.32em] text-slate-400">
+                    {dateTicket.year}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            {set.avaliacao !== undefined && set.avaliacao !== null && (
+              <div className="text-right">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                  Avaliação
+                </div>
+                <div className="mt-2 text-sm font-black text-white">
+                  {formatScore(set.avaliacao)}/10
                 </div>
               </div>
-              <div className="flex flex-col leading-tight">
-                <span className="text-[11px] uppercase tracking-widest text-slate-400">
-                  {dateTicket.monthYear.split(' ').slice(0, -1).join(' ') || dateTicket.monthYear}
-                </span>
-                <span className="text-[11px] uppercase tracking-widest text-slate-400">
-                  {dateTicket.monthYear.split(' ').slice(-1).join(' ')}
-                </span>
-              </div>
-            </div>
+            )}
+          </div>
 
-            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
-              <div className="flex items-center gap-1.5 text-slate-200">
-                <Clock size={13} className="text-cyan-300" />
-                <span className="font-semibold">{startTime}</span>
-                <span className="text-slate-500">→</span>
-                <span className="font-semibold">{resolvedEndTime}</span>
-              </div>
-              <span className="h-1 w-1 rounded-full bg-white/30" />
-              <div className="text-slate-200">
-                <span className="text-slate-400">Duração:</span>{' '}
-                <span className="font-semibold text-cyan-300">{durationLabel}</span>
-              </div>
-            </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-cyan-400 shadow-[0_0_18px_rgba(217,70,239,0.42)] transition-all duration-500 ease-out group-hover:brightness-110"
+              style={{ width: `${scorePercent}%` }}
+            />
           </div>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          {djGeneros.length > 0 ? (
-            djGeneros.map((genero) => (
-              <span
-                key={genero.id}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300"
-              >
-                {genero.nome}
-              </span>
-            ))
-          ) : (
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-400">
-              Sem géneros definidos
-            </span>
-          )}
-        </div>
-
-        {set.avaliacao !== undefined && set.avaliacao !== null && (
-          <div className="grid gap-3 rounded-2xl border border-white/5 bg-white/5 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/10 text-fuchsia-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
-                  <Star size={15} className="text-fuchsia-300" fill="currentColor" />
-                </span>
-                <span>Avaliação</span>
-              </div>
-              <div className="flex items-end gap-1 font-mono text-2xl font-black leading-none text-white">
-                <span>{formatScore(set.avaliacao)}</span>
-                <span className="ml-1 text-sm font-semibold text-slate-500">/10</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 pb-1">
-              <div className="grid grid-cols-5 gap-1">
-                {Array.from({ length: 5 }).map((_, index) => {
-                  const filled = scoreValue >= index * 2 + 2
-
-                  return (
-                    <span
-                      key={`score-block-${index}`}
-                      className={`h-2.5 w-2.5 rounded-sm transition-all duration-300 ${filled ? 'bg-gradient-to-t from-purple-400 to-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.35)]' : 'bg-white/10'}`}
-                    />
-                  )
-                })}
-              </div>
-            </div>
-            <div className="-mx-4 -mb-4 mt-1 overflow-hidden rounded-b-2xl border-t border-white/5 bg-slate-900/50">
-              <div className="h-2.5 overflow-hidden bg-slate-800/80 ring-1 ring-white/5">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_18px_rgba(217,70,239,0.48)] transition-all duration-500 ease-out group-hover:brightness-110"
-                  style={{ width: `${scorePercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </article>
   )
