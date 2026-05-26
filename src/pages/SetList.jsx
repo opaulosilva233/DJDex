@@ -18,16 +18,6 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 	const djAutocompleteRef = useRef(null)
 	const festivalAutocompleteRef = useRef(null)
 
-	const getFestivalYear = (festival) => {
-		if (!festival) return ''
-
-		const explicitYear = String(festival.ano ?? '').trim()
-		if (explicitYear !== '') return explicitYear.slice(0, 4)
-
-		const fullDate = String(festival.data ?? festival.date ?? '').trim()
-		return fullDate.length >= 4 ? fullDate.slice(0, 4) : ''
-	}
-
 	// Lógica de filtragem unificada
 	const filteredSets = (sets ?? []).filter((set) => {
 		const dj = djs.find((entry) => entry.id === set.djId)
@@ -38,7 +28,7 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 		const matchesFestival = festivalSearch === '' || (festival?.nome ?? '').toLowerCase().includes(festivalSearch.toLowerCase())
 
 		const normalizedSelectedYear = selectedYear.trim()
-		const festivalYear = getFestivalYear(festival)
+		const festivalYear = String(festival?.ano ?? '').trim()
 		const matchesDate = normalizedSelectedYear === '' || festivalYear.includes(normalizedSelectedYear)
 
 		return matchesDj && matchesFestival && matchesDate
@@ -51,9 +41,9 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 				(sets ?? [])
 					.map((set) => {
 						const festival = festivais.find((entry) => entry.id === set.festivalId)
-						return getFestivalYear(festival)
+						return String(festival?.ano ?? '').trim()
 					})
-					.filter((year) => year !== '' && /^\d{4}$/.test(year)),
+					.filter((year) => year !== ''),
 			),
 		).sort((anoA, anoB) => Number(anoB) - Number(anoA))
 	}, [festivais, sets])
