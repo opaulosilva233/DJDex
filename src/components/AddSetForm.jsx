@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Calendar } from 'lucide-react'
 
 const initialFormState = {
 	djId: '',
@@ -75,6 +76,8 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const submitLabel = isEditing ? 'Guardar alterações' : 'Guardar set'
 	const inputClassName =
 		'w-full rounded-xl border border-slate-200 bg-white/80 p-3 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none dark:border-white/5 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500'
+	const dateInputClassName =
+		`${inputClassName} pr-11 dark:[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:hidden`
 	const labelClassName =
 		'block mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500'
 
@@ -126,14 +129,17 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 				<label>
 					<span className={labelClassName}>Data</span>
+						<div className="relative group">
 					<input
 						name="data"
 						type="date"
 						value={formData.data}
 						onChange={handleChange}
-						className={inputClassName}
+							className={dateInputClassName}
 						required
 					/>
+							<Calendar className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400 transition-all duration-200 group-hover:text-purple-300 group-hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.55)] dark:text-purple-400 dark:group-hover:text-cyan-300" />
+						</div>
 				</label>
 
 				<label>
