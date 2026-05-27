@@ -1,59 +1,172 @@
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
+
+const fallbackImageDataUrl =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" rx="80" fill="%23e2e8f0"/><circle cx="80" cy="64" r="28" fill="%2394a3b8"/><path d="M28 136c11-21 31-32 52-32s41 11 52 32" fill="%2394a3b8"/></svg>'
 
 export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
   const navigate = useNavigate()
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredDjs = useMemo(() => {
+    const normalizedTerm = searchTerm.trim().toLowerCase()
+
+    return (djs ?? []).filter((dj) => {
+      if (normalizedTerm === '') return true
+
+      const nome = String(dj?.nome ?? '').toLowerCase()
+      const biografia = String(dj?.biografia ?? '').toLowerCase()
+      const generoNames = Array.isArray(dj?.generoIds)
+        ? dj.generoIds
+            .map((generoId) => generos.find((genero) => genero.id === generoId)?.nome ?? '')
+            .join(' ')
+            .toLowerCase()
+        : ''
+
+      return nome.includes(normalizedTerm) || biografia.includes(normalizedTerm) || generoNames.includes(normalizedTerm)
+    })
+  }, [djs, generos, searchTerm])
+
+  function handleImageError(event) {
+    if (event.currentTarget.dataset.fallbackApplied !== 'true') {
+      event.currentTarget.dataset.fallbackApplied = 'true'
+      event.currentTarget.src = fallbackImageDataUrl
+    }
+  }
 
   return (
-    <section className="page-section flex-1 min-h-0 overflow-y-auto pr-1 bg-transparent">
-      <div className="section-header flex items-center justify-between">
+    <div className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <p className="eyebrow dark:text-gray-400">Catálogo</p>
-          <h1 className="dark:text-gray-100">Lista de DJs</h1>
-          <p className="dark:text-slate-300">Todos os DJs guardados na aplicação.</p>
+          <span className="text-xs font-bold uppercase tracking-widest text-purple-500 bg-purple-500/10 px-3 py-1 rounded-full w-fit">
+            Catálogo
+          </span>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
+            Lista de DJs
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Todos os DJs guardados na aplicação.
+          </p>
         </div>
-        <div>
-          <button
-            type="button"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-            onClick={() => navigate('/djs/adicionar')}
-          >
-            Adicionar DJ
-          </button>
+
+        <button
+          type="button"
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
+          onClick={() => navigate('/djs/adicionar')}
+        >
+          <PlusCircle size={16} />
+          Adicionar DJ
+        </button>
+      </div>
+
+      <div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl shadow-xl">
+        <label
+          htmlFor="dj-search"
+          className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 block"
+        >
+          Pesquisar DJs
+        </label>
+        <div className="relative">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+          />
+          <input
+            id="dj-search"
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Nome, biografia ou género musical"
+            className="w-full rounded-xl border border-slate-200 bg-white/80 pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-100 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all"
+          />
         </div>
       </div>
 
-      <div style={{ display: 'grid', gap: '12px' }}>
-        <div className="sets-grid">
-          {djs.length === 0 && <p className="dark:text-slate-400">Ainda não existem DJs.</p>}
-          {djs.map((dj) => (
-            <div key={dj.id} className="flex items-start gap-4 rounded-2xl border border-slate-800/50 bg-slate-950/40 p-5 shadow-xl backdrop-blur-md">
-              <img src={dj.imagem || '/images/default-dj.png'} alt={dj.nome} className="h-16 w-16 rounded-full object-cover" />
-              <div className="flex-1">
-                <h2 className="m-0 text-lg font-semibold dark:text-gray-100">{dj.nome}</h2>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{dj.biografia}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {Array.isArray(dj.generoIds) && dj.generoIds.length > 0 ? (
-                    dj.generoIds.map((gid) => {
-                      const genero = generos.find((g) => g.id === gid)
-                      return (
-                        <span key={gid} className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300">
-                          {genero?.nome ?? '—'}
-                        </span>
-                      )
-                    })
-                  ) : (
-                    <span className="text-sm text-gray-500 dark:text-gray-300">Sem géneros definidos</span>
-                  )}
+      {filteredDjs.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDjs.map((dj) => {
+            const generoLabels = Array.isArray(dj.generoIds)
+              ? dj.generoIds
+                  .map((generoId) => generos.find((genero) => genero.id === generoId)?.nome)
+                  .filter(Boolean)
+              : []
+
+            return (
+              <article
+                key={dj.id}
+                className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 p-6 text-slate-900 shadow-[0_18px_55px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)] dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-100"
+              >
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.12),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.08),transparent_30%,rgba(99,102,241,0.05))] opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -left-16 top-4 h-40 w-40 rounded-full bg-purple-500/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -bottom-14 right-[-3rem] h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+                <div className="absolute right-4 top-4 z-20 flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/djs/adicionar?edit=${dj.id}`)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400/30 hover:bg-purple-400/10 hover:text-purple-700 focus-visible:border-purple-400/40 focus-visible:bg-purple-400/10 focus-visible:text-purple-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-purple-200 dark:focus-visible:text-purple-200"
+                    aria-label="Editar DJ"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDj && handleDeleteDj(dj.id)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-700 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-rose-200 dark:focus-visible:text-rose-200"
+                    aria-label="Eliminar DJ"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={() => navigate(`/djs/adicionar?edit=${dj.id}`)} className="text-sm text-slate-600 dark:text-slate-300">Editar</button>
-                <button type="button" onClick={() => handleDeleteDj && handleDeleteDj(dj.id)} className="text-sm text-red-600">Eliminar</button>
-              </div>
-            </div>
-          ))}
+
+                <div className="relative flex h-full flex-col gap-5">
+                  <div className="flex min-w-0 items-start gap-4 pr-16">
+                    <img
+                      src={dj.imagem || '/images/default-dj.png'}
+                      alt={dj.nome}
+                      onError={handleImageError}
+                      className="h-20 w-20 shrink-0 rounded-full border border-slate-200/80 object-cover shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_18px_40px_rgba(15,23,42,0.14)] dark:border-white/10 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.35)]"
+                    />
+
+                    <div className="min-w-0 pt-1">
+                      <h2 className="truncate text-xl font-black leading-none text-slate-900 dark:text-white">
+                        {dj.nome}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                        {dj.biografia || 'Sem biografia disponível.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    {generoLabels.length > 0 ? (
+                      generoLabels.map((nomeGenero) => (
+                        <span
+                          key={nomeGenero}
+                          className="rounded-full border border-purple-400/20 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-200"
+                        >
+                          {nomeGenero}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        Sem géneros definidos
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </article>
+            )
+          })}
         </div>
-      </div>
-    </section>
+      ) : (
+        <div className="w-full p-12 text-center bg-white/10 dark:bg-slate-950/10 backdrop-blur-sm rounded-2xl border border-dashed border-slate-300/60 dark:border-slate-700/40">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Nenhum DJ corresponde à pesquisa atual.
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
