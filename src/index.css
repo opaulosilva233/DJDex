@@ -51,6 +51,12 @@
     @apply text-inherit no-underline;
   }
 
+  input[list]::-webkit-calendar-picker-indicator {
+    display: none !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   h1,
   h2,
   h3,
