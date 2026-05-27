@@ -30,6 +30,14 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
     }
   }
 
+  function formatFestivalSubtitle(festival) {
+    const local = String(festival?.local ?? '').trim()
+    const ano = String(festival?.ano ?? '').trim()
+
+    if (local && ano) return `${local} • ${ano}`
+    return local || ano || 'Local e ano por definir'
+  }
+
   return (
     <div className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -122,20 +130,20 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
                       {festival.nome}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                      {festival.local || 'Local por definir'}
+                      {formatFestivalSubtitle(festival)}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-auto flex flex-wrap gap-2">
-                  <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-200">
-                    {festival.ano || 'Ano por definir'}
-                  </span>
                   {festival.local ? (
-                    <span className="rounded-full border border-slate-300/40 bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    <span className="rounded-full border border-slate-300/40 bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                       {festival.local}
                     </span>
                   ) : null}
+                  <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-200">
+                    {festival.ano || 'Ano por definir'}
+                  </span>
                 </div>
               </div>
             </article>
