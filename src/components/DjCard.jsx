@@ -111,7 +111,7 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
   }
 
   return (
-    <article className="group relative justify-self-center w-full max-w-[420px] overflow-hidden rounded-[1.6rem] border border-white/10 bg-slate-950/60 p-5 text-slate-100 shadow-[0_18px_55px_rgba(2,6,23,0.42)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:border-cyan-400/40 hover:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_26px_80px_rgba(168,85,247,0.28)] focus-within:border-cyan-400/40">
+    <article className="group relative justify-self-center w-full max-w-[420px] overflow-hidden rounded-[1.6rem] border border-slate-200/60 bg-white/60 p-5 text-slate-900 shadow-[0_18px_55px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:border-cyan-400/40 hover:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_26px_80px_rgba(168,85,247,0.18)] focus-within:border-cyan-400/40 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-100 dark:shadow-[0_18px_55px_rgba(2,6,23,0.42)] dark:hover:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_26px_80px_rgba(168,85,247,0.28)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.08),transparent_36%),linear-gradient(145deg,rgba(255,255,255,0.05),transparent_35%,rgba(168,85,247,0.04))] opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute -left-16 top-6 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="pointer-events-none absolute -top-20 right-[-3.5rem] h-44 w-44 rounded-full bg-purple-500/15 blur-3xl opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
@@ -120,7 +120,7 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
         <button
           type="button"
           onClick={() => navigate(`/sets/editar/${set.id}`)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/55 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-200 focus-visible:border-cyan-400/40 focus-visible:bg-cyan-400/10 focus-visible:text-cyan-200"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-700 focus-visible:border-cyan-400/40 focus-visible:bg-cyan-400/10 focus-visible:text-cyan-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-cyan-200 dark:focus-visible:text-cyan-200"
           aria-label="Editar set"
         >
           <Pencil size={15} />
@@ -128,7 +128,7 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
         <button
           type="button"
           onClick={() => onDelete(set.id)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/55 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-200 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-200"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-700 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-rose-200 dark:focus-visible:text-rose-200"
           aria-label="Eliminar set"
         >
           <Trash2 size={15} />
@@ -141,35 +141,41 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
             src={djImagemSrc}
             alt={dj?.nome ?? 'DJ'}
             onError={handleImageError}
-            className="h-20 w-20 shrink-0 rounded-full border border-white/10 object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.35)]"
+            className="h-20 w-20 shrink-0 rounded-full border border-slate-200/80 object-cover shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_18px_40px_rgba(15,23,42,0.14)] dark:border-white/10 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.35)]"
           />
 
           <div className="min-w-0 pt-1">
-            <h2 className="truncate text-xl font-black leading-none text-white">
+            <h2 className="truncate text-xl font-black leading-none text-slate-900 dark:text-white">
               {dj?.nome ?? 'DJ desconhecido'}
             </h2>
-            <p className="mt-2 truncate text-sm font-medium text-purple-400/80">
+            <p className="mt-2 truncate text-sm font-medium text-slate-600 dark:text-purple-300/80">
               {festival?.nome ?? 'Festival desconhecido'}
             </p>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-sm">
-          <div className="grid grid-cols-[1fr_auto] items-center gap-3 text-sm text-slate-200">
-            <Clock size={14} className="text-cyan-300" />
+        <div className="rounded-2xl border border-slate-200/60 bg-white/45 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/10 dark:bg-white/5 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+          <div className="grid grid-cols-[1fr_auto] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+            <Clock size={14} className="text-cyan-600 dark:text-cyan-300" />
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-semibold tracking-wide">{startTime}</span>
-              <span className="text-slate-500">-</span>
-              <span className="font-semibold tracking-wide">{resolvedEndTime}</span>
+              <span className="font-semibold tracking-wide text-slate-900 dark:text-slate-100">
+                {startTime}
+              </span>
+              <span className="text-slate-400 dark:text-slate-500">-</span>
+              <span className="font-semibold tracking-wide text-slate-900 dark:text-slate-100">
+                {resolvedEndTime}
+              </span>
             </div>
           </div>
 
           <div className="mt-3 grid grid-cols-[1fr_auto] items-end gap-4">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                 Duração
               </div>
-              <div className="mt-1 text-lg font-black text-cyan-300">{durationLabel}</div>
+              <div className="mt-1 text-lg font-black text-cyan-700 dark:text-cyan-300">
+                {durationLabel}
+              </div>
             </div>
 
             <div className="flex items-end gap-1.5 pb-1">
@@ -181,21 +187,21 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
           </div>
         </div>
 
-        <div className="mt-auto rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
+        <div className="mt-auto rounded-2xl border border-slate-200/60 bg-white/45 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/35 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="grid grid-cols-[1fr_auto] items-center gap-4">
             <div className="min-w-0">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                 Data
               </div>
               <div className="mt-2 flex items-start gap-3">
-                <span className="text-3xl font-extrabold leading-none text-cyan-400">
+                <span className="text-3xl font-extrabold leading-none text-cyan-700 dark:text-cyan-400">
                   {dateTicket.day}
                 </span>
                 <span className="mt-0.5 flex flex-col leading-none">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-300">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-700 dark:text-slate-300">
                     {dateTicket.month}
                   </span>
-                  <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.32em] text-slate-400">
+                  <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">
                     {dateTicket.year}
                   </span>
                 </span>
@@ -204,17 +210,17 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
 
             {set.avaliacao !== undefined && set.avaliacao !== null && (
               <div className="text-right justify-self-end">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                   Avaliação
                 </div>
-                <div className="mt-2 text-sm font-black text-white">
+                <div className="mt-2 text-sm font-black text-slate-900 dark:text-white">
                   {formatScore(set.avaliacao)}/10
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5">
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200/80 ring-1 ring-slate-200/60 dark:bg-slate-800/80 dark:ring-white/5">
             <div
               className="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-cyan-400 shadow-[0_0_18px_rgba(217,70,239,0.42)] transition-all duration-500 ease-out group-hover:brightness-110"
               style={{ width: `${scorePercent}%` }}
