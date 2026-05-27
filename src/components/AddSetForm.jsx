@@ -74,24 +74,19 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const formTitle = isEditing ? 'Editar set' : 'Adicionar novo set'
 	const submitLabel = isEditing ? 'Guardar alterações' : 'Guardar set'
 	const inputClassName =
-		'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 dark:placeholder:text-slate-400 dark:focus:border-blue-500 dark:focus:ring-blue-500/20'
+		'w-full rounded-xl border border-slate-200 bg-white/80 p-3 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none dark:border-white/5 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500'
+	const labelClassName =
+		'block mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500'
 
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="grid w-full max-w-none gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-none"
+			className="grid w-full max-w-none gap-5 rounded-2xl border border-slate-200/60 bg-white/60 p-8 shadow-lg shadow-slate-200/30 dark:border-white/10 dark:bg-slate-900/40 dark:shadow-xl dark:backdrop-blur-md"
 		>
-			<div className="flex items-center justify-between gap-4">
-				<div>
-					<h2 className="m-0 text-xl font-semibold text-slate-900 dark:text-gray-100">{formTitle}</h2>
-					<p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-						Preenche os campos abaixo para guardar ou atualizar o set.
-					</p>
-				</div>
-			</div>
+			<h2 className="mb-6 text-2xl font-black text-slate-900 dark:text-white">{formTitle}</h2>
 			<div className="grid w-full gap-4 lg:grid-cols-2 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
-				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
-					<span className="text-slate-700 dark:text-gray-100">DJ</span>
+				<label>
+					<span className={labelClassName}>DJ</span>
 					<select name="djId" value={formData.djId} onChange={handleChange} className={inputClassName} required>
 						<option value="" disabled>
 							Seleciona um DJ
@@ -109,8 +104,8 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 					)}
 				</label>
 
-				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
-					<span className="text-slate-700 dark:text-gray-100">Festival</span>
+				<label>
+					<span className={labelClassName}>Festival</span>
 					<select
 						name="festivalId"
 						value={formData.festivalId}
@@ -129,8 +124,8 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 					</select>
 				</label>
 
-				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
-					<span className="text-slate-700 dark:text-gray-100">Data</span>
+				<label>
+					<span className={labelClassName}>Data</span>
 					<input
 						name="data"
 						type="date"
@@ -141,8 +136,8 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 					/>
 				</label>
 
-				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
-					<span className="text-slate-700 dark:text-gray-100">Hora</span>
+				<label>
+					<span className={labelClassName}>Hora</span>
 					<input
 						name="hora"
 						type="time"
@@ -153,8 +148,8 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 					/>
 				</label>
 
-				<label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-gray-100">
-					<span className="text-slate-700 dark:text-gray-100">Avaliação</span>
+				<label>
+					<span className={labelClassName}>Avaliação</span>
 					<input
 						name="avaliacao"
 						type="number"
@@ -168,12 +163,21 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 					/>
 				</label>
 			</div>
-			<button
-				type="submit"
-				className="justify-self-start rounded-full bg-slate-900 px-5 py-2.5 font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-			>
-				{submitLabel}
-			</button>
+			<div className="mt-6 flex justify-end gap-3">
+				<button
+					type="button"
+					onClick={() => navigate('/lista')}
+					className="px-4 py-2 font-medium text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+				>
+					Cancelar
+				</button>
+				<button
+					type="submit"
+					className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-2.5 font-bold text-white shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 hover:from-purple-500 hover:to-indigo-500"
+				>
+					{submitLabel}
+				</button>
+			</div>
 		</form>
 	)
 }
