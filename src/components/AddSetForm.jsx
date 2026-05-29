@@ -12,6 +12,20 @@ const initialFormState = {
 }
 
 const calendarWeekdays = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
+const calendarMonthOptions = [
+	'Janeiro',
+	'Fevereiro',
+	'Março',
+	'Abril',
+	'Maio',
+	'Junho',
+	'Julho',
+	'Agosto',
+	'Setembro',
+	'Outubro',
+	'Novembro',
+	'Dezembro',
+]
 const currentYear = new Date().getFullYear()
 const calendarYearOptions = Array.from({ length: currentYear - 2022 + 1 }, (_, index) => 2022 + index)
 const timeHours = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, '0'))
@@ -90,6 +104,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const [isPanelMounted, setIsPanelMounted] = useState(false)
 	const [recentSelection, setRecentSelection] = useState(null)
 	const [calendarCursor, setCalendarCursor] = useState(() => new Date())
+	const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false)
 	const [isYearPickerOpen, setIsYearPickerOpen] = useState(false)
 	const navigate = useNavigate()
 	const starValues = Array.from({ length: 10 }, (_, index) => index + 1)
@@ -132,6 +147,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		setIsPanelMounted(false)
 		setRecentSelection(null)
 		setCalendarCursor(new Date())
+		setIsMonthPickerOpen(false)
 		setIsYearPickerOpen(false)
 	}, [initialData])
 
@@ -156,6 +172,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		}
 
 		if (activeSelector !== 'data') {
+			setIsMonthPickerOpen(false)
 			setIsYearPickerOpen(false)
 		}
 
@@ -216,6 +233,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		setPanelSelector(selector)
 		setSearchTerm('')
 		setIsPanelMounted(true)
+		setIsMonthPickerOpen(false)
 		setIsYearPickerOpen(false)
 
 		if (selector === 'data') {
@@ -226,6 +244,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	function closeSelector() {
 		setActiveSelector(null)
 		setSearchTerm('')
+		setIsMonthPickerOpen(false)
 		setIsYearPickerOpen(false)
 	}
 
@@ -411,9 +430,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const displayedCalendarDate = calendarCursor ?? new Date()
 	const calendarMonthStart = new Date(displayedCalendarDate.getFullYear(), displayedCalendarDate.getMonth(), 1)
 	const calendarMonthEnd = new Date(displayedCalendarDate.getFullYear(), displayedCalendarDate.getMonth() + 1, 0)
-	const calendarMonthLabel = capitalizeFirstLetter(
-		new Intl.DateTimeFormat('pt-PT', { month: 'long' }).format(calendarMonthStart),
-	)
+	const calendarMonthLabel = calendarMonthOptions[displayedCalendarDate.getMonth()]
 	const leadingEmptyDays = (calendarMonthStart.getDay() + 6) % 7
 	const daysInMonth = calendarMonthEnd.getDate()
 	const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -671,9 +688,52 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 								<div className="min-w-0 flex-1 text-center">
 									<p className="text-[11px] font-bold uppercase tracking-[0.3em] text-cyan-400">Calendário</p>
 									<div className="mt-1 flex items-center justify-center gap-2">
-										<span className="truncate text-base font-black tracking-tight text-slate-900 dark:text-white">
-											{calendarMonthLabel}
-										</span>
+										<div className="relative">
+											<button
+												type="button"
+												onClick={() => {
+													setIsMonthPickerOpen((currentValue) => !currentValue)
+													setIsYearPickerOpen(false)
+												}}
+												className="inline-flex min-w-[7.5rem] items-center justify-center gap-2 rounded-full border border-cyan-400/25 bg-gradient-to-br from-white/90 via-cyan-50/70 to-purple-50/60 px-3 py-1.5 text-sm font-bold text-slate-700 shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/50 hover:text-slate-900 hover:shadow-[0_0_0_1px_rgba(34,211,238,0.12),0_14px_36px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/30 dark:from-slate-900/80 dark:via-slate-950/85 dark:to-cyan-950/50 dark:text-slate-100 dark:hover:text-white"
+												aria-label="Selecionar mês"
+												aria-expanded={isMonthPickerOpen}
+											>
+												<span className="truncate">{calendarMonthLabel}</span>
+												<ChevronRight className={`h-4 w-4 text-cyan-400 transition-transform duration-200 ${isMonthPickerOpen ? 'rotate-90' : ''}`} />
+											</button>
+
+											{isMonthPickerOpen && (
+												<div className="absolute left-1/2 top-[calc(100%+0.7rem)] z-20 w-64 -translate-x-1/2 rounded-[1.35rem] border border-cyan-400/20 bg-white/95 p-3 text-left shadow-[0_24px_70px_rgba(15,23,42,0.2)] backdrop-blur-xl animate-year-picker-pop dark:bg-slate-950/95">
+													<div className="grid grid-cols-3 gap-2">
+														{calendarMonthOptions.map((month, index) => {
+															const isSelectedMonth = displayedCalendarDate.getMonth() === index
+
+															return (
+																<button
+																	key={month}
+																	type="button"
+																	onClick={() => {
+																		setCalendarCursor((currentDate) => new Date(currentDate.getFullYear(), index, 1))
+																		setIsMonthPickerOpen(false)
+																		setIsYearPickerOpen(false)
+																	}}
+																	className={`animate-year-chip-pop rounded-xl border px-2.5 py-2 text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/30 ${
+																		isSelectedMonth
+																			? 'border-cyan-400/50 bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-[0_0_18px_rgba(168,85,247,0.24)]'
+																			: 'border-slate-200/70 bg-white/80 text-slate-700 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:text-cyan-200'
+																	}`}
+																	style={{ animationDelay: `${Math.min(index * 18, 180)}ms` }}
+																	aria-pressed={isSelectedMonth}
+																>
+																	{month}
+																</button>
+															)
+														})}
+													</div>
+												</div>
+											)}
+										</div>
 										<div className="relative">
 											<button
 												type="button"
@@ -699,6 +759,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 																		type="button"
 																		onClick={() => {
 																			setCalendarCursor((currentDate) => new Date(year, currentDate.getMonth(), 1))
+																			setIsMonthPickerOpen(false)
 																			setIsYearPickerOpen(false)
 																		}}
 																		className={`animate-year-chip-pop rounded-xl border px-2.5 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/30 ${
