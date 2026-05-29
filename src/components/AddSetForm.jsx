@@ -98,6 +98,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const [formData, setFormData] = useState(initialFormState)
 	const [hoverRating, setHoverRating] = useState(0)
 	const [selectedRating, setSelectedRating] = useState(0)
+	const [ratingPulseKey, setRatingPulseKey] = useState(0)
 	const [activeSelector, setActiveSelector] = useState(null)
 	const [panelSelector, setPanelSelector] = useState(null)
 	const [searchTerm, setSearchTerm] = useState('')
@@ -133,6 +134,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 			setCalendarCursor(parseDateValue(resolvedData) ?? new Date())
 			setSelectedRating(initialRating)
 			setHoverRating(0)
+			setRatingPulseKey(0)
 			setActiveSelector(null)
 			setSearchTerm('')
 			return
@@ -141,6 +143,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		setFormData(initialFormState)
 		setSelectedRating(0)
 		setHoverRating(0)
+		setRatingPulseKey(0)
 		setActiveSelector(null)
 		setPanelSelector(null)
 		setSearchTerm('')
@@ -150,6 +153,20 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		setIsMonthPickerOpen(false)
 		setIsYearPickerOpen(false)
 	}, [initialData])
+
+	useEffect(() => {
+		if (ratingPulseKey === 0) {
+			return undefined
+		}
+
+		const timer = window.setTimeout(() => {
+			setRatingPulseKey(0)
+		}, 380)
+
+		return () => {
+			window.clearTimeout(timer)
+		}
+	}, [ratingPulseKey])
 
 	useEffect(() => {
 		let panelTimer
@@ -197,6 +214,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const isEntitySelector = selectorContext === 'festival' || selectorContext === 'dj'
 	const isCalendarSelector = selectorContext === 'data'
 	const isTimeSelector = selectorContext === 'horaInicio' || selectorContext === 'horaFim'
+	const isRatingSelector = selectorContext === 'avaliacao'
 	const selectorItems = selectorContext === 'festival' ? festivais : djs
 	const selectorTitleByContext = {
 		dj: 'Escolher Artista',
@@ -204,6 +222,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		data: 'Escolher Data',
 		horaInicio: 'Escolher Hora de Início',
 		horaFim: 'Escolher Hora de Fim',
+		avaliacao: 'Pontuar a Energia do Set',
 	}
 	const selectorSubtitleByContext = {
 		dj: 'Filtra por nome e escolhe o artista que vai assinar o set.',
@@ -211,6 +230,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		data: 'Seleciona a data num calendário compacto, sem sair do painel.',
 		horaInicio: 'Escolhe a hora de início com uma grelha rápida e precisa.',
 		horaFim: 'Escolhe a hora de fim com uma grelha rápida e precisa.',
+		avaliacao: 'Arrasta o cursor nas estrelas e sela a energia do set com uma confirmação luminosa.',
 	}
 	const selectorTitle = selectorTitleByContext[selectorContext] ?? 'Escolha um Campo'
 	const selectorSubtitle = selectorSubtitleByContext[selectorContext] ?? 'Usa o painel lateral para ajustar o valor selecionado.'
@@ -278,6 +298,10 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 			return formData.horaFim || 'Seleciona a Hora de Fim'
 		}
 
+		if (selector === 'avaliacao') {
+			return selectedRating ? `${selectedRating}/10` : 'Seleciona uma Avaliação'
+		}
+
 		return 'Seleciona um campo'
 	}
 
@@ -304,6 +328,10 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 		if (selector === 'horaFim') {
 			return formData.horaFim ? `Hora de fim definida: ${formData.horaFim}` : 'Abre o seletor para escolher a hora de fim'
+		}
+
+		if (selector === 'avaliacao') {
+			return selectedRating ? `Avaliação guardada: ${selectedRating}/10` : 'Abre o painel para pontuar a energia do set'
 		}
 
 		return 'Abre o painel lateral para editar este campo'
@@ -360,6 +388,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 	function handleRatingSelect(rating) {
 		setSelectedRating(rating)
+		setRatingPulseKey((currentValue) => currentValue + 1)
 		setFormData((currentFormData) => ({
 			...currentFormData,
 			avaliacao: String(rating),
@@ -543,36 +572,21 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 						<input type="hidden" name="horaFim" value={formData.horaFim} />
 					</div>
 
-					<label>
+					<div>
 						<span className={labelClassName}>Avaliação</span>
-						<div className="mt-1" onMouseLeave={() => setHoverRating(0)}>
-							<div className="mt-1 flex items-center gap-1">
-								{starValues.map((rating) => {
-									const isActive = rating <= activeRating
-
-									return (
-										<button
-											key={rating}
-											type="button"
-											aria-label={`Selecionar avaliação ${rating} de 10`}
-											aria-pressed={selectedRating === rating}
-											onMouseEnter={() => setHoverRating(rating)}
-											onFocus={() => setHoverRating(rating)}
-											onBlur={() => setHoverRating(0)}
-											onClick={() => handleRatingSelect(rating)}
-											className="group rounded-md p-0.5 transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60"
-										>
-											<Star className={isActive ? 'fill-current text-amber-400' : 'text-slate-300 dark:text-slate-600'} />
-										</button>
-									)
-								})}
-							</div>
-							<p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-								{selectedRating ? `Avaliação selecionada: ${selectedRating}/10` : 'Clica numa estrela para definir a avaliação'}
-							</p>
-							<input type="hidden" name="avaliacao" value={formData.avaliacao} />
-						</div>
-					</label>
+						<button
+							type="button"
+							onClick={() => openSelector('avaliacao')}
+							className={`${triggerButtonClassName} group`}
+						>
+							<span className={selectedRating ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
+								{getSelectorTriggerLabel('avaliacao')}
+							</span>
+							<Star className="h-4 w-4 shrink-0 text-amber-400 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_12px_rgba(245,158,11,0.45)]" />
+						</button>
+						<p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{getSelectorTriggerMeta('avaliacao')}</p>
+						<input type="hidden" name="avaliacao" value={formData.avaliacao} />
+					</div>
 				</div>
 				<div className="mt-6 flex items-center justify-end gap-3">
 					<button
@@ -600,14 +614,24 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 						: 'hidden'
 				} transition-all duration-300 ease-in-out`}
 			>
-				<div className="flex h-full max-h-[500px] flex-col gap-4 overflow-hidden rounded-2xl border border-slate-200/60 bg-white/40 p-6 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/30">
+				<div className={`flex h-full max-h-[500px] flex-col gap-4 overflow-hidden rounded-2xl border p-6 shadow-xl backdrop-blur-md transition-all duration-300 ease-out ${isRatingSelector ? 'border-purple-400/30 bg-gradient-to-br from-slate-950/95 via-slate-950/88 to-purple-950/55 shadow-[0_0_0_1px_rgba(168,85,247,0.12),0_30px_80px_rgba(88,28,135,0.24)] dark:border-purple-400/30' : 'border-slate-200/60 bg-white/40 dark:border-white/10 dark:bg-slate-900/30'}`}>
 					<div className="flex items-start justify-between gap-4">
 						<div>
-							<div className="flex items-center gap-2 text-slate-900 dark:text-white">
-								<Disc3 className="h-4 w-4 text-cyan-400" />
-								<h2 className="text-lg font-black tracking-tight">{selectorTitle}</h2>
-							</div>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectorSubtitle}</p>
+							{isRatingSelector ? (
+								<div className="space-y-2">
+									<p className="text-[11px] font-bold uppercase tracking-[0.35em] text-purple-300/80">Pulso do set</p>
+									<h2 className="text-xl font-black tracking-tight text-white">{selectorTitle}</h2>
+									<p className="max-w-sm text-sm text-slate-300/90">{selectorSubtitle}</p>
+								</div>
+							) : (
+								<div>
+									<div className="flex items-center gap-2 text-slate-900 dark:text-white">
+										<Disc3 className="h-4 w-4 text-cyan-400" />
+										<h2 className="text-lg font-black tracking-tight">{selectorTitle}</h2>
+									</div>
+									<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectorSubtitle}</p>
+								</div>
+							)}
 						</div>
 						<button
 							type="button"
@@ -618,6 +642,62 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 							<X className="h-4 w-4" />
 						</button>
 					</div>
+
+						{isRatingSelector && (
+							<div className="relative flex flex-1 min-h-0 flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.22),_transparent_42%),radial-gradient(circle_at_bottom,_rgba(245,158,11,0.12),_transparent_35%),linear-gradient(180deg,rgba(15,23,42,0.42),rgba(2,6,23,0.65))] px-4 py-6">
+								<div className="pointer-events-none absolute inset-x-8 top-5 h-24 rounded-full bg-gradient-to-r from-purple-500/0 via-fuchsia-400/20 to-amber-300/0 blur-3xl" />
+								<div className="relative z-10 flex flex-col items-center gap-2 text-center">
+									<div className={`relative ${ratingPulseKey > 0 ? 'animate-[rating-pulse_420ms_ease-out_1]' : ''}`} key={ratingPulseKey}>
+										<div className="absolute inset-0 -z-10 rounded-full bg-purple-500/20 blur-2xl" />
+										<div className="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-400 to-pink-500 drop-shadow-[0_0_18px_rgba(168,85,247,0.35)]">
+											{selectedRating || 0}
+										</div>
+									</div>
+									<p className="text-[11px] font-bold uppercase tracking-[0.35em] text-slate-300/70">Nota fixa</p>
+								</div>
+
+								<div className="mt-8 flex w-full items-end justify-center gap-1 sm:gap-1.5" onMouseLeave={() => setHoverRating(0)}>
+									{starValues.map((rating, index) => {
+										const isActive = rating <= activeRating
+										const isSelected = selectedRating === rating
+										const arcOffset = Math.abs(index - 4.5) * 5
+										const shouldFlash = ratingPulseKey > 0 && selectedRating === rating
+
+										return (
+											<button
+												key={`${rating}-${ratingPulseKey}`}
+												type="button"
+												aria-label={`Selecionar avaliação ${rating} de 10`}
+												aria-pressed={selectedRating === rating}
+												onMouseEnter={() => setHoverRating(rating)}
+												onFocus={() => setHoverRating(rating)}
+												onBlur={() => setHoverRating(0)}
+												onClick={() => handleRatingSelect(rating)}
+												style={{ marginTop: `${arcOffset}px` }}
+												className={`group relative rounded-full p-1 outline-none transition-all duration-200 ease-out hover:z-20 focus-visible:ring-2 focus-visible:ring-purple-400/60 ${
+													isActive ? 'scale-[1.3] drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]' : 'opacity-60'
+												} ${shouldFlash ? 'animate-[rating-star-flash_320ms_ease-out_1]' : ''}`}
+											>
+												<Star
+													className={`h-7 w-7 transition-all duration-200 ease-out ${
+														isActive
+															? 'fill-current text-amber-300 drop-shadow-[0_0_12px_rgba(252,211,77,0.5)]'
+															: 'text-white/22'
+													} ${shouldFlash ? 'text-fuchsia-300 drop-shadow-[0_0_18px_rgba(236,72,153,0.65)]' : ''}`}
+												/>
+												{isSelected && (
+													<span className="pointer-events-none absolute inset-0 rounded-full bg-white/5 ring-1 ring-white/10" />
+												)}
+											</button>
+										)
+									})}
+								</div>
+
+								<p className="mt-6 text-xs font-medium text-slate-300/75">
+									{selectedRating ? `Nota guardada: ${selectedRating}/10` : 'Passa o rato para pré-visualizar e clica para selar a nota.'}
+								</p>
+							</div>
+						)}
 
 					{isEntitySelector && (
 						<>
