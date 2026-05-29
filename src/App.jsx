@@ -172,6 +172,14 @@ export default function App() {
     setDjs((currentDjs) => currentDjs.map((dj) => (dj.id === updatedDj.id ? { ...dj, ...normalizeDj(updatedDj) } : dj)))
   }
 
+  function handleEditFestival(updatedFestival) {
+    setFestivais((currentFestivais) =>
+      currentFestivais.map((festival) =>
+        festival.id === updatedFestival.id ? { ...festival, ...updatedFestival } : festival,
+      ),
+    )
+  }
+
   function handleDeleteSet(id) {
     setSets((currentSets) => currentSets.filter((set) => set.id !== id))
   }
@@ -381,6 +389,7 @@ export default function App() {
                   <AddFestivalPage
                     festivais={festivais}
                     handleAddFestival={handleAddFestival}
+                    handleEditFestival={handleEditFestival}
                     handleDeleteFestival={handleDeleteFestival}
                   />
                 }

@@ -1,17 +1,32 @@
+import { useSearchParams } from 'react-router-dom'
+
 import AddFestivalForm from '../components/AddFestivalForm'
 
-export default function AddFestivalPage({ handleAddFestival }) {
+
+export default function AddFestivalPage({ festivais = [], handleAddFestival, handleEditFestival }) {
+	const [searchParams] = useSearchParams()
+	const editId = searchParams.get('edit')
+	const initialData = editId ? festivais.find((f) => f.id === editId) : undefined
+	const isEditing = Boolean(initialData)
+
 	return (
-		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden">
-			<div className="section-header shrink-0">
-				<p className="eyebrow dark:text-gray-400">Catálogo</p>
-				<h1 className="dark:text-gray-100">Adicionar Festival</h1>
-				<p className="dark:text-slate-300">Cria uma entidade de Festival para depois associar aos sets.</p>
+		<section className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
+			<div className="flex flex-col gap-2 max-w-4xl mx-auto w-full">
+				<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+					{isEditing ? 'Editar Festival' : 'Adicionar Festival'}
+				</h1>
+				<p className="text-sm text-slate-500 dark:text-slate-400">
+					{isEditing
+						? 'Atualiza os dados do festival selecionado e mantém a biblioteca consistente.'
+						: 'Cria uma nova entidade de festival para depois associar aos sets.'}
+				</p>
 			</div>
 
-			<div className="form-wrapper w-full flex-1 min-h-0 overflow-y-auto pr-1">
-				<AddFestivalForm handleAddFestival={handleAddFestival} />
-			</div>
+			<AddFestivalForm
+				initialData={initialData}
+				handleAddFestival={handleAddFestival}
+				handleEditFestival={handleEditFestival}
+			/>
 		</section>
 	)
 }
