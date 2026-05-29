@@ -56,7 +56,9 @@ function normalizeSet(set) {
     djId: set.djId ?? set.dj?.id ?? '',
     festivalId: set.festivalId ?? set.festival?.id ?? '',
     data: set.data ?? '',
-    hora: set.hora ?? '',
+    horaInicio: set.horaInicio ?? set.hora ?? '',
+    horaFim: set.horaFim ?? '',
+    hora: set.hora ?? set.horaInicio ?? '',
     avaliacao: set.avaliacao ?? null,
   }
 }
