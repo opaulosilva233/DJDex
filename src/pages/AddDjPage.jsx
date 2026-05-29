@@ -10,25 +10,25 @@ export default function AddDjPage({ djs = [], handleAddDj, handleEditDj, generos
 	const isEditing = Boolean(initialData)
 
 	return (
-		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden">
-			<div className="section-header shrink-0">
-				<p className="eyebrow dark:text-gray-400">Catálogo</p>
-				<h1 className="dark:text-gray-100">{isEditing ? 'Editar DJ' : 'Adicionar DJ'}</h1>
-				<p className="dark:text-slate-300">
+		<section className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
+			<div className="flex flex-col gap-3">
+				<p className="text-xs font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">Catálogo</p>
+				<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+					{isEditing ? 'Editar DJ' : 'Adicionar DJ'}
+				</h1>
+				<p className="max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-300">
 					{isEditing
-						? 'Atualiza os dados do DJ selecionado através do formulário abaixo.'
-						: 'Cria uma entidade de DJ para depois associar aos sets.'}
+						? 'Atualiza os dados do DJ selecionado e mantém a biblioteca consistente com a nova linguagem visual.'
+						: 'Cria uma nova entidade de DJ com um formulário mais limpo, translúcido e alinhado ao resto da aplicação.'}
 				</p>
 			</div>
 
-			<div className="form-wrapper w-full flex-1 min-h-0 overflow-y-auto pr-1">
-				<AddDjForm
-					initialData={initialData}
-					handleAddDj={handleAddDj}
-					handleEditDj={handleEditDj}
-					generos={generos}
-				/>
-			</div>
+			<AddDjForm
+				initialData={initialData}
+				handleAddDj={handleAddDj}
+				handleEditDj={handleEditDj}
+				generos={generos}
+			/>
 		</section>
 	)
 }
