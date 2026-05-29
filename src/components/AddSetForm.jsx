@@ -15,6 +15,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const [hoverRating, setHoverRating] = useState(0)
 	const [selectedRating, setSelectedRating] = useState(0)
 	const [activeSelector, setActiveSelector] = useState(null)
+	const [panelSelector, setPanelSelector] = useState(null)
 	const [searchTerm, setSearchTerm] = useState('')
 	const [isPanelMounted, setIsPanelMounted] = useState(false)
 	const [recentSelection, setRecentSelection] = useState(null)
@@ -47,6 +48,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		setSelectedRating(0)
 		setHoverRating(0)
 		setActiveSelector(null)
+		setPanelSelector(null)
 		setSearchTerm('')
 		setIsPanelMounted(false)
 		setRecentSelection(null)
@@ -58,9 +60,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 		if (activeSelector) {
 			setIsPanelMounted(true)
+			setPanelSelector(activeSelector)
 		} else {
 			panelTimer = window.setTimeout(() => {
 				setIsPanelMounted(false)
+				setPanelSelector(null)
 			}, 300)
 		}
 
@@ -87,10 +91,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		(genero) => Array.isArray(selectedDj?.generoIds) && selectedDj.generoIds.includes(genero.id),
 	)
 	const isSelectorActive = activeSelector !== null
- 	const selectorItems = activeSelector === 'festival' ? festivais : djs
-	const selectorTitle = activeSelector === 'festival' ? 'Escolher Festival' : 'Escolher Artista'
+	const selectorContext = activeSelector ?? panelSelector
+	const selectorItems = selectorContext === 'festival' ? festivais : djs
+	const selectorTitle = selectorContext === 'festival' ? 'Escolher Festival' : 'Escolher Artista'
 	const selectorSubtitle =
-		activeSelector === 'festival'
+		selectorContext === 'festival'
 			? 'Filtra por nome e escolhe o festival que vai guardar o set.'
 			: 'Filtra por nome e escolhe o artista que vai assinar o set.'
 	const normalizedSearchTerm = searchTerm.trim().toLowerCase()
@@ -100,7 +105,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		}
 
 		const baseText =
-			activeSelector === 'festival'
+			selectorContext === 'festival'
 				? `${item.nome ?? ''} ${item.local ?? ''} ${item.ano ?? ''}`
 				: `${item.nome ?? ''} ${item.biografia ?? ''}`
 
@@ -109,6 +114,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 	function openSelector(selector) {
 		setActiveSelector(selector)
+		setPanelSelector(selector)
 		setSearchTerm('')
 		setIsPanelMounted(true)
 	}
@@ -214,7 +220,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const activeRating = hoverRating || selectedRating
 
 	return (
-		<div className={`w-full ${isPanelMounted ? 'grid grid-cols-1 gap-8 lg:grid-cols-12' : 'mx-auto max-w-2xl'}`}>
+		<div
+			className={`w-full transition-all duration-300 ease-in-out ${
+				isPanelMounted ? 'grid grid-cols-1 gap-8 lg:grid-cols-12' : 'block'
+			}`}
+		>
 			<form
 				onSubmit={handleSubmit}
 				className={`w-full h-full max-h-[500px] overflow-hidden bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-xl ${
@@ -323,8 +333,10 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 			<aside
 				className={`${
 					isPanelMounted
-						? 'lg:col-span-5 w-full opacity-100 translate-x-0'
-						: 'hidden lg:block lg:col-span-5 lg:pointer-events-none lg:opacity-0 lg:translate-x-4'
+						? isSelectorActive
+							? 'lg:block lg:col-span-5 w-full opacity-100 translate-x-0 pointer-events-auto'
+							: 'lg:block lg:col-span-5 w-full opacity-0 translate-x-12 pointer-events-none'
+						: 'hidden'
 				} transition-all duration-300 ease-in-out`}
 			>
 				<div className="flex h-full max-h-[500px] flex-col gap-4 overflow-hidden rounded-2xl border border-slate-200/60 bg-white/40 p-6 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/30">
@@ -370,11 +382,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 										key={item.id}
 										type="button"
 										onClick={() => handleEntitySelect(activeSelector, item.id)}
-										className={`mx-auto flex w-full max-w-md cursor-pointer items-center gap-3 rounded-xl border p-2 text-left transition-all duration-200 hover:border-purple-500/30 hover:bg-purple-500/10 active:scale-95 ${
+										className={`mx-auto flex w-full max-w-md cursor-pointer items-center gap-3 rounded-xl border p-2 text-left transition-all duration-100 transition-transform hover:border-purple-500/30 hover:bg-purple-500/10 active:scale-95 ${
 											isSelected
-												? 'border-purple-500/40 bg-purple-500/10 shadow-[0_0_0_1px_rgba(168,85,247,0.15)]'
+												? 'border-purple-500/40 bg-purple-500/10 shadow-[0_0_0_1px_rgba(168,85,247,0.15)] transition-colors duration-500'
 												: 'border-transparent bg-white/30 dark:bg-white/5'
-										} ${isRecentlySelected ? 'scale-[0.99] ring-2 ring-purple-400/30 animate-[pulse_0.2s_ease-in-out_1]' : ''}`}
+										} ${isRecentlySelected ? 'scale-[0.99] ring-2 ring-purple-400/30 animate-[pulse_0.35s_ease-in-out_1]' : ''}`}
 									>
 										<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-sm font-bold text-slate-700 ring-1 ring-white/20 dark:text-white">
 											{avatarContent}
@@ -382,7 +394,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 										<div className="min-w-0 flex-1">
 											<div className="flex items-center justify-between gap-2">
 												<p className="truncate text-sm font-bold text-slate-900 dark:text-white">{item.nome}</p>
-												{isSelected && <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-400">Selecionado</span>}
+												{isSelected && <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-400 transition-colors duration-500">Selecionado</span>}
 											</div>
 											<p className="mt-1 text-[11px] leading-4 text-slate-500 dark:text-slate-400">{details}</p>
 										</div>
