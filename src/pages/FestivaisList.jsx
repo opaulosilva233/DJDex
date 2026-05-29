@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
+import { Globe, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
 
 const fallbackImageDataUrl =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" rx="80" fill="%23e2e8f0"/><path d="M36 106l22-30 16 18 18-24 32 36H36Z" fill="%2394a3b8"/><circle cx="60" cy="58" r="10" fill="%2394a3b8"/></svg>'
 
-export default function FestivaisList({ festivais = [], handleDeleteFestival }) {
+export default function FestivaisList({ festivais = [], handleDeleteFestival, generos = [] }) {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -16,10 +16,20 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
       if (normalizedTerm === '') return true
 
       const nome = String(festival?.nome ?? '').toLowerCase()
+      if (nome.includes(normalizedTerm)) return true
+
+      if (Array.isArray(festival?.edicoes)) {
+        const matchesEdicao = festival.edicoes.some((edicao) => {
+          const local = String(edicao.local ?? '').toLowerCase()
+          const ano = String(edicao.ano ?? '').toLowerCase()
+          return local.includes(normalizedTerm) || ano.includes(normalizedTerm)
+        })
+        if (matchesEdicao) return true
+      }
+
       const local = String(festival?.local ?? '').toLowerCase()
       const ano = String(festival?.ano ?? '').toLowerCase()
-
-      return nome.includes(normalizedTerm) || local.includes(normalizedTerm) || ano.includes(normalizedTerm)
+      return local.includes(normalizedTerm) || ano.includes(normalizedTerm)
     })
   }, [festivais, searchTerm])
 
@@ -31,6 +41,13 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
   }
 
   function formatFestivalSubtitle(festival) {
+    if (Array.isArray(festival?.edicoes) && festival.edicoes.length > 0) {
+      const sortedEdicoes = [...festival.edicoes].sort((left, right) => right.ano - left.ano)
+      const latest = sortedEdicoes[0]
+      const totalEditions = festival.edicoes.length
+      return `${latest.local} • ${latest.ano} (${totalEditions} ${totalEditions === 1 ? 'edição' : 'edições'})`
+    }
+
     const local = String(festival?.local ?? '').trim()
     const ano = String(festival?.ano ?? '').trim()
 
@@ -98,6 +115,17 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
               <div className="pointer-events-none absolute -bottom-14 right-[-3rem] h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
               <div className="absolute right-4 top-4 z-20 flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                {festival.website && (
+                  <a
+                    href={festival.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400/30 hover:bg-purple-400/10 hover:text-purple-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20"
+                    aria-label="Website Oficial"
+                  >
+                    <Globe size={15} />
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => navigate(`/festivais/adicionar?edit=${festival.id}`)}
@@ -132,18 +160,66 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival }) 
                     <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                       {formatFestivalSubtitle(festival)}
                     </p>
+                    
+                    {/* Tags secundárias de Tipo e Géneros */}
+                    {(festival.tipo || (Array.isArray(festival.generoIds) && festival.generoIds.length > 0)) && (
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        {festival.tipo && (
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-cyan-500 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                            {festival.tipo}
+                          </span>
+                        )}
+                        {Array.isArray(festival.generoIds) &&
+                          festival.generoIds.map((id) => {
+                            const g = generos.find((item) => item.id === id)
+                            if (!g) return null
+                            return (
+                              <span
+                                key={id}
+                                className="text-[9px] font-extrabold uppercase tracking-wider text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20"
+                              >
+                                {g.nome}
+                              </span>
+                            )
+                          })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="mt-auto flex flex-wrap gap-2">
-                  {festival.local ? (
-                    <span className="rounded-full border border-slate-300/40 bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                      {festival.local}
-                    </span>
-                  ) : null}
-                  <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-200">
-                    {festival.ano || 'Ano por definir'}
-                  </span>
+                  {Array.isArray(festival.edicoes) && festival.edicoes.length > 0 ? (
+                    (() => {
+                      const sortedEdicoes = [...festival.edicoes].sort((left, right) => right.ano - left.ano)
+                      const latest = sortedEdicoes[0]
+                      const anosUnicos = Array.from(new Set(festival.edicoes.map((e) => e.ano)))
+                        .sort((left, right) => right - left)
+                        .slice(0, 3)
+
+                      return (
+                        <>
+                          <span className="rounded-full border border-slate-300/40 bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                            {latest.local}
+                          </span>
+                          <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-200">
+                            {anosUnicos.join(', ')}
+                            {festival.edicoes.length > 3 ? '...' : ''}
+                          </span>
+                        </>
+                      )
+                    })()
+                  ) : (
+                    <>
+                      {festival.local ? (
+                        <span className="rounded-full border border-slate-300/40 bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                          {festival.local}
+                        </span>
+                      ) : null}
+                      <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-200">
+                        {festival.ano || 'Ano por definir'}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             </article>

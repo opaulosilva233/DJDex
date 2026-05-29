@@ -63,6 +63,39 @@ function normalizeSet(set) {
   }
 }
 
+function normalizeFestival(festival) {
+  if (!festival || typeof festival !== 'object') {
+    return festival
+  }
+
+  const edicoes = Array.isArray(festival.edicoes)
+    ? festival.edicoes
+    : (festival.local || festival.ano)
+      ? [
+          {
+            id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()),
+            ano: festival.ano ? Number(festival.ano) : new Date().getFullYear(),
+            dataInicio: festival.dataInicio || `${festival.ano || new Date().getFullYear()}-06-01`,
+            duracao: festival.duracao ? Number(festival.duracao) : 1,
+            local: festival.local || '',
+          }
+        ]
+      : []
+
+  return {
+    ...festival,
+    edicoes,
+    generoIds: Array.isArray(festival.generoIds)
+      ? festival.generoIds
+      : Array.isArray(festival.generos)
+        ? festival.generos.map((g) => g.id).filter(Boolean)
+        : [],
+    tipo: festival.tipo ?? '',
+    website: festival.website ?? '',
+  }
+}
+
+
 function readStoredCollection(storageKey, fallback, normalizer) {
   if (typeof window === 'undefined') {
     return fallback
@@ -71,7 +104,7 @@ function readStoredCollection(storageKey, fallback, normalizer) {
   const storedCollection = window.localStorage.getItem(storageKey)
 
   if (!storedCollection) {
-    return fallback
+    return typeof normalizer === 'function' ? fallback.map(normalizer) : fallback
   }
 
   try {
@@ -88,7 +121,7 @@ export default function App() {
   const [generos, setGeneros] = useState(() => readStoredCollection('ravedex_generos', initialRelationalGeneros))
   const [djs, setDjs] = useState(() => readStoredCollection('ravedex_djs', initialRelationalDjs, normalizeDj))
   const [festivais, setFestivais] = useState(() =>
-    readStoredCollection('ravedex_festivais', initialRelationalFestivais),
+    readStoredCollection('ravedex_festivais', initialRelationalFestivais, normalizeFestival),
   )
   const [sets, setSets] = useState(() => {
     return readStoredCollection('ravedex_sets', initialRelationalSets, normalizeSet)
@@ -141,7 +174,7 @@ export default function App() {
   }
 
   function handleAddFestival(novoFestival) {
-    setFestivais((currentFestivais) => [novoFestival, ...currentFestivais])
+    setFestivais((currentFestivais) => [normalizeFestival(novoFestival), ...currentFestivais])
   }
 
   function handleAddSet(novoSet) {
@@ -160,7 +193,7 @@ export default function App() {
 
     setGeneros(Array.isArray(importedData.generos) ? importedData.generos : [])
     setDjs(Array.isArray(importedData.djs) ? importedData.djs.map(normalizeDj) : [])
-    setFestivais(Array.isArray(importedData.festivais) ? importedData.festivais : [])
+    setFestivais(Array.isArray(importedData.festivais) ? importedData.festivais.map(normalizeFestival) : [])
     setSets(Array.isArray(importedData.sets) ? importedData.sets.map(normalizeSet) : [])
   }
 
@@ -175,7 +208,15 @@ export default function App() {
   function handleEditFestival(updatedFestival) {
     setFestivais((currentFestivais) =>
       currentFestivais.map((festival) =>
-        festival.id === updatedFestival.id ? { ...festival, ...updatedFestival } : festival,
+        festival.id === updatedFestival.id ? normalizeFestival(updatedFestival) : festival,
+      ),
+    )
+  }
+
+  function handleEditGenero(updatedGenero) {
+    setGeneros((currentGeneros) =>
+      currentGeneros.map((genero) =>
+        genero.id === updatedGenero.id ? { ...genero, ...updatedGenero } : genero,
       ),
     )
   }
@@ -304,6 +345,7 @@ export default function App() {
                   <FestivaisList
                     festivais={festivais}
                     handleDeleteFestival={handleDeleteFestival}
+                    generos={generos}
                   />
                 }
               />
@@ -379,6 +421,7 @@ export default function App() {
                   <AddGeneroPage
                     generos={generos}
                     handleAddGenero={handleAddGenero}
+                    handleEditGenero={handleEditGenero}
                     handleDeleteGenero={handleDeleteGenero}
                   />
                 }
@@ -388,6 +431,7 @@ export default function App() {
                 element={
                   <AddFestivalPage
                     festivais={festivais}
+                    generos={generos}
                     handleAddFestival={handleAddFestival}
                     handleEditFestival={handleEditFestival}
                     handleDeleteFestival={handleDeleteFestival}

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import AddFestivalForm from '../components/AddFestivalForm'
 
 
-export default function AddFestivalPage({ festivais = [], handleAddFestival, handleEditFestival }) {
+export default function AddFestivalPage({ festivais = [], handleAddFestival, handleEditFestival, generos = [] }) {
 	const [searchParams] = useSearchParams()
 	const editId = searchParams.get('edit')
 	const initialData = editId ? festivais.find((f) => f.id === editId) : undefined
@@ -26,6 +26,7 @@ export default function AddFestivalPage({ festivais = [], handleAddFestival, han
 				initialData={initialData}
 				handleAddFestival={handleAddFestival}
 				handleEditFestival={handleEditFestival}
+				generos={generos}
 			/>
 		</section>
 	)

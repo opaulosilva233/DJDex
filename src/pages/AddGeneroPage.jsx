@@ -1,17 +1,31 @@
+import { useSearchParams } from 'react-router-dom'
+
 import AddGeneroForm from '../components/AddGeneroForm'
 
-export default function AddGeneroPage({ handleAddGenero }) {
+export default function AddGeneroPage({ generos = [], handleAddGenero, handleEditGenero }) {
+	const [searchParams] = useSearchParams()
+	const editId = searchParams.get('edit')
+	const initialData = editId ? generos.find((g) => g.id === editId) : undefined
+	const isEditing = Boolean(initialData)
+
 	return (
-		<section className="page-section h-full w-full min-h-0 flex flex-col overflow-hidden">
-			<div className="section-header shrink-0">
-				<p className="eyebrow dark:text-gray-400">Catálogo</p>
-				<h1 className="dark:text-gray-100">Adicionar Género</h1>
-				<p className="dark:text-slate-300">Cria um género para depois o associares a um ou mais DJs.</p>
+		<section className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
+			<div className="flex flex-col gap-2 max-w-xl mx-auto w-full">
+				<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+					{isEditing ? 'Editar Género' : 'Adicionar Género'}
+				</h1>
+				<p className="text-sm text-slate-500 dark:text-slate-400">
+					{isEditing
+						? 'Atualiza os dados do género selecionado e mantém o catálogo consistente.'
+						: 'Cria um género para depois o associares a um ou mais DJs.'}
+				</p>
 			</div>
 
-			<div className="form-wrapper w-full flex-1 min-h-0 overflow-y-auto pr-1">
-				<AddGeneroForm handleAddGenero={handleAddGenero} />
-			</div>
+			<AddGeneroForm
+				initialData={initialData}
+				handleAddGenero={handleAddGenero}
+				handleEditGenero={handleEditGenero}
+			/>
 		</section>
 	)
 }
