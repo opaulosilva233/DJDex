@@ -31,6 +31,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [modalDjData, setModalDjData] = useState(null)
 	const [showAllDjs, setShowAllDjs] = useState(false)
+	const [selectedFestivalId, setSelectedFestivalId] = useState('')
 
 	// Configurar DJ selecionado padrão caso não esteja definido
 	useEffect(() => {
@@ -321,6 +322,65 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			)
 		})
 	}, [djs, djSearchTerm, generos])
+
+	// Calculations for the selected festival in "Festivais" tab
+	const festivalSets = useMemo(() => {
+		if (!selectedFestivalId) return []
+		return sets.filter((s) => s.festivalId === selectedFestivalId)
+	}, [sets, selectedFestivalId])
+
+	const festivalKpis = useMemo(() => {
+		if (festivalSets.length === 0) return { edicoes: 0, djs: 0, media: '—' }
+		
+		// Unique years / editions attended
+		const anos = festivalSets.map((s) => s.data ? s.data.substring(0, 4) : '').filter(Boolean)
+		const edicoesCount = new Set(anos).size
+
+		// Unique DJs seen in this festival
+		const djIds = festivalSets.map((s) => s.djId).filter(Boolean)
+		const djsCount = new Set(djIds).size
+
+		// Average rating of sets at this festival
+		const ratedSets = festivalSets.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
+		const media = ratedSets.length > 0
+			? (ratedSets.reduce((acc, s) => acc + Number(s.avaliacao), 0) / ratedSets.length).toFixed(1)
+			: '—'
+
+		return {
+			edicoes: edicoesCount,
+			djs: djsCount,
+			media,
+		}
+	}, [festivalSets])
+
+	const festivalTopDjs = useMemo(() => {
+		if (festivalSets.length === 0) return []
+		const counts = {}
+		festivalSets.forEach((s) => {
+			if (s.djId) {
+				counts[s.djId] = (counts[s.djId] || 0) + 1
+			}
+		})
+		return Object.entries(counts)
+			.map(([djId, count]) => {
+				const dj = djs.find((d) => d.id === djId)
+				return {
+					name: dj ? dj.nome : 'Desconhecido',
+					quantidade: count,
+				}
+			})
+			.sort((a, b) => b.quantidade - a.quantidade || a.name.localeCompare(b.name, 'pt'))
+			.slice(0, 10)
+	}, [festivalSets, djs])
+
+	const festivalHistorySets = useMemo(() => {
+		if (festivalSets.length === 0) return []
+		return [...festivalSets].sort((a, b) => {
+			const dateA = new Date(`${a.data || '2000-01-01'}T${a.hora || '00:00'}`)
+			const dateB = new Date(`${b.data || '2000-01-01'}T${b.hora || '00:00'}`)
+			return dateB - dateA
+		})
+	}, [festivalSets])
 
 	// Abas configuradas
 	const tabs = [
@@ -881,56 +941,204 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				)}
 
 				{activeTab === 'festivais' && (
-					<div className="grid grid-cols-1 gap-8 animate-fadeIn">
-						<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
-							<div>
-								<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-									<BarChart2 className="text-purple-500 dark:text-purple-400 w-5 h-5" />
-									Sets por Festival
-								</h2>
-								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-									Distribuição de atuações por cada festival registado.
+					<div className="flex flex-col gap-6 animate-fadeIn">
+						
+						{/* Seletor de Festival */}
+						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40 dark:bg-slate-900/20 backdrop-blur-md border border-slate-200/60 dark:border-white/5 p-4 rounded-2xl shadow-lg">
+							<div className="flex items-center gap-3">
+								<div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-600 dark:text-purple-400 shrink-0">
+									<Calendar className="w-5 h-5" />
+								</div>
+								<div>
+									<h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Selecionar Festival</h2>
+									<p className="text-xs text-slate-500 dark:text-slate-400">Escolhe um festival para visualizar o histórico de atuações e métricas.</p>
+								</div>
+							</div>
+							<div className="relative min-w-[240px]">
+								<select
+									value={selectedFestivalId}
+									onChange={(e) => setSelectedFestivalId(e.target.value)}
+									className="w-full appearance-none rounded-xl border border-slate-200 bg-white/80 dark:bg-slate-900/60 px-4 py-2.5 pr-10 text-sm text-slate-900 dark:text-white dark:border-slate-800 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all cursor-pointer font-semibold shadow-sm"
+								>
+									<option value="" className="dark:bg-slate-950 font-normal">Selecione um festival...</option>
+									{festivais.map((f) => (
+										<option key={f.id} value={f.id} className="dark:bg-slate-950 font-medium">{f.nome}</option>
+									))}
+								</select>
+								<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 dark:text-slate-400">
+									<Sliders className="w-4 h-4" />
+								</div>
+							</div>
+						</div>
+
+						{selectedFestivalId ? (
+							<>
+								{/* KPIs rápidos do Festival */}
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+									{/* KPI 1: Edições Assistidas */}
+									<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+										<div className="flex flex-col gap-1 min-w-0">
+											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Edições Assistidas</span>
+											<span className="text-2xl font-black text-slate-900 dark:text-white">{festivalKpis.edicoes}</span>
+										</div>
+										<div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-500/20 dark:border-purple-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(168,85,247,0.1)] shrink-0">
+											<Ticket className="w-5 h-5" />
+										</div>
+									</div>
+
+									{/* KPI 2: DJs Vistos */}
+									<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+										<div className="flex flex-col gap-1 min-w-0">
+											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">DJs Vistos</span>
+											<span className="text-2xl font-black text-slate-900 dark:text-white">{festivalKpis.djs}</span>
+										</div>
+										<div className="p-3 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 rounded-xl border border-cyan-500/20 dark:border-cyan-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(6,182,212,0.1)] shrink-0">
+											<Headphones className="w-5 h-5" />
+										</div>
+									</div>
+
+									{/* KPI 3: Nota Média */}
+									<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+										<div className="flex flex-col gap-1 min-w-0">
+											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nota Média do Festival</span>
+											<span className="text-2xl font-black text-purple-600 dark:text-purple-400">{festivalKpis.media}</span>
+										</div>
+										<div className="p-3 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 rounded-xl border border-fuchsia-500/20 dark:border-fuchsia-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(217,70,239,0.1)] shrink-0">
+											<Flame className="w-5 h-5" />
+										</div>
+									</div>
+								</div>
+
+								{/* Grid de Análise Detalhada */}
+								<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+									
+									{/* Coluna Esquerda: Top DJs no Festival (5 colunas) */}
+									<div className="lg:col-span-5 flex flex-col gap-6">
+										<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+											<div>
+												<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+													<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
+													Top DJs no Festival
+												</h2>
+												<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+													Quantidade de sets que cada DJ tocou neste festival.
+												</p>
+											</div>
+
+											{festivalTopDjs.length > 0 ? (
+												<div style={{ width: '100%', height: '300px' }}>
+													<ResponsiveContainer width="100%" height="100%">
+														<BarChart data={festivalTopDjs} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+															<defs>
+																<linearGradient id="cyanToNeonBlue" x1="0" y1="0" x2="1" y2="0">
+																	<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.8} />
+																	<stop offset="100%" stopColor="#3b82f6" stopOpacity={0.8} />
+																</linearGradient>
+															</defs>
+															<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} horizontal={false} />
+															<XAxis type="number" allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+															<YAxis dataKey="name" type="category" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+															<Tooltip
+																contentStyle={{
+																	backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+																	borderColor: darkMode ? '#334155' : '#e2e8f0',
+																	borderRadius: '12px',
+																	color: darkMode ? '#fff' : '#0f172a',
+																	fontSize: '11px',
+																	boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+																}}
+																cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}
+															/>
+															<Bar dataKey="quantidade" name="Sets" fill="url(#cyanToNeonBlue)" radius={[0, 4, 4, 0]} barSize={16} />
+														</BarChart>
+													</ResponsiveContainer>
+												</div>
+											) : (
+												<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+													<Info className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+													<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhum set registado</p>
+													<p className="text-xs text-slate-500 max-w-xs">
+														Não existem sets de DJs registados para este festival.
+													</p>
+												</div>
+											)}
+										</section>
+									</div>
+
+									{/* Coluna Direita: Histórico de Atuações (7 colunas) */}
+									<div className="lg:col-span-7 flex flex-col gap-6">
+										<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+											<div>
+												<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+													<Calendar className="text-purple-500 dark:text-purple-400 w-5 h-5" />
+													Histórico de Atuações
+												</h2>
+												<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+													Lista de todos os sets assistidos associados a este festival.
+												</p>
+											</div>
+
+											{festivalHistorySets.length > 0 ? (
+												<div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5">
+													<table className="w-full text-left text-sm border-collapse">
+														<thead>
+															<tr className="bg-slate-100/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-white/10">
+																<th className="py-3 px-4">Edição/Ano</th>
+																<th className="py-3 px-4">Data e Hora</th>
+																<th className="py-3 px-4">DJ</th>
+																<th className="py-3 px-4 text-center">Avaliação</th>
+															</tr>
+														</thead>
+														<tbody className="divide-y divide-slate-200/60 dark:divide-white/5 text-slate-700 dark:text-slate-300">
+															{festivalHistorySets.map((s) => {
+																const dj = djs.find((d) => d.id === s.djId)
+																return (
+																	<tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
+																		<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold">
+																			{s.data ? s.data.substring(0, 4) : '—'}
+																		</td>
+																		<td className="py-3.5 px-4">
+																			{s.data ? s.data.split('-').reverse().join('/') : 'Sem data'}
+																			{s.hora && <span className="text-slate-500 font-normal"> às {s.hora}</span>}
+																		</td>
+																		<td className="py-3.5 px-4 text-slate-900 dark:text-white font-medium">
+																			{dj ? dj.nome : 'Desconhecido'}
+																		</td>
+																		<td className="py-3.5 px-4 text-center">
+																			{getRatingBadge(s.avaliacao)}
+																		</td>
+																	</tr>
+																)
+															})}
+														</tbody>
+													</table>
+												</div>
+											) : (
+												<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+													<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+													<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhum set registado</p>
+													<p className="text-xs text-slate-500 max-w-xs">
+														Não existem sets gravados para este festival no histórico.
+													</p>
+												</div>
+											)}
+										</section>
+									</div>
+
+								</div>
+							</>
+						) : (
+							/* Estado Inicial Vazio */
+							<div className="flex flex-col items-center justify-center py-20 text-center gap-4 bg-white/40 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 backdrop-blur-md rounded-2xl animate-fadeIn p-6">
+								<div className="p-4 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl border border-purple-500/20 dark:border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+									<Ticket className="w-8 h-8" />
+								</div>
+								<p className="text-slate-600 dark:text-slate-400 text-sm font-semibold max-w-md">
+									Por favor, seleciona um festival para ver o histórico e métricas das atuações.
 								</p>
 							</div>
+						)}
 
-							{setsPorFestival.length > 0 ? (
-								<div style={{ width: '100%', height: '320px' }}>
-									<ResponsiveContainer width="100%" height="100%">
-										<PieChart>
-											<Pie
-												data={setsPorFestival}
-												dataKey="quantidade"
-												nameKey="name"
-												cx="50%"
-												cy="50%"
-												innerRadius="65%"
-												outerRadius="85%"
-												paddingAngle={4}
-												stroke={darkMode ? 'rgba(15, 23, 42, 0.8)' : '#ffffff'}
-												strokeWidth={3}
-												label={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
-												labelLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.15)' }}
-											>
-												{setsPorFestival.map((entry, index) => (
-													<Cell key={`cell-${entry.name}`} fill={pieColors[index % pieColors.length]} />
-												))}
-											</Pie>
-											<Tooltip
-												contentStyle={{
-													backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-													borderColor: darkMode ? '#334155' : '#e2e8f0',
-													borderRadius: '12px',
-													color: darkMode ? '#fff' : '#0f172a',
-												}}
-												itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
-											/>
-										</PieChart>
-									</ResponsiveContainer>
-								</div>
-							) : (
-								<div className="text-sm text-slate-500 italic py-10 text-center">Nenhum set registado em festivais.</div>
-							)}
-						</section>
 					</div>
 				)}
 
