@@ -338,6 +338,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const [modalDjData, setModalDjData] = useState(null)
 	const [showAllDjs, setShowAllDjs] = useState(false)
 	const [selectedFestivalId, setSelectedFestivalId] = useState('')
+	const [selectedGenreId, setSelectedGenreId] = useState('')
 
 	// Configurar DJ selecionado padrão caso não esteja definido
 	useEffect(() => {
@@ -1452,61 +1453,358 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 					<LocaisTab sets={sets} festivais={festivais} djs={djs} darkMode={darkMode} />
 				)}
 
-				{activeTab === 'generos' && (
-					<div className="grid grid-cols-1 gap-8 animate-fadeIn">
-						<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
-							<div>
-								<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-									<TrendingUp className="text-cyan-500 dark:text-cyan-400 w-5 h-5" stroke="#22d3ee" />
-									Espectro de Ritmo (BPM por Género)
-								</h2>
-								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-									Mapeamento do andamento/velocidade (BPM) de cada género registado.
-								</p>
-							</div>
+				{activeTab === 'generos' && (() => {
+					// ── Derived data for the Géneros tab ──
+					// Count sets per genre (via DJ → generoIds)
+					const setCountByGenre = generos.reduce((acc, g) => {
+						const count = sets.filter((s) => {
+							const dj = djs.find((d) => d.id === s.djId)
+							return dj && Array.isArray(dj.generoIds) && dj.generoIds.includes(g.id)
+						}).length
+						acc[g.id] = count
+						return acc
+					}, {})
 
-							{bpmPorGenero.length > 0 ? (
-								<div style={{ width: '100%', height: '320px' }}>
-									<ResponsiveContainer width="100%" height="100%">
-										<AreaChart data={bpmPorGenero}>
-											<defs>
-												<linearGradient id="bpmGradient" x1="0" y1="0" x2="0" y2="1">
-													<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.3} />
-													<stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
-												</linearGradient>
-											</defs>
-											<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.3 : 0.5} vertical={false} />
-											<XAxis
-												dataKey="name"
-												tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
-												axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
-												tickLine={false}
-											/>
-											<YAxis
-												domain={['auto', 'auto']}
-												tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
-												axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
-												tickLine={false}
-											/>
-											<Tooltip
-												contentStyle={{
-													backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-													borderColor: darkMode ? '#334155' : '#e2e8f0',
-													borderRadius: '12px',
-													color: darkMode ? '#fff' : '#0f172a',
-												}}
-												itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
-											/>
-											<Area type="monotone" dataKey="bpm" stroke="#06b6d4" strokeWidth={2} fill="url(#bpmGradient)" />
-										</AreaChart>
-									</ResponsiveContainer>
+					// Count DJs per genre
+					const djCountByGenre = generos.reduce((acc, g) => {
+						acc[g.id] = djs.filter((d) => Array.isArray(d.generoIds) && d.generoIds.includes(g.id)).length
+						return acc
+					}, {})
+
+					// Selected genre object
+					const activeGenre = generos.find((g) => g.id === selectedGenreId) || null
+
+					// Average rating of sets for the selected genre
+					const genreSetsRated = activeGenre
+						? sets.filter((s) => {
+								const dj = djs.find((d) => d.id === s.djId)
+								return (
+									dj &&
+									Array.isArray(dj.generoIds) &&
+									dj.generoIds.includes(activeGenre.id) &&
+									s.avaliacao !== null &&
+									s.avaliacao !== undefined &&
+									s.avaliacao !== ''
+								)
+							})
+						: []
+					const avgRating =
+						genreSetsRated.length > 0
+							? (genreSetsRated.reduce((acc, s) => acc + Number(s.avaliacao), 0) / genreSetsRated.length).toFixed(1)
+							: null
+
+					const genreColor = activeGenre?.cor || '#a855f7'
+					const intensidade = activeGenre ? Math.min(10, Math.max(1, Number(activeGenre.intensidade) || 5)) : 0
+
+					return (
+						<div className="flex flex-col gap-8 animate-fadeIn">
+
+							{/* ── TOP: Espectro de Ritmo (AreaChart) ── */}
+							<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+								<div>
+									<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+										<TrendingUp className="text-cyan-500 dark:text-cyan-400 w-5 h-5" stroke="#22d3ee" />
+										Espectro de Ritmo (BPM por Género)
+									</h2>
+									<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+										Mapeamento do andamento/velocidade (BPM) de cada género registado.
+									</p>
 								</div>
-							) : (
-								<div className="text-sm text-slate-500 italic py-10 text-center">Nenhum género registado.</div>
-							)}
-						</section>
-					</div>
-				)}
+
+								{bpmPorGenero.length > 0 ? (
+									<div style={{ width: '100%', height: '320px' }}>
+										<ResponsiveContainer width="100%" height="100%">
+											<AreaChart data={bpmPorGenero}>
+												<defs>
+													<linearGradient id="bpmGradient" x1="0" y1="0" x2="0" y2="1">
+														<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.3} />
+														<stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
+													</linearGradient>
+												</defs>
+												<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.3 : 0.5} vertical={false} />
+												<XAxis
+													dataKey="name"
+													tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
+													axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
+													tickLine={false}
+												/>
+												<YAxis
+													domain={['auto', 'auto']}
+													tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
+													axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
+													tickLine={false}
+												/>
+												<Tooltip
+													contentStyle={{
+														backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+														borderColor: darkMode ? '#334155' : '#e2e8f0',
+														borderRadius: '12px',
+														color: darkMode ? '#fff' : '#0f172a',
+													}}
+													itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
+												/>
+												<Area type="monotone" dataKey="bpm" stroke="#06b6d4" strokeWidth={2} fill="url(#bpmGradient)" />
+											</AreaChart>
+										</ResponsiveContainer>
+									</div>
+								) : (
+									<div className="text-sm text-slate-500 italic py-10 text-center">Nenhum género registado.</div>
+								)}
+							</section>
+
+							{/* ── BOTTOM TWO-COLUMN GRID ── */}
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+								{/* ── LEFT: Grelha de Afinidade Estética (Top Géneros) ── */}
+								<section className="bg-white/5 border border-white/5 rounded-2xl p-6 flex flex-col gap-5">
+									<div>
+										<h3 className="text-sm font-bold text-slate-200 tracking-tight flex items-center gap-2">
+											<Sliders className="w-4 h-4 text-purple-400" />
+											Grelha de Afinidade
+										</h3>
+										<p className="text-xs text-slate-400 mt-1">Clica num género para o explorar em detalhe.</p>
+									</div>
+
+									{generos.length > 0 ? (
+										<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+											{generos.map((g) => {
+												const isActive = selectedGenreId === g.id
+												const color = g.cor || '#a855f7'
+												const sCount = setCountByGenre[g.id] || 0
+												return (
+													<button
+														key={g.id}
+														type="button"
+														onClick={() => setSelectedGenreId(isActive ? '' : g.id)}
+														className="group relative flex flex-col items-start gap-2 rounded-xl p-4 border transition-all duration-200 text-left focus:outline-none"
+														style={{
+															background: isActive
+																? `linear-gradient(135deg, ${color}22, ${color}08)`
+																: 'rgba(255,255,255,0.03)',
+															borderColor: isActive ? `${color}60` : 'rgba(255,255,255,0.07)',
+															boxShadow: isActive ? `0 0 18px ${color}25, inset 0 0 12px ${color}08` : 'none',
+														}}
+													>
+														{/* Sigla em destaque */}
+														<span
+															className="text-lg font-black tracking-widest leading-none"
+															style={{
+																color,
+																textShadow: isActive ? `0 0 14px ${color}` : `0 0 8px ${color}60`,
+															}}
+														>
+															{g.sigla || g.nome.substring(0, 4).toUpperCase()}
+														</span>
+
+														{/* Nome completo */}
+														<span className="text-xs font-semibold text-slate-300 truncate w-full">{g.nome}</span>
+
+														{/* Contador de sets */}
+														<span
+															className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+															style={{
+																color,
+																borderColor: `${color}40`,
+																background: `${color}12`,
+															}}
+														>
+															{sCount} {sCount === 1 ? 'set' : 'sets'}
+														</span>
+													</button>
+												)
+											})}
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-10 text-center gap-3 border border-dashed border-white/10 rounded-xl">
+											<Sliders className="w-7 h-7 text-slate-500" />
+											<p className="text-sm text-slate-400">Nenhum género registado.</p>
+										</div>
+									)}
+								</section>
+
+								{/* ── RIGHT: Explorador Dinâmico de Género ── */}
+								<section className="bg-white/5 border border-white/5 rounded-2xl p-6 flex flex-col gap-5">
+									{/* Header com selector */}
+									<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+										<div>
+											<h3 className="text-sm font-bold text-slate-200 tracking-tight flex items-center gap-2">
+												<Flame className="w-4 h-4 text-orange-400" />
+												Explorador de Género
+											</h3>
+											<p className="text-xs text-slate-400 mt-0.5">Painel de curadoria detalhada.</p>
+										</div>
+
+										{/* Select de género */}
+										<select
+											id="genero-explorer-select"
+											value={selectedGenreId}
+											onChange={(e) => setSelectedGenreId(e.target.value)}
+											className="shrink-0 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold px-3 py-2 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all cursor-pointer"
+										>
+											<option value="">— Selecionar Género —</option>
+											{generos.map((g) => (
+												<option key={g.id} value={g.id}>{g.nome}</option>
+											))}
+										</select>
+									</div>
+
+									{/* Painel detalhado ou empty state */}
+									{activeGenre ? (
+										<div className="flex flex-col gap-5">
+
+											{/* Cabeçalho do género selecionado */}
+											<div
+												className="flex items-center gap-4 rounded-xl p-4 border"
+												style={{
+													background: `linear-gradient(135deg, ${genreColor}18, ${genreColor}06)`,
+													borderColor: `${genreColor}40`,
+												}}
+											>
+												{/* Sigla grande */}
+												<div
+													className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl font-black text-base tracking-widest"
+													style={{
+														background: `${genreColor}20`,
+														color: genreColor,
+														textShadow: `0 0 16px ${genreColor}`,
+														border: `1px solid ${genreColor}40`,
+													}}
+												>
+													{activeGenre.sigla || activeGenre.nome.substring(0, 4).toUpperCase()}
+												</div>
+												<div className="flex flex-col gap-1 min-w-0">
+													<h4
+														className="text-base font-black text-white leading-tight truncate"
+														style={{ textShadow: `0 0 20px ${genreColor}50` }}
+													>
+														{activeGenre.nome}
+													</h4>
+													<div className="flex gap-2 flex-wrap">
+														<span
+															className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+															style={{ background: `${genreColor}20`, color: genreColor, border: `1px solid ${genreColor}40` }}
+														>
+															{setCountByGenre[activeGenre.id] || 0} sets
+														</span>
+														<span
+															className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+															style={{ background: `${genreColor}20`, color: genreColor, border: `1px solid ${genreColor}40` }}
+														>
+															{djCountByGenre[activeGenre.id] || 0} DJs
+														</span>
+													</div>
+												</div>
+											</div>
+
+											{/* Separador de métricas */}
+											<div className="grid grid-cols-1 gap-3">
+
+												{/* Origem Geográfica */}
+												<div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
+													<span className="text-base shrink-0">📍</span>
+													<div className="flex flex-col min-w-0">
+														<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Origem Geográfica</span>
+														<span className="text-sm font-semibold text-slate-200 truncate">
+															{activeGenre.origem || <span className="text-slate-500 italic">Não definida</span>}
+														</span>
+													</div>
+												</div>
+
+												{/* Média de Notas */}
+												<div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
+													<span className="text-base shrink-0">⭐</span>
+													<div className="flex flex-col flex-1 min-w-0">
+														<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Média de Notas</span>
+														<div className="flex items-baseline gap-1.5">
+															{avgRating !== null ? (
+																<>
+																	<span
+																		className="text-2xl font-black tabular-nums leading-none"
+																		style={{ color: genreColor, textShadow: `0 0 12px ${genreColor}60` }}
+																	>
+																		{avgRating}
+																	</span>
+																	<span className="text-xs text-slate-500 font-bold">/10</span>
+																</>
+															) : (
+																<span className="text-sm text-slate-500 italic">Sem avaliações</span>
+															)}
+														</div>
+													</div>
+												</div>
+
+												{/* Nível de Intensidade */}
+												<div className="flex flex-col gap-2 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
+													<div className="flex items-center justify-between">
+														<div className="flex items-center gap-2">
+															<span className="text-base">🔥</span>
+															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Energia / Intensidade</span>
+														</div>
+														<span
+															className="text-sm font-black tabular-nums"
+															style={{ color: genreColor, textShadow: `0 0 10px ${genreColor}80` }}
+														>
+															{intensidade}/10
+														</span>
+													</div>
+													{/* Barra de intensidade */}
+													<div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+														<div
+															className="h-full rounded-full transition-all duration-700"
+															style={{
+																width: `${(intensidade / 10) * 100}%`,
+																background: `linear-gradient(90deg, ${genreColor}80, ${genreColor})`,
+																boxShadow: `0 0 10px ${genreColor}60`,
+															}}
+														/>
+													</div>
+													{/* Segmentos de 1 a 10 */}
+													<div className="flex gap-1">
+														{Array.from({ length: 10 }, (_, i) => (
+															<div
+																key={i}
+																className="flex-1 h-1 rounded-sm transition-all duration-500"
+																style={{
+																	background: i < intensidade ? genreColor : 'rgba(255,255,255,0.08)',
+																	boxShadow: i < intensidade ? `0 0 4px ${genreColor}` : 'none',
+																}}
+															/>
+														))}
+													</div>
+												</div>
+
+												{/* Elemento Sonoro */}
+												{activeGenre.elementoSonoro && (
+													<div className="flex items-start gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
+														<span className="text-base shrink-0">🎵</span>
+														<div className="flex flex-col min-w-0">
+															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Elemento Sonoro</span>
+															<span className="text-sm text-slate-300 leading-snug">{activeGenre.elementoSonoro}</span>
+														</div>
+													</div>
+												)}
+											</div>
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-4 border border-dashed border-white/10 rounded-xl">
+											<div className="relative">
+												<Flame className="w-10 h-10 text-slate-600" />
+												<div className="absolute inset-0 flex items-center justify-center">
+													<div className="w-6 h-6 rounded-full bg-slate-700/50" />
+												</div>
+											</div>
+											<div>
+												<p className="text-sm font-semibold text-slate-400">Seleciona um género</p>
+												<p className="text-xs text-slate-600 mt-1 max-w-[200px] mx-auto">Escolhe pela grelha à esquerda ou pelo selector acima.</p>
+											</div>
+										</div>
+									)}
+								</section>
+
+							</div>{/* /grid */}
+						</div>
+					)
+				})()}
 			</div>
 
 			{/* Modal de Presenças Flutuante de Vidro Espesso */}
