@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
+import { PlusCircle, Search } from 'lucide-react'
+import GeneroCard from '../components/GeneroCard'
+
 
 export default function GenerosList({ generos = [], handleDeleteGenero }) {
   const navigate = useNavigate()
@@ -63,42 +65,14 @@ export default function GenerosList({ generos = [], handleDeleteGenero }) {
       </div>
 
       {filteredGeneros.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredGeneros.map((genero) => (
-            <article
+            <GeneroCard
               key={genero.id}
-              className="group relative bg-white/60 border border-slate-200/60 text-slate-900 rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md dark:bg-slate-900/40 dark:border-white/10 dark:text-slate-100"
-            >
-              <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.12),transparent_34%)] opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
-
-              <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/generos/adicionar?edit=${genero.id}`)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400/30 hover:bg-purple-400/10 hover:text-purple-700 focus-visible:border-purple-400/40 focus-visible:bg-purple-400/10 focus-visible:text-purple-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-purple-200 dark:focus-visible:text-purple-200"
-                  aria-label="Editar género"
-                >
-                  <Pencil size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteGenero && handleDeleteGenero(genero.id)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-700 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-rose-200 dark:focus-visible:text-rose-200"
-                  aria-label="Eliminar género"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-
-              <div className="relative flex h-full min-h-[92px] flex-col justify-center pr-16">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-purple-500/80 dark:text-purple-300/80">
-                    Género
-                  </p>
-                  <h2 className="mt-2 mb-0 text-xl font-black text-slate-900 dark:text-white">{genero.nome}</h2>
-                </div>
-              </div>
-            </article>
+              genero={genero}
+              onEdit={() => navigate(`/generos/adicionar?edit=${genero.id}`)}
+              onDelete={() => handleDeleteGenero && handleDeleteGenero(genero.id)}
+            />
           ))}
         </div>
       ) : (
