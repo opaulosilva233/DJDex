@@ -9,7 +9,7 @@ import AddFestivalPage from './pages/AddFestivalPage'
 import Home from './pages/Home'
 import AddGeneroPage from './pages/AddGeneroPage'
 import SetList from './pages/SetList'
-import Stats from './pages/Stats'
+import EstatisticasPage from './pages/EstatisticasPage'
 import DjsList from './pages/DjsList'
 import GenerosList from './pages/GenerosList'
 import FestivaisList from './pages/FestivaisList'
@@ -352,15 +352,11 @@ export default function App() {
               <Route
                 path="/estatisticas"
                 element={
-                  <Stats
+                  <EstatisticasPage
                     generos={generos}
                     sets={sets}
                     djs={djs}
                     festivais={festivais}
-                    handleDeleteSet={handleDeleteSet}
-                    handleDeleteDj={handleDeleteDj}
-                    handleDeleteFestival={handleDeleteFestival}
-                    handleDeleteGenero={handleDeleteGenero}
                   />
                 }
               />

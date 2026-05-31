@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 
-import { Compass, Download, Home, ListMusic, Loader2, Moon, Sun, Tag, Upload, User } from 'lucide-react'
+import { BarChart2, Compass, Download, Home, ListMusic, Loader2, Moon, Sun, Tag, Upload, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 const sidebarStyle = {
@@ -224,6 +224,16 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 						<NavLink to="/" end className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
 							<Home size={18} className={navIconStyle} />
 							<span>Início</span>
+						</NavLink>
+					</div>
+				</section>
+
+				<section>
+					<h2 className={sectionTitleStyle}>ANÁLISE</h2>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+						<NavLink to="/estatisticas" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
+							<BarChart2 size={18} className={navIconStyle} />
+							<span>Estatísticas</span>
 						</NavLink>
 						<NavLink to="/lista" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
 							<ListMusic size={18} className={navIconStyle} />
