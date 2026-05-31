@@ -20,7 +20,7 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
-import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X } from 'lucide-react'
+import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame } from 'lucide-react'
 
 const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1']
 
@@ -324,11 +324,11 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 	// Abas configuradas
 	const tabs = [
-		{ id: 'geral', label: 'Geral' },
-		{ id: 'djs', label: 'DJs' },
-		{ id: 'festivais', label: 'Festivais' },
-		{ id: 'locais', label: 'Locais' },
-		{ id: 'generos', label: 'Géneros' },
+		{ id: 'geral', label: 'Geral', icon: LayoutDashboard },
+		{ id: 'djs', label: 'DJs', icon: Music },
+		{ id: 'festivais', label: 'Festivais', icon: Calendar },
+		{ id: 'locais', label: 'Locais', icon: MapPin },
+		{ id: 'generos', label: 'Géneros', icon: Sliders },
 	]
 
 	return (
@@ -346,18 +346,20 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			<div className="flex items-center border-b border-slate-200 dark:border-slate-800 pb-3 gap-2 overflow-x-auto scrollbar-none">
 				{tabs.map((tab) => {
 					const isActive = activeTab === tab.id
+					const Icon = tab.icon
 					return (
 						<button
 							key={tab.id}
 							onClick={() => setActiveTab(tab.id)}
 							type="button"
-							className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 border backdrop-blur-md focus:outline-none whitespace-nowrap cursor-pointer ${
+							className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 border backdrop-blur-md focus:outline-none whitespace-nowrap cursor-pointer flex items-center gap-2 group ${
 								isActive
 									? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-purple-500/30 dark:border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.08)] dark:shadow-[0_0_15px_rgba(168,85,247,0.15)] font-medium'
 									: 'bg-white/40 dark:bg-slate-900/20 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-transparent hover:bg-white/60 dark:hover:bg-slate-900/40 hover:text-slate-700 dark:hover:text-slate-200'
 							}`}
 						>
-							{tab.label}
+							{Icon && <Icon className={`w-4 h-4 transition-transform duration-300 ${isActive ? 'scale-110 text-purple-600 dark:text-purple-400' : 'group-hover:scale-110 text-slate-400 dark:text-slate-500'}`} />}
+							<span>{tab.label}</span>
 						</button>
 					)
 				})}
@@ -373,24 +375,44 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 						{/* Fila de KPIs Rápidos */}
 						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 							{/* Card 1: Total Sets */}
-							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sets Assistidos</span>
-								<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.totalSets}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+								<div className="flex flex-col gap-1 min-w-0">
+									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sets Assistidos</span>
+									<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.totalSets}</span>
+								</div>
+								<div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-500/20 dark:border-purple-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(168,85,247,0.1)] shrink-0">
+									<Headphones className="w-5 h-5" />
+								</div>
 							</div>
 							{/* Card 2: Festivals */}
-							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Festivais Únicos</span>
-								<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueFestivals}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+								<div className="flex flex-col gap-1 min-w-0">
+									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Festivais Únicos</span>
+									<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueFestivals}</span>
+								</div>
+								<div className="p-3 bg-pink-500/10 text-pink-600 dark:text-pink-400 rounded-xl border border-pink-500/20 dark:border-pink-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(236,72,153,0.1)] shrink-0">
+									<Ticket className="w-5 h-5" />
+								</div>
 							</div>
 							{/* Card 3: DJs */}
-							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">DJs Vistos</span>
-								<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueDjs}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+								<div className="flex flex-col gap-1 min-w-0">
+									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">DJs Vistos</span>
+									<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueDjs}</span>
+								</div>
+								<div className="p-3 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 rounded-xl border border-cyan-500/20 dark:border-cyan-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(6,182,212,0.1)] shrink-0">
+									<Users className="w-5 h-5" />
+								</div>
 							</div>
 							{/* Card 4: Top Genre */}
-							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Género Mais Ouvido</span>
-								<span className="text-2xl font-black text-purple-600 dark:text-purple-400 truncate">{kpis.topGenreName}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+								<div className="flex flex-col gap-1 min-w-0">
+									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Género Mais Ouvido</span>
+									<span className="text-2xl font-black text-purple-600 dark:text-purple-400 truncate">{kpis.topGenreName}</span>
+								</div>
+								<div className="p-3 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 rounded-xl border border-fuchsia-500/20 dark:border-fuchsia-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(217,70,239,0.1)] shrink-0">
+									<Flame className="w-5 h-5" />
+								</div>
 							</div>
 						</div>
 
