@@ -20,9 +20,315 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
-import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame } from 'lucide-react'
+import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation } from 'lucide-react'
 
 const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1']
+
+// ──────────────────────────────────────────────
+// Aba Locais — Análise Geográfica dos Festivais
+// ──────────────────────────────────────────────
+function LocaisTab({ sets = [], festivais = [], djs = [], darkMode = true }) {
+	// 1. Contagem de sets por Cidade
+	const cidadesData = useMemo(() => {
+		const counts = {}
+		sets.forEach((s) => {
+			if (!s.festivalId) return
+			const festival = festivais.find((f) => f.id === s.festivalId)
+			if (!festival) return
+			// Resolve cidade: tenta edicoes[].local, fallback para festival.local
+			let cidade = festival.local || ''
+			if (Array.isArray(festival.edicoes) && festival.edicoes.length > 0) {
+				// Encontrar a edição pelo ano do set
+				const ano = s.data ? Number(s.data.substring(0, 4)) : null
+				const edicao = ano
+					? festival.edicoes.find((e) => Number(e.ano) === ano) || festival.edicoes[0]
+					: festival.edicoes[0]
+				if (edicao && edicao.local) cidade = edicao.local
+			}
+			if (!cidade) return
+			counts[cidade] = (counts[cidade] || 0) + 1
+		})
+		return Object.entries(counts)
+			.map(([name, sets]) => ({ name, sets }))
+			.sort((a, b) => b.sets - a.sets)
+	}, [sets, festivais])
+
+	// 2. Recintos únicos (venues)
+	const recintos = useMemo(() => {
+		const seen = new Set()
+		const list = []
+		festivais.forEach((f) => {
+			const addLocal = (local, cidade) => {
+				if (!local || seen.has(local)) return
+				seen.add(local)
+				list.push({ local, cidade: cidade || f.local || '' })
+			}
+			if (Array.isArray(f.edicoes) && f.edicoes.length > 0) {
+				f.edicoes.forEach((e) => addLocal(e.local, f.local || ''))
+			} else if (f.local) {
+				addLocal(f.local, f.local)
+			}
+		})
+		return list
+	}, [festivais])
+
+	// 3. Tabela de Rotas: Cidade / Recinto | Festival | Ano | Nº Sets
+	const routesTable = useMemo(() => {
+		const rows = []
+		festivais.forEach((f) => {
+			const festivalSets = sets.filter((s) => s.festivalId === f.id)
+			if (festivalSets.length === 0) return
+
+			// Agrupar por ano
+			const byYear = {}
+			festivalSets.forEach((s) => {
+				const ano = s.data ? s.data.substring(0, 4) : '—'
+				byYear[ano] = byYear[ano] || { ano, sets: 0, local: '' }
+				byYear[ano].sets++
+
+				// Resolver local/recinto para este ano
+				if (!byYear[ano].local) {
+					if (Array.isArray(f.edicoes) && f.edicoes.length > 0) {
+						const edicao = f.edicoes.find((e) => String(e.ano) === ano) || f.edicoes[0]
+						byYear[ano].local = edicao?.local || f.local || '—'
+					} else {
+						byYear[ano].local = f.local || '—'
+					}
+				}
+			})
+
+			Object.values(byYear)
+				.sort((a, b) => b.ano - a.ano)
+				.forEach(({ ano, sets: numSets, local }) => {
+					// Derive cidade do local (se tiver espaço, usa o local completo)
+					const cidade = f.local || local || '—'
+					rows.push({
+						id: `${f.id}-${ano}`,
+						cidade,
+						recinto: local !== cidade ? local : local,
+						festival: f.nome,
+						ano,
+						numSets,
+					})
+				})
+		})
+		return rows.sort((a, b) => b.ano - a.ano || a.festival.localeCompare(b.festival, 'pt'))
+	}, [sets, festivais])
+
+	const tooltipStyle = {
+		backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+		borderColor: darkMode ? '#334155' : '#e2e8f0',
+		borderRadius: '12px',
+		color: darkMode ? '#fff' : '#0f172a',
+		fontSize: '11px',
+		boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+	}
+
+	const emptyMap = cidadesData.length === 0
+
+	return (
+		<div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fadeIn">
+
+			{/* ── Coluna Esquerda: Cidades mais Visitadas (5 colunas) ── */}
+			<div className="lg:col-span-5 flex flex-col gap-6">
+				<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 h-full">
+					<div>
+						<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+							<MapPin className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
+							Cidades mais Visitadas
+						</h2>
+						<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+							Número de sets assistidos agrupados por cidade de realização do festival.
+						</p>
+					</div>
+
+					{emptyMap ? (
+						<div className="flex flex-col items-center justify-center py-16 text-center gap-3 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/40 dark:bg-slate-950/20 flex-1">
+							<MapPin className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+							<p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Sem dados geográficos</p>
+							<p className="text-xs text-slate-500 max-w-xs">
+								Adiciona festivais com a informação de cidade/local para visualizar este gráfico.
+							</p>
+						</div>
+					) : (
+						<div style={{ width: '100%', height: `${Math.max(200, cidadesData.length * 52)}px` }}>
+							<ResponsiveContainer width="100%" height="100%">
+								<BarChart
+									data={cidadesData}
+									layout="vertical"
+									margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
+								>
+									<defs>
+										<linearGradient id="cidadeGradient" x1="0" y1="0" x2="1" y2="0">
+											<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.9} />
+											<stop offset="100%" stopColor="#1e3a8a" stopOpacity={0.25} />
+										</linearGradient>
+									</defs>
+									<CartesianGrid
+										strokeDasharray="3 3"
+										stroke={darkMode ? '#334155' : '#cbd5e1'}
+										opacity={darkMode ? 0.2 : 0.4}
+										horizontal={false}
+									/>
+									<XAxis
+										type="number"
+										allowDecimals={false}
+										tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }}
+										axisLine={false}
+										tickLine={false}
+									/>
+									<YAxis
+										dataKey="name"
+										type="category"
+										tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontWeight: 600 }}
+										axisLine={false}
+										tickLine={false}
+										width={110}
+									/>
+									<Tooltip
+										contentStyle={tooltipStyle}
+										cursor={{ fill: darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}
+										formatter={(value) => [`${value} set${value !== 1 ? 's' : ''}`, 'Sets Assistidos']}
+									/>
+									<Bar
+										dataKey="sets"
+										name="Sets"
+										fill="url(#cidadeGradient)"
+										radius={[0, 6, 6, 0]}
+										barSize={20}
+									/>
+								</BarChart>
+							</ResponsiveContainer>
+						</div>
+					)}
+				</section>
+			</div>
+
+			{/* ── Coluna Direita: Recintos & Tabela de Rotas (7 colunas) ── */}
+			<div className="lg:col-span-7 flex flex-col gap-6">
+
+				{/* Bloco de Recintos / Venues */}
+				<div className="bg-white/5 border border-white/5 rounded-2xl p-6 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border-slate-200/60 dark:border-white/5 shadow-xl">
+					<div className="flex items-center gap-2 mb-4">
+						<div className="p-2 bg-cyan-500/10 rounded-xl border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 shrink-0">
+							<MapPin className="w-4 h-4" />
+						</div>
+						<div>
+							<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+								Recintos &amp; Venues
+							</h2>
+							<p className="text-xs text-slate-500 dark:text-slate-400">
+								Localizações exatas dos festivais registados na base de dados.
+							</p>
+						</div>
+					</div>
+
+					{recintos.length > 0 ? (
+						<div className="flex flex-wrap gap-2">
+							{recintos.map((r, i) => (
+								<span
+									key={i}
+									className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-cyan-500/10 hover:border-cyan-500/30 hover:text-cyan-700 dark:hover:text-cyan-300 transition-all duration-200 cursor-default shadow-sm"
+								>
+									<Building2 className="w-3 h-3 text-cyan-500 dark:text-cyan-400 shrink-0" />
+									<span>{r.local}</span>
+									{r.cidade && r.cidade !== r.local && (
+										<span className="text-slate-400 dark:text-slate-500 font-normal">· {r.cidade}</span>
+									)}
+								</span>
+							))}
+						</div>
+					) : (
+						<p className="text-xs text-slate-500 italic py-4 text-center border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/40 dark:bg-slate-950/20">
+							Nenhum recinto registado ainda.
+						</p>
+					)}
+				</div>
+
+				{/* Tabela de Rotas de Festivais */}
+				<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4 flex-1">
+					<div>
+						<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+							<BarChart2 className="text-purple-500 dark:text-purple-400 w-5 h-5" />
+							Distribuição Geográfica
+						</h2>
+						<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+							Mapeamento de cada festival por cidade, recinto, edição e número de sets registados.
+						</p>
+					</div>
+
+					{routesTable.length > 0 ? (
+						<div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5">
+							<table className="w-full text-left text-sm border-collapse">
+								<thead>
+									<tr className="bg-slate-100/60 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+										<th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+											Cidade / Recinto
+										</th>
+										<th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+											Festival
+										</th>
+										<th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">
+											Ano
+										</th>
+										<th className="py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">
+											Nº Sets
+										</th>
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-slate-200/60 dark:divide-white/5">
+									{routesTable.map((row) => (
+										<tr
+											key={row.id}
+											className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
+										>
+											<td className="py-3.5 px-4">
+												<div className="flex items-center gap-2">
+													<Navigation className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400 shrink-0 mt-0.5" />
+													<div>
+														<p className="text-slate-800 dark:text-slate-200 font-semibold text-xs leading-tight">
+															{row.cidade}
+														</p>
+														{row.recinto && row.recinto !== row.cidade && (
+															<p className="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5 leading-tight">
+																{row.recinto}
+															</p>
+														)}
+													</div>
+												</div>
+											</td>
+											<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold text-xs">
+												{row.festival}
+											</td>
+											<td className="py-3.5 px-4 text-center">
+												<span className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-full">
+													{row.ano}
+												</span>
+											</td>
+											<td className="py-3.5 px-4 text-center">
+												<span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full">
+													{row.numSets} {row.numSets === 1 ? 'set' : 'sets'}
+												</span>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<div className="flex flex-col items-center justify-center py-12 text-center gap-3 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/40 dark:bg-slate-950/20">
+							<BarChart2 className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+							<p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Sem rotas registadas</p>
+							<p className="text-xs text-slate-500 max-w-xs">
+								Adiciona sets associados a festivais para visualizar a distribuição geográfica.
+							</p>
+						</div>
+					)}
+				</section>
+			</div>
+		</div>
+	)
+}
 
 export default function EstatisticasPage({ sets = [], djs = [], festivais = [], generos = [], darkMode = true }) {
 	const [activeTab, setActiveTab] = useState('geral')
@@ -1143,9 +1449,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				)}
 
 				{activeTab === 'locais' && (
-					<div className="text-slate-600 dark:text-slate-400 font-medium py-12 text-center bg-white/60 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 backdrop-blur-md rounded-2xl animate-fadeIn">
-						Estatísticas de Locais em breve...
-					</div>
+					<LocaisTab sets={sets} festivais={festivais} djs={djs} darkMode={darkMode} />
 				)}
 
 				{activeTab === 'generos' && (
