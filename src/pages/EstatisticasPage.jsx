@@ -24,7 +24,7 @@ import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X } from '
 
 const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1']
 
-export default function EstatisticasPage({ sets = [], djs = [], festivais = [], generos = [] }) {
+export default function EstatisticasPage({ sets = [], djs = [], festivais = [], generos = [], darkMode = true }) {
 	const [activeTab, setActiveTab] = useState('geral')
 	const [selectedDjId, setSelectedDjId] = useState('')
 	const [djSearchTerm, setDjSearchTerm] = useState('')
@@ -135,16 +135,16 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 	const getRatingBadge = (rating) => {
 		if (rating === null || rating === undefined) {
-			return <span className="text-slate-505 dark:text-slate-500 font-medium">—</span>
+			return <span className="text-slate-500 font-medium">—</span>
 		}
 
-		let colorClasses = "bg-slate-500/10 text-slate-400 border border-slate-500/20"
+		let colorClasses = "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
 		if (rating >= 9.0) {
-			colorClasses = "bg-amber-400/10 text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+			colorClasses = "bg-amber-400/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
 		} else if (rating >= 7.5) {
-			colorClasses = "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+			colorClasses = "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20"
 		} else if (rating >= 5.0) {
-			colorClasses = "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+			colorClasses = "bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20"
 		}
 
 		return (
@@ -336,14 +336,14 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			{/* Cabeçalho */}
 			<div className="flex flex-col gap-1">
 				<span className="text-xs font-bold tracking-widest text-purple-500 uppercase">ANÁLISE</span>
-				<h1 className="text-3xl font-black tracking-tight text-white">Estatísticas</h1>
-				<p className="text-slate-400 text-sm max-w-xl">
+				<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Estatísticas</h1>
+				<p className="text-slate-600 dark:text-slate-400 text-sm max-w-xl">
 					Explora as métricas da tua coleção, analisa a distribuição de notas e monitoriza o histórico de atuações dos teus DJs favoritos.
 				</p>
 			</div>
 
 			{/* Barra de Navegação Interna Horizontal */}
-			<div className="flex items-center border-b border-slate-800 pb-3 gap-2 overflow-x-auto scrollbar-none">
+			<div className="flex items-center border-b border-slate-200 dark:border-slate-800 pb-3 gap-2 overflow-x-auto scrollbar-none">
 				{tabs.map((tab) => {
 					const isActive = activeTab === tab.id
 					return (
@@ -353,8 +353,8 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							type="button"
 							className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 border backdrop-blur-md focus:outline-none whitespace-nowrap cursor-pointer ${
 								isActive
-									? 'bg-purple-600/10 text-purple-400 border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.15)] font-medium'
-									: 'bg-white/5 dark:bg-slate-900/20 text-slate-400 border-transparent hover:bg-white/10 dark:hover:bg-slate-900/40 hover:text-slate-200'
+									? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-purple-500/30 dark:border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.08)] dark:shadow-[0_0_15px_rgba(168,85,247,0.15)] font-medium'
+									: 'bg-white/40 dark:bg-slate-900/20 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-transparent hover:bg-white/60 dark:hover:bg-slate-900/40 hover:text-slate-700 dark:hover:text-slate-200'
 							}`}
 						>
 							{tab.label}
@@ -373,24 +373,24 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 						{/* Fila de KPIs Rápidos */}
 						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 							{/* Card 1: Total Sets */}
-							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Sets Assistidos</span>
-								<span className="text-2xl font-black text-white">{kpis.totalSets}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sets Assistidos</span>
+								<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.totalSets}</span>
 							</div>
 							{/* Card 2: Festivals */}
-							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Festivais Únicos</span>
-								<span className="text-2xl font-black text-white">{kpis.uniqueFestivals}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Festivais Únicos</span>
+								<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueFestivals}</span>
 							</div>
 							{/* Card 3: DJs */}
-							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">DJs Vistos</span>
-								<span className="text-2xl font-black text-white">{kpis.uniqueDjs}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">DJs Vistos</span>
+								<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueDjs}</span>
 							</div>
 							{/* Card 4: Top Genre */}
-							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
-								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Género Mais Ouvido</span>
-								<span className="text-2xl font-black text-purple-400 truncate">{kpis.topGenreName}</span>
+							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Género Mais Ouvido</span>
+								<span className="text-2xl font-black text-purple-600 dark:text-purple-400 truncate">{kpis.topGenreName}</span>
 							</div>
 						</div>
 
@@ -399,13 +399,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							
 							{/* Bloco Top 10 DJs Interativo (6 colunas) */}
 							<div className="lg:col-span-6 flex flex-col gap-6">
-								<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
 									<div>
-										<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
-											<User className="text-purple-400 w-5 h-5" />
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<User className="text-purple-500 dark:text-purple-400 w-5 h-5" />
 											Top DJs Registados
 										</h2>
-										<p className="text-xs text-slate-400 mt-1">
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 											Lista dos DJs com mais sets registados na base de dados (clica para ver o histórico).
 										</p>
 									</div>
@@ -432,12 +432,12 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 															setModalDjData(dj)
 															setIsModalOpen(true)
 														}}
-														className="hover:bg-white/5 cursor-pointer rounded-xl p-2.5 transition-all flex justify-between items-center border border-transparent hover:border-white/5 active:scale-[0.99]"
+														className="hover:bg-slate-100/60 dark:hover:bg-white/5 cursor-pointer rounded-xl p-2.5 transition-all flex justify-between items-center border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 active:scale-[0.99]"
 													>
 														<div className="flex items-center gap-3 min-w-0">
 															<span className="text-xs font-bold text-slate-500 w-5 text-right shrink-0">{index + 1}.</span>
 															{/* Avatar */}
-															<div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-400/20 text-xs font-bold text-slate-200 ring-1 ring-white/10">
+															<div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-400/20 text-xs font-bold text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-white/10">
 																{dj.imagem ? (
 																	<img src={dj.imagem} alt={dj.nome} className="h-full w-full object-cover" />
 																) : (
@@ -446,11 +446,11 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 															</div>
 															{/* DJ Info */}
 															<div className="min-w-0">
-																<p className="text-xs font-bold text-white truncate">{dj.nome}</p>
-																<p className="text-[10px] text-slate-400 mt-0.5 truncate">{djGenres}</p>
+																<p className="text-xs font-bold text-slate-900 dark:text-white truncate">{dj.nome}</p>
+																<p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{djGenres}</p>
 															</div>
 														</div>
-														<span className="text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg px-2.5 py-1 shrink-0 ml-2">
+														<span className="text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-lg px-2.5 py-1 shrink-0 ml-2">
 															{dj.count} {dj.count === 1 ? 'set' : 'sets'}
 														</span>
 													</div>
@@ -465,7 +465,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 										<button
 											type="button"
 											onClick={() => setShowAllDjs(!showAllDjs)}
-											className="mt-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 rounded-xl py-2.5 w-full cursor-pointer focus:outline-none"
+											className="mt-2 text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 rounded-xl py-2.5 w-full cursor-pointer focus:outline-none"
 										>
 											{showAllDjs ? 'Mostrar menos' : `Mostrar mais (${topDjsList.length - 10} adicionais)`}
 										</button>
@@ -475,13 +475,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 							{/* Bloco Frequência de Festivais (6 colunas) */}
 							<div className="lg:col-span-6 flex flex-col gap-6">
-								<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
 									<div>
-										<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
-											<BarChart2 className="text-cyan-400 w-5 h-5" />
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
 											Frequência de Festivais
 										</h2>
-										<p className="text-xs text-slate-400 mt-1">
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 											Frequência de atuações assistidas em cada festival (Top 10).
 										</p>
 									</div>
@@ -496,19 +496,19 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 															<stop offset="100%" stopColor="#0891b2" stopOpacity={0.15} />
 														</linearGradient>
 													</defs>
-													<CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} horizontal={false} />
-													<XAxis type="number" allowDecimals={false} tick={{ fill: '#cbd5e1', fontSize: 10 }} axisLine={false} tickLine={false} />
-													<YAxis dataKey="name" type="category" tick={{ fill: '#cbd5e1', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} horizontal={false} />
+													<XAxis type="number" allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+													<YAxis dataKey="name" type="category" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
 													<Tooltip
 														contentStyle={{
-															backgroundColor: '#0f172a',
-															borderColor: '#334155',
+															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+															borderColor: darkMode ? '#334155' : '#e2e8f0',
 															borderRadius: '12px',
-															color: '#fff',
+															color: darkMode ? '#fff' : '#0f172a',
 															fontSize: '11px',
-															boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
 														}}
-														cursor={{ fill: 'rgba(255, 255, 255, 0.02)' }}
+														cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}
 													/>
 													<Bar dataKey="quantidade" name="Sets" fill="url(#festivalCountGradient)" radius={[0, 4, 4, 0]} barSize={16} />
 												</BarChart>
@@ -530,13 +530,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 						<div className="lg:col-span-7 flex flex-col gap-8">
 							
 							{/* 1. Distribuição de Avaliações */}
-							<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+							<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
 								<div>
-									<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
-										<BarChart2 className="text-purple-400 w-5 h-5" />
+									<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+										<BarChart2 className="text-purple-500 dark:text-purple-400 w-5 h-5" />
 										Distribuição de Avaliações de {selectedDj?.nome}
 									</h2>
-									<p className="text-xs text-slate-400 mt-1">
+									<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 										Quantidade total de sets pontuados em cada nota de 1 a 10 para este DJ.
 									</p>
 								</div>
@@ -550,31 +550,31 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 													<stop offset="100%" stopColor="#6366f1" stopOpacity={0.15} />
 												</linearGradient>
 											</defs>
-											<CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.25} vertical={false} />
+											<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.25 : 0.45} vertical={false} />
 											<XAxis
 												dataKey="nota"
-												tick={{ fill: '#cbd5e1', fontSize: 11, fontFamily: 'sans-serif' }}
-												axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
+												tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
+												axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)' }}
 												tickLine={false}
 											/>
 											<YAxis
 												allowDecimals={false}
-												tick={{ fill: '#cbd5e1', fontSize: 11, fontFamily: 'sans-serif' }}
-												axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
+												tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
+												axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)' }}
 												tickLine={false}
 											/>
 											<Tooltip
-												cursor={{ fill: 'rgba(255, 255, 255, 0.03)' }}
+												cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' }}
 												contentStyle={{
-													backgroundColor: '#0f172a',
-													borderColor: '#334155',
+													backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+													borderColor: darkMode ? '#334155' : '#e2e8f0',
 													borderRadius: '12px',
-													color: '#fff',
+													color: darkMode ? '#fff' : '#0f172a',
 													fontSize: '12px',
-													boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+													boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
 												}}
-												itemStyle={{ color: '#a855f7' }}
-												labelStyle={{ fontWeight: 'bold' }}
+												itemStyle={{ color: darkMode ? '#a855f7' : '#7c3aed' }}
+												labelStyle={{ fontWeight: 'bold', color: darkMode ? '#fff' : '#0f172a' }}
 												labelFormatter={(value) => `Nota: ${value}`}
 											/>
 											<Bar
@@ -589,13 +589,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							</section>
 
 							{/* 2. Perfil de Intensidade / Energia por DJ */}
-							<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+							<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
 								<div>
-									<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
-										<BarChart2 className="text-purple-400 w-5 h-5" />
+									<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+										<BarChart2 className="text-purple-500 dark:text-purple-400 w-5 h-5" />
 										Perfil de Intensidade / Energia por DJ
 									</h2>
-									<p className="text-xs text-slate-400 mt-1">
+									<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 										Comparação de perfil baseada na Intensidade dos géneros, BPM e Sets registados.
 									</p>
 								</div>
@@ -603,9 +603,9 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 								<div style={{ width: '100%', height: '300px' }}>
 									<ResponsiveContainer width="100%" height="100%">
 										<RadarChart cx="50%" cy="50%" outerRadius="60%" data={radarData}>
-											<PolarGrid stroke="#334155" opacity={0.6} />
-											<PolarAngleAxis dataKey="subject" tick={{ fill: '#cbd5e1', fontSize: 12, fontWeight: 600, fontFamily: 'sans-serif' }} />
-											<PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fill: '#64748b' }} />
+											<PolarGrid stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={0.6} />
+											<PolarAngleAxis dataKey="subject" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 12, fontWeight: 600, fontFamily: 'sans-serif' }} />
+											<PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fill: darkMode ? '#94a3b8' : '#475569' }} />
 											{selectedDj && (
 												<Radar
 													key={selectedDj.id}
@@ -618,14 +618,14 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 											)}
 											<Tooltip
 												contentStyle={{
-													backgroundColor: '#0f172a',
-													borderColor: '#334155',
+													backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+													borderColor: darkMode ? '#334155' : '#e2e8f0',
 													borderRadius: '12px',
-													color: '#fff',
+													color: darkMode ? '#fff' : '#0f172a',
 												}}
-												itemStyle={{ color: '#fff' }}
+												itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
 											/>
-											<Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'sans-serif', marginTop: '10px' }} />
+											<Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'sans-serif', marginTop: '10px', color: darkMode ? '#cbd5e1' : '#475569' }} />
 										</RadarChart>
 									</ResponsiveContainer>
 								</div>
@@ -633,13 +633,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 							{/* 3. Gráfico Interativo de Avaliações do DJ Selecionado */}
 							{selectedDjId && selectedDj && (
-								<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 animate-fadeIn">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 animate-fadeIn">
 									<div>
-										<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
 											<TrendingUp className="text-cyan-400 w-5 h-5" />
 											Histórico de Avaliações de {selectedDj.nome}
 										</h2>
-										<p className="text-xs text-slate-400 mt-1">
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 											Evolução das notas atribuídas aos sets deste DJ ao longo do tempo.
 										</p>
 									</div>
@@ -654,29 +654,29 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 															<stop offset="100%" stopColor="#06b6d4" stopOpacity={0.0} />
 														</linearGradient>
 													</defs>
-													<CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} vertical={false} />
+													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} vertical={false} />
 													<XAxis
 														dataKey="exibicao"
-														tick={{ fill: '#94a3b8', fontSize: 9, fontFamily: 'sans-serif' }}
-														axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
+														tick={{ fill: darkMode ? '#94a3b8' : '#475569', fontSize: 9, fontFamily: 'sans-serif' }}
+														axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)' }}
 														tickLine={false}
 													/>
 													<YAxis
 														domain={[0, 10]}
-														tick={{ fill: '#94a3b8', fontSize: 10, fontFamily: 'sans-serif' }}
-														axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
+														tick={{ fill: darkMode ? '#94a3b8' : '#475569', fontSize: 10, fontFamily: 'sans-serif' }}
+														axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)' }}
 														tickLine={false}
 													/>
 													<Tooltip
 														contentStyle={{
-															backgroundColor: '#0f172a',
-															borderColor: '#334155',
+															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+															borderColor: darkMode ? '#334155' : '#e2e8f0',
 															borderRadius: '12px',
-															color: '#fff',
+															color: darkMode ? '#fff' : '#0f172a',
 															fontSize: '12px',
-															boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
 														}}
-														itemStyle={{ color: '#06b6d4' }}
+														itemStyle={{ color: darkMode ? '#06b6d4' : '#0891b2' }}
 														labelFormatter={(label, items) => {
 															const item = items[0]?.payload
 															return item ? `${item.data} - ${item.festivalNome}` : ''
@@ -689,16 +689,16 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 														stroke="#06b6d4"
 														strokeWidth={2.5}
 														fill="url(#djHistoryGradient)"
-														dot={{ fill: '#06b6d4', stroke: '#0f172a', strokeWidth: 1.5, r: 4 }}
+														dot={{ fill: '#06b6d4', stroke: darkMode ? '#0f172a' : '#ffffff', strokeWidth: 1.5, r: 4 }}
 														activeDot={{ r: 6, strokeWidth: 0 }}
 													/>
 												</AreaChart>
 											</ResponsiveContainer>
 										</div>
 									) : (
-										<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-800 rounded-xl bg-slate-950/20">
-											<Info className="w-8 h-8 text-slate-500" />
-											<p className="text-sm text-slate-400 font-medium">Sem avaliações registadas</p>
+										<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+											<Info className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Sem avaliações registadas</p>
 											<p className="text-xs text-slate-500 max-w-xs">
 												Adiciona avaliações aos sets de {selectedDj.nome} para visualizar o gráfico.
 											</p>
@@ -712,16 +712,16 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 						<div className="lg:col-span-5 flex flex-col gap-8">
 							
 							{/* Seletor do DJ Estilo Form */}
-							<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+							<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
 								<div className="flex items-center gap-3">
-									<div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-400">
+									<div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-600 dark:text-purple-400">
 										<User className="w-5 h-5" />
 									</div>
 									<div>
-										<h2 className="text-base font-bold text-slate-200 tracking-tight">
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight">
 											Selecionar DJ
 										</h2>
-										<p className="text-xs text-slate-400 mt-0.5">
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
 											Pesquisa e escolhe um artista para atualizar as métricas.
 										</p>
 									</div>
@@ -729,13 +729,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 								{/* Barra de Pesquisa */}
 								<div className="relative">
-									<Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-400" />
+									<Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
 									<input
 										type="text"
 										value={djSearchTerm}
 										onChange={(e) => setDjSearchTerm(e.target.value)}
 										placeholder="Pesquisar artista ou género..."
-										className="w-full rounded-xl border border-cyan-400/20 bg-slate-950/10 py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:bg-white/5 shadow-[0_0_0_1px_rgba(34,211,238,0.04)]"
+										className="w-full rounded-xl border border-slate-200 bg-white/80 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-100 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all"
 									/>
 								</div>
 
@@ -763,12 +763,12 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 													onClick={() => setSelectedDjId(dj.id)}
 													className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border p-2 text-left transition-all duration-100 transition-transform active:scale-[0.98] focus:outline-none ${
 														isSelected
-															? 'border-purple-500/40 bg-purple-500/10 shadow-[0_0_0_1px_rgba(168,85,247,0.15)] text-slate-900 dark:text-white transition-colors duration-500'
-															: 'border-transparent bg-white/30 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:border-purple-500/30 hover:bg-purple-500/10'
+															? 'border-purple-500/40 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.08)] dark:shadow-[0_0_15px_rgba(168,85,247,0.15)] text-slate-900 dark:text-white'
+															: 'border-transparent bg-slate-100/40 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:border-purple-500/30 hover:bg-purple-500/5 dark:hover:bg-purple-500/10'
 													}`}
 												>
 													{/* Avatar */}
-													<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-sm font-bold text-slate-700 ring-1 ring-white/20 dark:text-white">
+													<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-sm font-bold text-slate-700 dark:text-white ring-1 ring-slate-200 dark:ring-white/20">
 														{dj.imagem ? (
 															<img src={dj.imagem} alt={dj.nome} className="h-full w-full object-cover" />
 														) : (
@@ -781,7 +781,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 														<div className="flex items-center justify-between gap-2">
 															<p className="truncate text-sm font-bold text-slate-900 dark:text-white">{dj.nome}</p>
 															{isSelected && (
-																<span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-400 transition-colors duration-500 whitespace-nowrap">
+																<span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-600 dark:text-purple-400 whitespace-nowrap">
 																	Selecionado
 																</span>
 															)}
@@ -792,7 +792,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 											)
 										})
 									) : (
-										<div className="text-center py-8 text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl bg-slate-950/20">
+										<div className="text-center py-8 text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/40 dark:bg-slate-950/20">
 											Nenhum DJ encontrado para a pesquisa.
 										</div>
 									)}
@@ -801,41 +801,41 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 							{/* Tabela de Rastreio Horas/Locais (Histórico de Presenças) */}
 							{selectedDjId && selectedDj && (
-								<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4 animate-fadeIn">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4 animate-fadeIn">
 									<div>
-										<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
-											<Calendar className="text-purple-400 w-5 h-5" />
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<Calendar className="text-purple-500 dark:text-purple-400 w-5 h-5" />
 											Histórico de Presenças
 										</h2>
-										<p className="text-xs text-slate-400 mt-1">
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 											Lista de sets e eventos em que assististe à atuação do DJ.
 										</p>
 									</div>
 
 									{djHistoryData.length > 0 ? (
-										<div className="overflow-x-auto rounded-xl border border-white/5">
+										<div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5">
 											<table className="w-full text-left text-sm border-collapse">
 												<thead>
-													<tr className="bg-white/5 text-slate-300 font-bold border-b border-white/10">
+													<tr className="bg-slate-100/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-white/10">
 														<th className="py-3 px-4">Data e Hora</th>
 														<th className="py-3 px-4">Festival / Edição</th>
 														<th className="py-3 px-4 flex items-center gap-1">
-															<MapPin className="w-3.5 h-3.5 text-slate-400" />
+															<MapPin className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
 															Local
 														</th>
 													</tr>
 												</thead>
-												<tbody className="divide-y divide-white/5">
+												<tbody className="divide-y divide-slate-200/60 dark:divide-white/5">
 													{djHistoryData.map((item) => (
-														<tr key={item.id} className="hover:bg-white/5 transition-colors">
-															<td className="py-3.5 px-4 text-slate-300 font-medium">
+														<tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
+															<td className="py-3.5 px-4 text-slate-800 dark:text-slate-300 font-medium">
 																{item.data.split('-').reverse().join('/')} 
 																{item.hora && <span className="text-slate-500 font-normal"> às {item.hora}</span>}
 															</td>
-															<td className="py-3.5 px-4 text-purple-300 font-semibold">
+															<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold">
 																{item.festivalNome}
 															</td>
-															<td className="py-3.5 px-4 text-slate-400">
+															<td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">
 																{item.local}
 															</td>
 														</tr>
@@ -844,9 +844,9 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 											</table>
 										</div>
 									) : (
-										<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-800 rounded-xl bg-slate-950/20">
-											<Calendar className="w-8 h-8 text-slate-500" />
-											<p className="text-sm text-slate-400 font-medium">Nenhuma presença registada</p>
+										<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+											<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhuma presença registada</p>
 											<p className="text-xs text-slate-500 max-w-xs">
 												Não existem sets associados a {selectedDj.nome} no histórico.
 											</p>
@@ -860,13 +860,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 				{activeTab === 'festivais' && (
 					<div className="grid grid-cols-1 gap-8 animate-fadeIn">
-						<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+						<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
 							<div>
-								<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
-									<BarChart2 className="text-purple-400 w-5 h-5" />
+								<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+									<BarChart2 className="text-purple-500 dark:text-purple-400 w-5 h-5" />
 									Sets por Festival
 								</h2>
-								<p className="text-xs text-slate-400 mt-1">
+								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 									Distribuição de atuações por cada festival registado.
 								</p>
 							</div>
@@ -884,10 +884,10 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 												innerRadius="65%"
 												outerRadius="85%"
 												paddingAngle={4}
-												stroke="rgba(15, 23, 42, 0.8)"
+												stroke={darkMode ? 'rgba(15, 23, 42, 0.8)' : '#ffffff'}
 												strokeWidth={3}
-												label={{ fill: '#cbd5e1', fontSize: 11, fontFamily: 'sans-serif' }}
-												labelLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+												label={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
+												labelLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.15)' }}
 											>
 												{setsPorFestival.map((entry, index) => (
 													<Cell key={`cell-${entry.name}`} fill={pieColors[index % pieColors.length]} />
@@ -895,12 +895,12 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 											</Pie>
 											<Tooltip
 												contentStyle={{
-													backgroundColor: '#0f172a',
-													borderColor: '#334155',
+													backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+													borderColor: darkMode ? '#334155' : '#e2e8f0',
 													borderRadius: '12px',
-													color: '#fff',
+													color: darkMode ? '#fff' : '#0f172a',
 												}}
-												itemStyle={{ color: '#fff' }}
+												itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
 											/>
 										</PieChart>
 									</ResponsiveContainer>
@@ -913,20 +913,20 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				)}
 
 				{activeTab === 'locais' && (
-					<div className="text-slate-400 font-medium py-12 text-center bg-white/5 dark:bg-slate-900/20 border border-slate-800 backdrop-blur-md rounded-2xl animate-fadeIn">
+					<div className="text-slate-600 dark:text-slate-400 font-medium py-12 text-center bg-white/60 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 backdrop-blur-md rounded-2xl animate-fadeIn">
 						Estatísticas de Locais em breve...
 					</div>
 				)}
 
 				{activeTab === 'generos' && (
 					<div className="grid grid-cols-1 gap-8 animate-fadeIn">
-						<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+						<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
 							<div>
-								<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
-									<TrendingUp className="text-cyan-400 w-5 h-5" />
+								<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+									<TrendingUp className="text-cyan-500 dark:text-cyan-400 w-5 h-5" stroke="#22d3ee" />
 									Espectro de Ritmo (BPM por Género)
 								</h2>
-								<p className="text-xs text-slate-400 mt-1">
+								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
 									Mapeamento do andamento/velocidade (BPM) de cada género registado.
 								</p>
 							</div>
@@ -941,27 +941,27 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 													<stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
 												</linearGradient>
 											</defs>
-											<CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
+											<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.3 : 0.5} vertical={false} />
 											<XAxis
 												dataKey="name"
-												tick={{ fill: '#cbd5e1', fontSize: 11, fontFamily: 'sans-serif' }}
-												axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+												tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
+												axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
 												tickLine={false}
 											/>
 											<YAxis
 												domain={['auto', 'auto']}
-												tick={{ fill: '#cbd5e1', fontSize: 11, fontFamily: 'sans-serif' }}
-												axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+												tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
+												axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
 												tickLine={false}
 											/>
 											<Tooltip
 												contentStyle={{
-													backgroundColor: '#0f172a',
-													borderColor: '#334155',
+													backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+													borderColor: darkMode ? '#334155' : '#e2e8f0',
 													borderRadius: '12px',
-													color: '#fff',
+													color: darkMode ? '#fff' : '#0f172a',
 												}}
-												itemStyle={{ color: '#fff' }}
+												itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
 											/>
 											<Area type="monotone" dataKey="bpm" stroke="#06b6d4" strokeWidth={2} fill="url(#bpmGradient)" />
 										</AreaChart>
@@ -994,14 +994,14 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							}}
 						>
 							<div
-								className="bg-slate-950/85 backdrop-blur-xl border border-white/10 p-6 rounded-2xl max-w-2xl w-full relative z-50 shadow-2xl flex flex-col gap-5 animate-modal-content"
+								className="bg-white/95 dark:bg-slate-950/85 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-6 rounded-2xl max-w-2xl w-full relative z-50 shadow-2xl flex flex-col gap-5 animate-modal-content"
 								onClick={(e) => e.stopPropagation()}
 							>
 								{/* Cabeçalho do Modal */}
 								<div className="flex justify-between items-start gap-4">
 									<div className="flex items-center gap-3">
 										{/* Avatar do DJ no Modal */}
-										<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-400/20 text-sm font-bold text-slate-200 ring-1 ring-white/10 shadow-lg">
+										<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-400/20 text-sm font-bold text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-white/10 shadow-lg">
 											{modalDjData.imagem ? (
 												<img src={modalDjData.imagem} alt={modalDjData.nome} className="h-full w-full object-cover" />
 											) : (
@@ -1009,15 +1009,15 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 											)}
 										</div>
 										<div>
-											<h3 className="text-lg font-black text-white leading-tight">
+											<h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
 												Histórico de {modalDjData.nome}
 											</h3>
 											{/* Mini KPIs do DJ no Cabeçalho */}
 											<div className="flex gap-2.5 items-center mt-1.5">
-												<span className="text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full px-2.5 py-0.5 flex items-center gap-1">
+												<span className="text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-full px-2.5 py-0.5 flex items-center gap-1">
 													{modalStats.count} {modalStats.count === 1 ? 'set' : 'sets'}
 												</span>
-												<span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full px-2.5 py-0.5 flex items-center gap-1">
+												<span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 rounded-full px-2.5 py-0.5 flex items-center gap-1">
 													Média: {modalStats.avg}
 												</span>
 											</div>
@@ -1029,28 +1029,28 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 											setIsModalOpen(false)
 											setModalDjData(null)
 										}}
-										className="text-slate-400 hover:text-white rounded-full p-1.5 hover:bg-white/10 transition-colors focus:outline-none cursor-pointer"
+										className="text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white rounded-full p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors focus:outline-none cursor-pointer"
 									>
 										<X className="w-5 h-5" />
 									</button>
 								</div>
 
 								{/* Tabela de Presenças no Modal */}
-								<div className="max-h-[380px] overflow-y-auto rounded-xl border border-white/5 pr-1">
+								<div className="max-h-[380px] overflow-y-auto rounded-xl border border-slate-200 dark:border-white/5 pr-1">
 									{modalSets.length > 0 ? (
 										<table className="w-full text-left text-sm border-collapse">
 											<thead>
-												<tr className="bg-white/5 text-slate-300 font-bold border-b border-white/10">
+												<tr className="bg-slate-100/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-white/10">
 													<th className="py-2.5 px-3.5">Festival / Edição</th>
 													<th className="py-2.5 px-3.5">Data e Hora</th>
 													<th className="py-2.5 px-3.5 text-center">Nota</th>
 												</tr>
 											</thead>
-											<tbody className="divide-y divide-white/5">
+											<tbody className="divide-y divide-slate-200/60 dark:divide-white/5">
 												{modalSets.map((set) => (
-													<tr key={set.id} className="hover:bg-white/5 transition-colors">
-														<td className="py-3 px-3.5 text-purple-300 font-semibold">{set.festivalNome}</td>
-														<td className="py-3 px-3.5 text-slate-300">
+													<tr key={set.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
+														<td className="py-3 px-3.5 text-purple-600 dark:text-purple-300 font-semibold">{set.festivalNome}</td>
+														<td className="py-3 px-3.5 text-slate-800 dark:text-slate-300">
 															{set.data.split('-').reverse().join('/')}
 															{set.hora && <span className="text-slate-500 font-normal"> às {set.hora}</span>}
 														</td>
@@ -1072,7 +1072,6 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 					)
 				})()
 			, document.body)}
-
 		</div>
 	)
 }

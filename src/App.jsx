@@ -357,6 +357,7 @@ export default function App() {
                     sets={sets}
                     djs={djs}
                     festivais={festivais}
+                    darkMode={darkMode}
                   />
                 }
               />
