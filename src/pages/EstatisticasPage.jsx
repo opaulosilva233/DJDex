@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
 	Area,
 	AreaChart,
@@ -19,14 +20,17 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
-import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search } from 'lucide-react'
+import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X } from 'lucide-react'
 
 const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1']
 
 export default function EstatisticasPage({ sets = [], djs = [], festivais = [], generos = [] }) {
-	const [activeTab, setActiveTab] = useState('djs')
+	const [activeTab, setActiveTab] = useState('geral')
 	const [selectedDjId, setSelectedDjId] = useState('')
 	const [djSearchTerm, setDjSearchTerm] = useState('')
+	const [isModalOpen, setIsModalOpen] = useState(false)
+	const [modalDjData, setModalDjData] = useState(null)
+	const [showAllDjs, setShowAllDjs] = useState(false)
 
 	// Configurar DJ selecionado padrão caso não esteja definido
 	useEffect(() => {
@@ -34,6 +38,140 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			setSelectedDjId(djs[0].id)
 		}
 	}, [djs, selectedDjId])
+
+	// Calculations for the "Geral" dashboard
+	const kpis = useMemo(() => {
+		const totalSets = sets.length
+
+		const uniqueFestivals = new Set(sets.map((s) => s.festivalId).filter(Boolean)).size
+
+		const uniqueDjs = new Set(sets.map((s) => s.djId).filter(Boolean)).size
+
+		// Compute most popular genre based on sets seen
+		const genreCounts = {}
+		sets.forEach((set) => {
+			const dj = djs.find((d) => d.id === set.djId)
+			if (dj && Array.isArray(dj.generoIds)) {
+				dj.generoIds.forEach((gid) => {
+					genreCounts[gid] = (genreCounts[gid] || 0) + 1
+				})
+			}
+		})
+
+		let topGenreName = 'Nenhum'
+		let maxCount = 0
+		Object.entries(genreCounts).forEach(([gid, count]) => {
+			if (count > maxCount) {
+				maxCount = count
+				const genre = generos.find((g) => g.id === gid)
+				if (genre) {
+					topGenreName = genre.nome
+				}
+			}
+		})
+
+		return {
+			totalSets,
+			uniqueFestivals,
+			uniqueDjs,
+			topGenreName,
+		}
+	}, [sets, djs, generos])
+
+	// List of DJs sorted by number of sets
+	const topDjsList = useMemo(() => {
+		const counts = {}
+		sets.forEach((s) => {
+			if (s.djId) {
+				counts[s.djId] = (counts[s.djId] || 0) + 1
+			}
+		})
+
+		return djs
+			.map((dj) => ({
+				...dj,
+				count: counts[dj.id] || 0,
+			}))
+			.filter((dj) => dj.count > 0)
+			.sort((a, b) => b.count - a.count || a.nome.localeCompare(b.nome, 'pt'))
+	}, [sets, djs])
+
+	const displayedTopDjs = showAllDjs ? topDjsList : topDjsList.slice(0, 10)
+
+	// Sets list for the DJ shown in the modal
+	const modalSets = useMemo(() => {
+		if (!modalDjData) return []
+		return sets
+			.filter((s) => s.djId === modalDjData.id)
+			.map((s) => {
+				const festival = festivais.find((f) => f.id === s.festivalId)
+				return {
+					id: s.id,
+					festivalNome: festival ? festival.nome : 'Set Individual',
+					data: s.data || 'Sem data',
+					hora: s.hora || s.horaInicio || '',
+					avaliacao: s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '' 
+						? Number(s.avaliacao) 
+						: null,
+				}
+			})
+			.sort((a, b) => {
+				const dateA = new Date(`${a.data}T${a.hora || '00:00'}`)
+				const dateB = new Date(`${b.data}T${b.hora || '00:00'}`)
+				return dateB - dateA // Newest first
+			})
+	}, [sets, modalDjData, festivais])
+
+	// Estatísticas agregadas do modal
+	const modalStats = useMemo(() => {
+		if (!modalDjData || modalSets.length === 0) return { count: 0, avg: '—' }
+		const count = modalSets.length
+		const ratedSets = modalSets.filter((s) => s.avaliacao !== null)
+		const avg = ratedSets.length > 0
+			? (ratedSets.reduce((acc, s) => acc + s.avaliacao, 0) / ratedSets.length).toFixed(1)
+			: '—'
+		return { count, avg }
+	}, [modalSets, modalDjData])
+
+	const getRatingBadge = (rating) => {
+		if (rating === null || rating === undefined) {
+			return <span className="text-slate-505 dark:text-slate-500 font-medium">—</span>
+		}
+
+		let colorClasses = "bg-slate-500/10 text-slate-400 border border-slate-500/20"
+		if (rating >= 9.0) {
+			colorClasses = "bg-amber-400/10 text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+		} else if (rating >= 7.5) {
+			colorClasses = "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+		} else if (rating >= 5.0) {
+			colorClasses = "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+		}
+
+		return (
+			<span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${colorClasses}`}>
+				{rating.toFixed(1)}/10
+			</span>
+		)
+	}
+
+	// Festival frequency data for the bar chart
+	const festivalFreqData = useMemo(() => {
+		const counts = {}
+		sets.forEach((s) => {
+			if (s.festivalId) {
+				counts[s.festivalId] = (counts[s.festivalId] || 0) + 1
+			}
+		})
+
+		return festivais
+			.map((f) => ({
+				name: f.nome,
+				quantidade: counts[f.id] || 0,
+			}))
+			.filter((item) => item.quantidade > 0)
+			.sort((a, b) => b.quantidade - a.quantidade || a.name.localeCompare(b.name, 'pt'))
+			.slice(0, 10)
+	}, [sets, festivais])
 
 	// 1. Distribuição de Avaliações do DJ Selecionado (de 1 a 10)
 	const djRatingDistribution = useMemo(() => {
@@ -186,6 +324,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 	// Abas configuradas
 	const tabs = [
+		{ id: 'geral', label: 'Geral' },
 		{ id: 'djs', label: 'DJs' },
 		{ id: 'festivais', label: 'Festivais' },
 		{ id: 'locais', label: 'Locais' },
@@ -226,6 +365,164 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 			{/* Conteúdo das Abas */}
 			<div className="w-full">
+				
+				{/* 1. ABA GERAL (Dashboard Principal) */}
+				{activeTab === 'geral' && (
+					<div className="flex flex-col gap-8 animate-fadeIn">
+						
+						{/* Fila de KPIs Rápidos */}
+						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+							{/* Card 1: Total Sets */}
+							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Sets Assistidos</span>
+								<span className="text-2xl font-black text-white">{kpis.totalSets}</span>
+							</div>
+							{/* Card 2: Festivals */}
+							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Festivais Únicos</span>
+								<span className="text-2xl font-black text-white">{kpis.uniqueFestivals}</span>
+							</div>
+							{/* Card 3: DJs */}
+							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">DJs Vistos</span>
+								<span className="text-2xl font-black text-white">{kpis.uniqueDjs}</span>
+							</div>
+							{/* Card 4: Top Genre */}
+							<div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col gap-1 hover:scale-[1.01] transition-transform duration-200">
+								<span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Género Mais Ouvido</span>
+								<span className="text-2xl font-black text-purple-400 truncate">{kpis.topGenreName}</span>
+							</div>
+						</div>
+
+						{/* Grid Principal de duas colunas */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+							
+							{/* Bloco Top 10 DJs Interativo (6 colunas) */}
+							<div className="lg:col-span-6 flex flex-col gap-6">
+								<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+									<div>
+										<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
+											<User className="text-purple-400 w-5 h-5" />
+											Top DJs Registados
+										</h2>
+										<p className="text-xs text-slate-400 mt-1">
+											Lista dos DJs com mais sets registados na base de dados (clica para ver o histórico).
+										</p>
+									</div>
+
+									<div className="flex flex-col gap-2 max-h-[480px] overflow-y-auto pr-1">
+										{displayedTopDjs.length > 0 ? (
+											displayedTopDjs.map((dj, index) => {
+												const djGenres = generos
+													.filter((g) => dj.generoIds?.includes(g.id))
+													.map((g) => g.nome)
+													.join(', ') || 'Sem géneros'
+
+												const initials = dj.nome
+													.split(' ')
+													.filter(Boolean)
+													.slice(0, 2)
+													.map((part) => part.charAt(0).toUpperCase())
+													.join('')
+
+												return (
+													<div
+														key={dj.id}
+														onClick={() => {
+															setModalDjData(dj)
+															setIsModalOpen(true)
+														}}
+														className="hover:bg-white/5 cursor-pointer rounded-xl p-2.5 transition-all flex justify-between items-center border border-transparent hover:border-white/5 active:scale-[0.99]"
+													>
+														<div className="flex items-center gap-3 min-w-0">
+															<span className="text-xs font-bold text-slate-500 w-5 text-right shrink-0">{index + 1}.</span>
+															{/* Avatar */}
+															<div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-400/20 text-xs font-bold text-slate-200 ring-1 ring-white/10">
+																{dj.imagem ? (
+																	<img src={dj.imagem} alt={dj.nome} className="h-full w-full object-cover" />
+																) : (
+																	initials
+																)}
+															</div>
+															{/* DJ Info */}
+															<div className="min-w-0">
+																<p className="text-xs font-bold text-white truncate">{dj.nome}</p>
+																<p className="text-[10px] text-slate-400 mt-0.5 truncate">{djGenres}</p>
+															</div>
+														</div>
+														<span className="text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg px-2.5 py-1 shrink-0 ml-2">
+															{dj.count} {dj.count === 1 ? 'set' : 'sets'}
+														</span>
+													</div>
+												)
+											})
+										) : (
+											<p className="text-xs text-slate-500 italic text-center py-8">Nenhum set registado na base de dados.</p>
+										)}
+									</div>
+
+									{topDjsList.length > 10 && (
+										<button
+											type="button"
+											onClick={() => setShowAllDjs(!showAllDjs)}
+											className="mt-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 rounded-xl py-2.5 w-full cursor-pointer focus:outline-none"
+										>
+											{showAllDjs ? 'Mostrar menos' : `Mostrar mais (${topDjsList.length - 10} adicionais)`}
+										</button>
+									)}
+								</section>
+							</div>
+
+							{/* Bloco Frequência de Festivais (6 colunas) */}
+							<div className="lg:col-span-6 flex flex-col gap-6">
+								<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+									<div>
+										<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
+											<BarChart2 className="text-cyan-400 w-5 h-5" />
+											Frequência de Festivais
+										</h2>
+										<p className="text-xs text-slate-400 mt-1">
+											Frequência de atuações assistidas em cada festival (Top 10).
+										</p>
+									</div>
+
+									{festivalFreqData.length > 0 ? (
+										<div style={{ width: '100%', height: '340px' }}>
+											<ResponsiveContainer width="100%" height="100%">
+												<BarChart data={festivalFreqData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+													<defs>
+														<linearGradient id="festivalCountGradient" x1="0" y1="0" x2="1" y2="0">
+															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.8} />
+															<stop offset="100%" stopColor="#0891b2" stopOpacity={0.15} />
+														</linearGradient>
+													</defs>
+													<CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} horizontal={false} />
+													<XAxis type="number" allowDecimals={false} tick={{ fill: '#cbd5e1', fontSize: 10 }} axisLine={false} tickLine={false} />
+													<YAxis dataKey="name" type="category" tick={{ fill: '#cbd5e1', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+													<Tooltip
+														contentStyle={{
+															backgroundColor: '#0f172a',
+															borderColor: '#334155',
+															borderRadius: '12px',
+															color: '#fff',
+															fontSize: '11px',
+															boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+														}}
+														cursor={{ fill: 'rgba(255, 255, 255, 0.02)' }}
+													/>
+													<Bar dataKey="quantidade" name="Sets" fill="url(#festivalCountGradient)" radius={[0, 4, 4, 0]} barSize={16} />
+												</BarChart>
+											</ResponsiveContainer>
+										</div>
+									) : (
+										<p className="text-xs text-slate-500 italic text-center py-10">Nenhum festival registado com sets.</p>
+									)}
+								</section>
+							</div>
+						</div>
+					</div>
+				)}
+
 				{activeTab === 'djs' && (
 					<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 						
@@ -562,7 +859,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				)}
 
 				{activeTab === 'festivais' && (
-					<div className="grid grid-cols-1 gap-8">
+					<div className="grid grid-cols-1 gap-8 animate-fadeIn">
 						<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
 							<div>
 								<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
@@ -616,13 +913,13 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				)}
 
 				{activeTab === 'locais' && (
-					<div className="text-slate-400 font-medium py-12 text-center bg-white/5 dark:bg-slate-900/20 border border-slate-800 backdrop-blur-md rounded-2xl">
+					<div className="text-slate-400 font-medium py-12 text-center bg-white/5 dark:bg-slate-900/20 border border-slate-800 backdrop-blur-md rounded-2xl animate-fadeIn">
 						Estatísticas de Locais em breve...
 					</div>
 				)}
 
 				{activeTab === 'generos' && (
-					<div className="grid grid-cols-1 gap-8">
+					<div className="grid grid-cols-1 gap-8 animate-fadeIn">
 						<section className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/10 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
 							<div>
 								<h2 className="text-base font-bold text-slate-200 tracking-tight flex items-center gap-2">
@@ -677,6 +974,105 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 					</div>
 				)}
 			</div>
+
+			{/* Modal de Presenças Flutuante de Vidro Espesso */}
+			{isModalOpen && modalDjData && createPortal(
+				(() => {
+					const modalDjInitials = modalDjData.nome
+						.split(' ')
+						.filter(Boolean)
+						.slice(0, 2)
+						.map((part) => part.charAt(0).toUpperCase())
+						.join('')
+
+					return (
+						<div
+							className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-modal-overlay"
+							onClick={() => {
+								setIsModalOpen(false)
+								setModalDjData(null)
+							}}
+						>
+							<div
+								className="bg-slate-950/85 backdrop-blur-xl border border-white/10 p-6 rounded-2xl max-w-2xl w-full relative z-50 shadow-2xl flex flex-col gap-5 animate-modal-content"
+								onClick={(e) => e.stopPropagation()}
+							>
+								{/* Cabeçalho do Modal */}
+								<div className="flex justify-between items-start gap-4">
+									<div className="flex items-center gap-3">
+										{/* Avatar do DJ no Modal */}
+										<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-400/20 text-sm font-bold text-slate-200 ring-1 ring-white/10 shadow-lg">
+											{modalDjData.imagem ? (
+												<img src={modalDjData.imagem} alt={modalDjData.nome} className="h-full w-full object-cover" />
+											) : (
+												modalDjInitials
+											)}
+										</div>
+										<div>
+											<h3 className="text-lg font-black text-white leading-tight">
+												Histórico de {modalDjData.nome}
+											</h3>
+											{/* Mini KPIs do DJ no Cabeçalho */}
+											<div className="flex gap-2.5 items-center mt-1.5">
+												<span className="text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full px-2.5 py-0.5 flex items-center gap-1">
+													{modalStats.count} {modalStats.count === 1 ? 'set' : 'sets'}
+												</span>
+												<span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full px-2.5 py-0.5 flex items-center gap-1">
+													Média: {modalStats.avg}
+												</span>
+											</div>
+										</div>
+									</div>
+									<button
+										type="button"
+										onClick={() => {
+											setIsModalOpen(false)
+											setModalDjData(null)
+										}}
+										className="text-slate-400 hover:text-white rounded-full p-1.5 hover:bg-white/10 transition-colors focus:outline-none cursor-pointer"
+									>
+										<X className="w-5 h-5" />
+									</button>
+								</div>
+
+								{/* Tabela de Presenças no Modal */}
+								<div className="max-h-[380px] overflow-y-auto rounded-xl border border-white/5 pr-1">
+									{modalSets.length > 0 ? (
+										<table className="w-full text-left text-sm border-collapse">
+											<thead>
+												<tr className="bg-white/5 text-slate-300 font-bold border-b border-white/10">
+													<th className="py-2.5 px-3.5">Festival / Edição</th>
+													<th className="py-2.5 px-3.5">Data e Hora</th>
+													<th className="py-2.5 px-3.5 text-center">Nota</th>
+												</tr>
+											</thead>
+											<tbody className="divide-y divide-white/5">
+												{modalSets.map((set) => (
+													<tr key={set.id} className="hover:bg-white/5 transition-colors">
+														<td className="py-3 px-3.5 text-purple-300 font-semibold">{set.festivalNome}</td>
+														<td className="py-3 px-3.5 text-slate-300">
+															{set.data.split('-').reverse().join('/')}
+															{set.hora && <span className="text-slate-500 font-normal"> às {set.hora}</span>}
+														</td>
+														<td className="py-3 px-3.5 text-center">
+															{getRatingBadge(set.avaliacao)}
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									) : (
+										<div className="text-center py-8 text-xs text-slate-500">
+											Nenhum set registado para este DJ.
+										</div>
+									)}
+								</div>
+							</div>
+						</div>
+					)
+				})()
+			, document.body)}
+
 		</div>
 	)
 }
