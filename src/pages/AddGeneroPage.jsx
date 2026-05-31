@@ -10,7 +10,7 @@ export default function AddGeneroPage({ generos = [], handleAddGenero, handleEdi
 
 	return (
 		<section className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
-			<div className="flex flex-col gap-2 max-w-xl mx-auto w-full">
+			<div className="flex flex-col gap-2 max-w-3xl mx-auto w-full">
 				<h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
 					{isEditing ? 'Editar Género' : 'Adicionar Género'}
 				</h1>
