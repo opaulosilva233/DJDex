@@ -18,22 +18,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// DJs
-Route::get('/djs', [DJController::class, 'index']);
-Route::post('/djs', [DJController::class, 'store']);
-
-// Festivais
-Route::get('/festivais', [FestivalController::class, 'index']);
-Route::post('/festivais', [FestivalController::class, 'store']);
-
-// Generos
-Route::get('/generos', [GeneroController::class, 'index']);
-Route::post('/generos', [GeneroController::class, 'store']);
-
-// Edicoes
-Route::get('/edicoes', [EdicaoController::class, 'index']);
-Route::post('/edicoes', [EdicaoController::class, 'store']);
-
-// Sets
-Route::get('/sets', [SetController::class, 'index']);
-Route::post('/sets', [SetController::class, 'store']);
+Route::apiResource('djs', DJController::class);
+Route::apiResource('festivais', FestivalController::class);
+Route::apiResource('generos', GeneroController::class);
+Route::apiResource('edicoes', EdicaoController::class);
+Route::apiResource('sets', SetController::class);

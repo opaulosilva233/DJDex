@@ -8,7 +8,7 @@ class Festival extends Model
 {
     protected $table = 'festivais';
 
-    protected $fillable = ['nome', 'tipo', 'website'];
+    protected $fillable = ['nome', 'tipo', 'website', 'imagem'];
 
     public function generos()
     {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { api } from './services/api'
 
 import './App.css'
 import Navbar from './components/Navbar'
@@ -13,17 +14,6 @@ import EstatisticasPage from './pages/EstatisticasPage'
 import DjsList from './pages/DjsList'
 import GenerosList from './pages/GenerosList'
 import FestivaisList from './pages/FestivaisList'
-import {
-  djs as initialDjs,
-  festivais as initialFestivais,
-  generos as initialGeneros,
-  sets as initialSets,
-} from './data/mockData'
-
-const initialRelationalGeneros = initialGeneros.map((genero) => ({ ...genero }))
-const initialRelationalDjs = initialDjs.map((dj) => ({ ...dj }))
-const initialRelationalFestivais = initialFestivais.map((festival) => ({ ...festival }))
-const initialRelationalSets = initialSets.map((set) => ({ ...set }))
 
 function normalizeGeneroIds(generoIds) {
   if (!Array.isArray(generoIds)) {
@@ -69,7 +59,10 @@ function normalizeFestival(festival) {
   }
 
   const edicoes = Array.isArray(festival.edicoes)
-    ? festival.edicoes
+    ? festival.edicoes.map((e) => ({
+        ...e,
+        dataInicio: e.data_inicio ?? e.dataInicio ?? '',
+      }))
     : (festival.local || festival.ano)
       ? [
           {
@@ -95,37 +88,13 @@ function normalizeFestival(festival) {
   }
 }
 
-
-function readStoredCollection(storageKey, fallback, normalizer) {
-  if (typeof window === 'undefined') {
-    return fallback
-  }
-
-  const storedCollection = window.localStorage.getItem(storageKey)
-
-  if (!storedCollection) {
-    return typeof normalizer === 'function' ? fallback.map(normalizer) : fallback
-  }
-
-  try {
-    const parsedCollection = JSON.parse(storedCollection)
-    return Array.isArray(parsedCollection)
-      ? parsedCollection.map((entry) => (typeof normalizer === 'function' ? normalizer(entry) : entry))
-      : fallback
-  } catch {
-    return fallback
-  }
-}
-
 export default function App() {
-  const [generos, setGeneros] = useState(() => readStoredCollection('ravedex_generos', initialRelationalGeneros))
-  const [djs, setDjs] = useState(() => readStoredCollection('ravedex_djs', initialRelationalDjs, normalizeDj))
-  const [festivais, setFestivais] = useState(() =>
-    readStoredCollection('ravedex_festivais', initialRelationalFestivais, normalizeFestival),
-  )
-  const [sets, setSets] = useState(() => {
-    return readStoredCollection('ravedex_sets', initialRelationalSets, normalizeSet)
-  })
+  const [generos, setGeneros] = useState([])
+  const [djs, setDjs] = useState([])
+  const [festivais, setFestivais] = useState([])
+  const [sets, setSets] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window === 'undefined') {
@@ -144,21 +113,38 @@ export default function App() {
       return true
     }
   })
-  useEffect(() => {
-    window.localStorage.setItem('ravedex_generos', JSON.stringify(generos))
-  }, [generos])
 
+  // Load all initial data from the database
   useEffect(() => {
-    window.localStorage.setItem('ravedex_djs', JSON.stringify(djs))
-  }, [djs])
+    let isMounted = true
+    setIsLoading(true)
 
-  useEffect(() => {
-    window.localStorage.setItem('ravedex_festivais', JSON.stringify(festivais))
-  }, [festivais])
+    Promise.all([
+      api.get('/generos'),
+      api.get('/djs'),
+      api.get('/festivais'),
+      api.get('/sets'),
+    ])
+      .then(([generosData, djsData, festivaisData, setsData]) => {
+        if (isMounted) {
+          setGeneros(generosData)
+          setDjs(djsData.map(normalizeDj))
+          setFestivais(festivaisData.map(normalizeFestival))
+          setSets(setsData.map(normalizeSet))
+          setIsLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err.message || 'Erro de ligação ao servidor.')
+          setIsLoading(false)
+        }
+      })
 
-  useEffect(() => {
-    window.localStorage.setItem('ravedex_sets', JSON.stringify(sets))
-  }, [sets])
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     window.localStorage.setItem('ravedex_theme', JSON.stringify(darkMode))
@@ -166,22 +152,40 @@ export default function App() {
   }, [darkMode])
 
   function handleAddGenero(novoGenero) {
-    setGeneros((currentGeneros) => [novoGenero, ...currentGeneros])
+    api.post('/generos', novoGenero)
+      .then((data) => {
+        setGeneros((currentGeneros) => [data, ...currentGeneros])
+      })
+      .catch((err) => alert('Erro ao adicionar género: ' + err.message))
   }
 
   function handleAddDj(novoDj) {
-    setDjs((currentDjs) => [novoDj, ...currentDjs])
+    api.post('/djs', novoDj)
+      .then((data) => {
+        setDjs((currentDjs) => [normalizeDj(data), ...currentDjs])
+      })
+      .catch((err) => alert('Erro ao adicionar DJ: ' + err.message))
   }
 
   function handleAddFestival(novoFestival) {
-    setFestivais((currentFestivais) => [normalizeFestival(novoFestival), ...currentFestivais])
+    api.post('/festivais', novoFestival)
+      .then((data) => {
+        setFestivais((currentFestivais) => [normalizeFestival(data), ...currentFestivais])
+      })
+      .catch((err) => alert('Erro ao adicionar festival: ' + err.message))
   }
 
   function handleAddSet(novoSet) {
-    setSets((currentSets) => [novoSet, ...currentSets])
+    api.post('/sets', novoSet)
+      .then((data) => {
+        setSets((currentSets) => [normalizeSet(data), ...currentSets])
+      })
+      .catch((err) => alert('Erro ao adicionar set: ' + err.message))
   }
 
   function handleImportAllData(importedData) {
+    // Note: We can implement batch import to the API if needed,
+    // but for now, we reset local states for visual demonstration.
     if (Array.isArray(importedData)) {
       setSets(importedData.map(normalizeSet))
       return
@@ -198,51 +202,83 @@ export default function App() {
   }
 
   function handleEditSet(updatedSet) {
-    setSets((currentSets) => currentSets.map((set) => (set.id === updatedSet.id ? { ...set, ...updatedSet } : set)))
+    api.put(`/sets/${updatedSet.id}`, updatedSet)
+      .then((data) => {
+        setSets((currentSets) => currentSets.map((set) => (set.id === data.id ? normalizeSet(data) : set)))
+      })
+      .catch((err) => alert('Erro ao editar set: ' + err.message))
   }
 
   function handleEditDj(updatedDj) {
-    setDjs((currentDjs) => currentDjs.map((dj) => (dj.id === updatedDj.id ? { ...dj, ...normalizeDj(updatedDj) } : dj)))
+    api.put(`/djs/${updatedDj.id}`, updatedDj)
+      .then((data) => {
+        setDjs((currentDjs) => currentDjs.map((dj) => (dj.id === data.id ? normalizeDj(data) : dj)))
+      })
+      .catch((err) => alert('Erro ao editar DJ: ' + err.message))
   }
 
   function handleEditFestival(updatedFestival) {
-    setFestivais((currentFestivais) =>
-      currentFestivais.map((festival) =>
-        festival.id === updatedFestival.id ? normalizeFestival(updatedFestival) : festival,
-      ),
-    )
+    api.put(`/festivais/${updatedFestival.id}`, updatedFestival)
+      .then((data) => {
+        setFestivais((currentFestivais) =>
+          currentFestivais.map((festival) =>
+            festival.id === data.id ? normalizeFestival(data) : festival,
+          ),
+        )
+      })
+      .catch((err) => alert('Erro ao editar festival: ' + err.message))
   }
 
   function handleEditGenero(updatedGenero) {
-    setGeneros((currentGeneros) =>
-      currentGeneros.map((genero) =>
-        genero.id === updatedGenero.id ? { ...genero, ...updatedGenero } : genero,
-      ),
-    )
+    api.put(`/generos/${updatedGenero.id}`, updatedGenero)
+      .then((data) => {
+        setGeneros((currentGeneros) =>
+          currentGeneros.map((genero) =>
+            genero.id === data.id ? data : genero,
+          ),
+        )
+      })
+      .catch((err) => alert('Erro ao editar género: ' + err.message))
   }
 
   function handleDeleteSet(id) {
-    setSets((currentSets) => currentSets.filter((set) => set.id !== id))
+    api.delete(`/sets/${id}`)
+      .then(() => {
+        setSets((currentSets) => currentSets.filter((set) => set.id !== id))
+      })
+      .catch((err) => alert('Erro ao eliminar set: ' + err.message))
   }
 
   function handleDeleteGenero(id) {
-    setGeneros((currentGeneros) => currentGeneros.filter((genero) => genero.id !== id))
-    setDjs((currentDjs) =>
-      currentDjs.map((dj) => ({
-        ...dj,
-        generoIds: Array.isArray(dj.generoIds) ? dj.generoIds.filter((generoId) => generoId !== id) : [],
-      })),
-    )
+    api.delete(`/generos/${id}`)
+      .then(() => {
+        setGeneros((currentGeneros) => currentGeneros.filter((genero) => genero.id !== id))
+        setDjs((currentDjs) =>
+          currentDjs.map((dj) => ({
+            ...dj,
+            generoIds: Array.isArray(dj.generoIds) ? dj.generoIds.filter((generoId) => generoId !== id) : [],
+          })),
+        )
+      })
+      .catch((err) => alert('Erro ao eliminar género: ' + err.message))
   }
 
   function handleDeleteDj(id) {
-    setDjs((currentDjs) => currentDjs.filter((dj) => dj.id !== id))
-    setSets((currentSets) => currentSets.filter((set) => set.djId !== id))
+    api.delete(`/djs/${id}`)
+      .then(() => {
+        setDjs((currentDjs) => currentDjs.filter((dj) => dj.id !== id))
+        setSets((currentSets) => currentSets.filter((set) => set.djId !== id))
+      })
+      .catch((err) => alert('Erro ao eliminar DJ: ' + err.message))
   }
 
   function handleDeleteFestival(id) {
-    setFestivais((currentFestivais) => currentFestivais.filter((festival) => festival.id !== id))
-    setSets((currentSets) => currentSets.filter((set) => set.festivalId !== id))
+    api.delete(`/festivais/${id}`)
+      .then(() => {
+        setFestivais((currentFestivais) => currentFestivais.filter((festival) => festival.id !== id))
+        setSets((currentSets) => currentSets.filter((set) => set.festivalId !== id))
+      })
+      .catch((err) => alert('Erro ao eliminar festival: ' + err.message))
   }
 
   function toggleDarkMode(e) {
@@ -295,147 +331,170 @@ export default function App() {
           </div>
 
           <div className="relative z-10 w-full min-h-full">
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <Home
-                    generos={generos}
-                    sets={sets}
-                    djs={djs}
-                    festivais={festivais}
-                    handleDeleteSet={handleDeleteSet}
-                    handleDeleteDj={handleDeleteDj}
-                    handleDeleteFestival={handleDeleteFestival}
-                    handleDeleteGenero={handleDeleteGenero}
-                  />
-                }
-              />
-              <Route
-                path="/lista"
-                element={
-                  <SetList
-                    sets={sets}
-                    generos={generos}
-                    djs={djs}
-                    festivais={festivais}
-                    onDeleteSet={handleDeleteSet}
-                  />
-                }
-              />
-              <Route
-                path="/djs"
-                element={
-                  <DjsList
-                    djs={djs}
-                    generos={generos}
-                    handleDeleteDj={handleDeleteDj}
-                  />
-                }
-              />
-              <Route
-                path="/generos"
-                element={
-                  <GenerosList generos={generos} handleDeleteGenero={handleDeleteGenero} />
-                }
-              />
-              <Route
-                path="/festivais"
-                element={
-                  <FestivaisList
-                    festivais={festivais}
-                    handleDeleteFestival={handleDeleteFestival}
-                    generos={generos}
-                  />
-                }
-              />
-              <Route
-                path="/estatisticas"
-                element={
-                  <EstatisticasPage
-                    generos={generos}
-                    sets={sets}
-                    djs={djs}
-                    festivais={festivais}
-                    darkMode={darkMode}
-                  />
-                }
-              />
-              <Route
-                path="/adicionar"
-                element={
-                  <AddSetPage
-                    sets={sets}
-                    generos={generos}
-                    djs={djs}
-                    festivais={festivais}
-                    handleAddSet={handleAddSet}
-                    handleEditSet={handleEditSet}
-                  />
-                }
-              />
-              <Route
-                path="/sets/editar/:id"
-                element={
-                  <AddSetPage
-                    sets={sets}
-                    generos={generos}
-                    djs={djs}
-                    festivais={festivais}
-                    handleAddSet={handleAddSet}
-                    handleEditSet={handleEditSet}
-                  />
-                }
-              />
-              <Route
-                path="/editar/:id"
-                element={
-                  <AddSetPage
-                    sets={sets}
-                    generos={generos}
-                    djs={djs}
-                    festivais={festivais}
-                    handleAddSet={handleAddSet}
-                    handleEditSet={handleEditSet}
-                  />
-                }
-              />
-              <Route
-                path="/djs/adicionar"
-                element={
-                  <AddDjPage
-                    djs={djs}
-                    generos={generos}
-                    handleAddDj={handleAddDj}
-                    handleEditDj={handleEditDj}
-                    handleDeleteDj={handleDeleteDj}
-                  />
-                }
-              />
-              <Route
-                path="/generos/adicionar"
-                element={
-                  <AddGeneroPage
-                    generos={generos}
-                    handleAddGenero={handleAddGenero}
-                    handleEditGenero={handleEditGenero}
-                    handleDeleteGenero={handleDeleteGenero}
-                  />
-                }
-              />
-              <Route
-                path="/festivais/adicionar"
-                element={
-                  <AddFestivalPage
-                    festivais={festivais}
-                    generos={generos}
-                    handleAddFestival={handleAddFestival}
-                    handleEditFestival={handleEditFestival}
-                    handleDeleteFestival={handleDeleteFestival}
-                  />
-                }
-              />
-            </Routes>
+            {isLoading ? (
+              <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 animate-pulse">
+                  A carregar dados da base de dados...
+                </p>
+              </div>
+            ) : error ? (
+              <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-300 p-6 rounded-2xl max-w-md text-center shadow-lg">
+                  <h3 className="font-bold text-lg mb-2">Erro de Ligação</h3>
+                  <p className="text-sm mb-4">{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all"
+                  >
+                    Tentar Novamente
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <Home
+                      generos={generos}
+                      sets={sets}
+                      djs={djs}
+                      festivais={festivais}
+                      handleDeleteSet={handleDeleteSet}
+                      handleDeleteDj={handleDeleteDj}
+                      handleDeleteFestival={handleDeleteFestival}
+                      handleDeleteGenero={handleDeleteGenero}
+                    />
+                  }
+                />
+                <Route
+                  path="/lista"
+                  element={
+                    <SetList
+                      sets={sets}
+                      generos={generos}
+                      djs={djs}
+                      festivais={festivais}
+                      onDeleteSet={handleDeleteSet}
+                    />
+                  }
+                />
+                <Route
+                  path="/djs"
+                  element={
+                    <DjsList
+                      djs={djs}
+                      generos={generos}
+                      handleDeleteDj={handleDeleteDj}
+                    />
+                  }
+                />
+                <Route
+                  path="/generos"
+                  element={
+                    <GenerosList generos={generos} handleDeleteGenero={handleDeleteGenero} />
+                  }
+                />
+                <Route
+                  path="/festivais"
+                  element={
+                    <FestivaisList
+                      festivais={festivais}
+                      handleDeleteFestival={handleDeleteFestival}
+                      generos={generos}
+                    />
+                  }
+                />
+                <Route
+                  path="/estatisticas"
+                  element={
+                    <EstatisticasPage
+                      generos={generos}
+                      sets={sets}
+                      djs={djs}
+                      festivais={festivais}
+                      darkMode={darkMode}
+                    />
+                  }
+                />
+                <Route
+                  path="/adicionar"
+                  element={
+                    <AddSetPage
+                      sets={sets}
+                      generos={generos}
+                      djs={djs}
+                      festivais={festivais}
+                      handleAddSet={handleAddSet}
+                      handleEditSet={handleEditSet}
+                    />
+                  }
+                />
+                <Route
+                  path="/sets/editar/:id"
+                  element={
+                    <AddSetPage
+                      sets={sets}
+                      generos={generos}
+                      djs={djs}
+                      festivais={festivais}
+                      handleAddSet={handleAddSet}
+                      handleEditSet={handleEditSet}
+                    />
+                  }
+                />
+                <Route
+                  path="/editar/:id"
+                  element={
+                    <AddSetPage
+                      sets={sets}
+                      generos={generos}
+                      djs={djs}
+                      festivais={festivais}
+                      handleAddSet={handleAddSet}
+                      handleEditSet={handleEditSet}
+                    />
+                  }
+                />
+                <Route
+                  path="/djs/adicionar"
+                  element={
+                    <AddDjPage
+                      djs={djs}
+                      generos={generos}
+                      handleAddDj={handleAddDj}
+                      handleEditDj={handleEditDj}
+                      handleDeleteDj={handleDeleteDj}
+                    />
+                  }
+                />
+                <Route
+                  path="/generos/adicionar"
+                  element={
+                    <AddGeneroPage
+                      generos={generos}
+                      handleAddGenero={handleAddGenero}
+                      handleEditGenero={handleEditGenero}
+                      handleDeleteGenero={handleDeleteGenero}
+                    />
+                  }
+                />
+                <Route
+                  path="/festivais/adicionar"
+                  element={
+                    <AddFestivalPage
+                      festivais={festivais}
+                      generos={generos}
+                      handleAddFestival={handleAddFestival}
+                      handleEditFestival={handleEditFestival}
+                      handleDeleteFestival={handleDeleteFestival}
+                    />
+                  }
+                />
+              </Routes>
+            )}
           </div>
         </div>
       </div>

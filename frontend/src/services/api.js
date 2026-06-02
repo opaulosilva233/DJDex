@@ -17,6 +17,10 @@ async function request(path, options = {}) {
         throw new Error(errorData.message || `Erro HTTP! Código: ${response.status}`);
     }
     
+    if (response.status === 204) {
+        return null;
+    }
+    
     return response.json();
 }
 

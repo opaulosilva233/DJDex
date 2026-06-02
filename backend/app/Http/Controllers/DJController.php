@@ -20,13 +20,28 @@ class DJController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show($id): JsonResponse
+    {
+        $dj = DJ::with('generos')->findOrFail($id);
+        return response()->json($dj);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request): JsonResponse
     {
+        // Normalise generoIds from frontend
+        if ($request->has('generoIds') && !$request->has('generos')) {
+            $request->merge(['generos' => $request->input('generoIds')]);
+        }
+
         $validated = $request->validate([
             'nome' => 'required|string|max:255',
             'biografia' => 'required|string',
+            'imagem' => 'nullable|string',
             'generos' => 'nullable|array',
             'generos.*' => 'integer|exists:generos,id',
         ]);
@@ -34,6 +49,7 @@ class DJController extends Controller
         $dj = DJ::create([
             'nome' => $validated['nome'],
             'biografia' => $validated['biografia'],
+            'imagem' => $validated['imagem'] ?? null,
         ]);
 
         if (!empty($validated['generos'])) {
@@ -41,5 +57,48 @@ class DJController extends Controller
         }
 
         return response()->json($dj->load('generos'), 201);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id): JsonResponse
+    {
+        // Normalise generoIds from frontend
+        if ($request->has('generoIds') && !$request->has('generos')) {
+            $request->merge(['generos' => $request->input('generoIds')]);
+        }
+
+        $dj = DJ::findOrFail($id);
+
+        $validated = $request->validate([
+            'nome' => 'required|string|max:255',
+            'biografia' => 'required|string',
+            'imagem' => 'nullable|string',
+            'generos' => 'nullable|array',
+            'generos.*' => 'integer|exists:generos,id',
+        ]);
+
+        $dj->update([
+            'nome' => $validated['nome'],
+            'biografia' => $validated['biografia'],
+            'imagem' => $validated['imagem'] ?? null,
+        ]);
+
+        $generos = $validated['generos'] ?? [];
+        $dj->generos()->sync($generos);
+
+        return response()->json($dj->load('generos'));
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id): JsonResponse
+    {
+        $dj = DJ::findOrFail($id);
+        $dj->delete();
+
+        return response()->json(null, 204);
     }
 }

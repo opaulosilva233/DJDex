@@ -8,7 +8,7 @@ class DJ extends Model
 {
     protected $table = 'djs';
 
-    protected $fillable = ['nome', 'biografia'];
+    protected $fillable = ['nome', 'biografia', 'imagem'];
 
     public function generos()
     {

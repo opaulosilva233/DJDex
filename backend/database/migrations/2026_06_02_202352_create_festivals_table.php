@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nome');
             $table->string('tipo')->nullable();
             $table->string('website')->nullable();
+            $table->longText('imagem')->nullable();
             $table->timestamps();
         });
     }

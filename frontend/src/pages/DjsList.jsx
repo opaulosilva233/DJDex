@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
 
@@ -8,51 +8,8 @@ const fallbackImageDataUrl =
 export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
-  const [localDjs, setLocalDjs] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let isMounted = true
-    setIsLoading(true)
-
-    fetch('http://localhost:8000/api/djs')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Falha ao obter os dados do servidor backend.')
-        }
-        return res.json()
-      })
-      .then((data) => {
-        if (isMounted) {
-          // Normalize relations. Laravel returns associated objects in "generos".
-          // The frontend expects "generoIds" as an array of IDs.
-          const normalized = data.map((dj) => ({
-            ...dj,
-            generoIds: Array.isArray(dj.generos)
-              ? dj.generos.map((g) => g.id)
-              : (dj.generoIds || [])
-          }))
-          setLocalDjs(normalized)
-          setIsLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setError(err.message)
-          setIsLoading(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
 
   const onDelete = (id) => {
-    // Optimistically update local state for the UI
-    setLocalDjs((prev) => prev.filter((dj) => dj.id !== id))
-    // Call parent handler (which syncs in localStorage)
     if (handleDeleteDj) {
       handleDeleteDj(id)
     }
@@ -61,56 +18,29 @@ export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
   const filteredDjs = useMemo(() => {
     const normalizedTerm = searchTerm.trim().toLowerCase()
 
-    return (localDjs ?? []).filter((dj) => {
+    return (djs ?? []).filter((dj) => {
       if (normalizedTerm === '') return true
 
       const nome = String(dj?.nome ?? '').toLowerCase()
       const biografia = String(dj?.biografia ?? '').toLowerCase()
-      const generoNames = Array.isArray(dj?.generoIds)
-        ? dj.generoIds
-            .map((generoId) => generos.find((genero) => String(genero.id) === String(generoId))?.nome ?? '')
-            .join(' ')
-            .toLowerCase()
-        : ''
+      const generoNames = Array.isArray(dj?.generos)
+        ? dj.generos.map((g) => g.nome ?? '').join(' ').toLowerCase()
+        : (Array.isArray(dj?.generoIds)
+            ? dj.generoIds
+                .map((generoId) => generos.find((genero) => String(genero.id) === String(generoId))?.nome ?? '')
+                .join(' ')
+                .toLowerCase()
+            : '')
 
       return nome.includes(normalizedTerm) || biografia.includes(normalizedTerm) || generoNames.includes(normalizedTerm)
     })
-  }, [localDjs, generos, searchTerm])
+  }, [djs, generos, searchTerm])
 
   function handleImageError(event) {
     if (event.currentTarget.dataset.fallbackApplied !== 'true') {
       event.currentTarget.dataset.fallbackApplied = 'true'
       event.currentTarget.src = fallbackImageDataUrl
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 animate-pulse">
-          A carregar catálogo de DJs...
-        </p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
-        <div className="bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-300 p-6 rounded-2xl max-w-md text-center shadow-lg">
-          <h3 className="font-bold text-lg mb-2">Erro de Ligação</h3>
-          <p className="text-sm mb-4">{error}</p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all"
-          >
-            Tentar Novamente
-          </button>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -164,11 +94,13 @@ export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
       {filteredDjs.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDjs.map((dj) => {
-            const generoLabels = Array.isArray(dj.generoIds)
-              ? dj.generoIds
-                  .map((generoId) => generos.find((genero) => String(genero.id) === String(generoId))?.nome)
-                  .filter(Boolean)
-              : []
+            const generoLabels = Array.isArray(dj.generos)
+              ? dj.generos.map((g) => g.nome).filter(Boolean)
+              : (Array.isArray(dj.generoIds)
+                  ? dj.generoIds
+                      .map((generoId) => generos.find((genero) => String(genero.id) === String(generoId))?.nome)
+                      .filter(Boolean)
+                  : [])
 
             return (
               <article
