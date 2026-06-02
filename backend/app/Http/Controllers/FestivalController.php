@@ -2,21 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DJ;
+use App\Models\Festival;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class DJController extends Controller
+class FestivalController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index(): JsonResponse
     {
-        // Fetch all DJs with their associated genres to prevent N+1 query issues
-        $djs = DJ::with('generos')->get();
-
-        return response()->json($djs);
+        $festivais = Festival::with(['generos', 'edicoes'])->get();
+        return response()->json($festivais);
     }
 
     /**
@@ -26,20 +24,22 @@ class DJController extends Controller
     {
         $validated = $request->validate([
             'nome' => 'required|string|max:255',
-            'biografia' => 'required|string',
+            'tipo' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
             'generos' => 'nullable|array',
             'generos.*' => 'integer|exists:generos,id',
         ]);
 
-        $dj = DJ::create([
+        $festival = Festival::create([
             'nome' => $validated['nome'],
-            'biografia' => $validated['biografia'],
+            'tipo' => $validated['tipo'] ?? null,
+            'website' => $validated['website'] ?? null,
         ]);
 
         if (!empty($validated['generos'])) {
-            $dj->generos()->attach($validated['generos']);
+            $festival->generos()->attach($validated['generos']);
         }
 
-        return response()->json($dj->load('generos'), 201);
+        return response()->json($festival->load(['generos', 'edicoes']), 201);
     }
 }
