@@ -13,6 +13,7 @@ const sidebarStyle = {
 	background: '#1a1a1a',
 	color: '#ffffff',
 	flexShrink: 0,
+	overflowY: 'auto',
 }
 
 const sectionTitleStyle = 'px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500'
@@ -305,9 +306,14 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 
 									<div
 										className={[
-											'absolute top-1 bottom-1 w-[calc(50%-8px)] rounded-lg transition-all duration-300 ease-out shadow-md flex items-center justify-center',
-											darkMode ? 'left-[calc(50%+4px)] bg-slate-800 border border-purple-500/40' : 'left-1 bg-white border border-amber-200',
+											'absolute top-1 bottom-1 rounded-lg transition-all duration-300 ease-out shadow-md flex items-center justify-center',
+											darkMode ? 'bg-slate-800 border border-purple-500/40' : 'bg-white border border-amber-200',
 										].join(' ')}
+										style={{
+											left: '4px',
+											width: 'calc(50% - 6px)',
+											transform: darkMode ? 'translateX(calc(100% + 4px))' : 'translateX(0)',
+										}}
 									>
 										<div className="flex h-3 w-full items-center justify-center gap-0.5 opacity-60">
 											<span className="h-2.5 w-px rounded-full bg-slate-400/70" />
