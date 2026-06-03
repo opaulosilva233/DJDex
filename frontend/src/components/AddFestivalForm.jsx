@@ -53,6 +53,8 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 
 	// Estado das edições associadas
 	const [edicoes, setEdicoes] = useState([])
+	const [formError, setFormError] = useState('')
+	const [edicaoError, setEdicaoError] = useState('')
 
 	// Estados do sub-formulário para adicionar uma nova edição
 	const [novoAno, setNovoAno] = useState('')
@@ -151,9 +153,11 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 	// Adiciona uma nova edição ao array de edições em memória
 	function handleAddEdicao() {
 		if (!novoAno || !novoLocal || !novaDataInicio || !novaDuracao) {
-			alert('Por favor, preenche todos os campos da edição.')
+			setEdicaoError('Por favor, preenche todos os campos da edição.')
 			return
 		}
+
+		setEdicaoError('')
 
 		const novaEdicao = {
 			id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()),
@@ -164,6 +168,7 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 		}
 
 		setEdicoes((prev) => [...prev, novaEdicao])
+		setFormError('')
 
 		// Reset dos campos do sub-formulário
 		setNovoAno('')
@@ -181,9 +186,11 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 		event.preventDefault()
 
 		if (edicoes.length === 0) {
-			alert('Adicione pelo menos uma edição ao festival antes de guardar.')
+			setFormError('Adicione pelo menos uma edição ao festival antes de guardar.')
 			return
 		}
+
+		setFormError('')
 
 		const payload = {
 			nome: formData.nome,
@@ -468,6 +475,12 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 					</p>
 				</div>
 
+				{edicaoError && (
+					<div className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-4 py-2.5 rounded-xl animate-[fadeIn_0.2s_ease-out]">
+						{edicaoError}
+					</div>
+				)}
+
 				{/* Inputs de Vidro Espaçados */}
 				<div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end p-6 rounded-xl border border-slate-200/40 bg-slate-100/30 backdrop-blur-sm dark:border-white/5 dark:bg-slate-950/20 relative z-20">
 					
@@ -671,6 +684,12 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 					)}
 				</div>
 			</div>
+
+			{formError && (
+				<div className="text-sm font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-6 py-3.5 rounded-2xl animate-[fadeIn_0.2s_ease-out] w-full max-w-4xl mx-auto">
+					{formError}
+				</div>
+			)}
 
 			{/* ════════════════════════════════════════════════════
 			    LINHA 3 — Botões de Ação Unificados

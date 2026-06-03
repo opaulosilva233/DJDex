@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { api } from './services/api'
+import { AlertCircle, CheckCircle, X } from 'lucide-react'
 
 import './App.css'
 import Navbar from './components/Navbar'
@@ -95,6 +96,19 @@ export default function App() {
   const [sets, setSets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [toast, setToast] = useState(null)
+
+  function showToast(message, type = 'success') {
+    setToast({ message, type })
+  }
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
+
 
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window === 'undefined') {
@@ -155,32 +169,36 @@ export default function App() {
     api.post('/generos', novoGenero)
       .then((data) => {
         setGeneros((currentGeneros) => [data, ...currentGeneros])
+        showToast('Género adicionado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao adicionar género: ' + err.message))
+      .catch((err) => showToast('Erro ao adicionar género: ' + err.message, 'error'))
   }
 
   function handleAddDj(novoDj) {
     api.post('/djs', novoDj)
       .then((data) => {
         setDjs((currentDjs) => [normalizeDj(data), ...currentDjs])
+        showToast('DJ adicionado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao adicionar DJ: ' + err.message))
+      .catch((err) => showToast('Erro ao adicionar DJ: ' + err.message, 'error'))
   }
 
   function handleAddFestival(novoFestival) {
     api.post('/festivais', novoFestival)
       .then((data) => {
         setFestivais((currentFestivais) => [normalizeFestival(data), ...currentFestivais])
+        showToast('Festival adicionado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao adicionar festival: ' + err.message))
+      .catch((err) => showToast('Erro ao adicionar festival: ' + err.message, 'error'))
   }
 
   function handleAddSet(novoSet) {
     api.post('/sets', novoSet)
       .then((data) => {
         setSets((currentSets) => [normalizeSet(data), ...currentSets])
+        showToast('Set adicionado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao adicionar set: ' + err.message))
+      .catch((err) => showToast('Erro ao adicionar set: ' + err.message, 'error'))
   }
 
   function handleImportAllData(importedData) {
@@ -205,16 +223,18 @@ export default function App() {
     api.put(`/sets/${updatedSet.id}`, updatedSet)
       .then((data) => {
         setSets((currentSets) => currentSets.map((set) => (set.id === data.id ? normalizeSet(data) : set)))
+        showToast('Set atualizado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao editar set: ' + err.message))
+      .catch((err) => showToast('Erro ao editar set: ' + err.message, 'error'))
   }
 
   function handleEditDj(updatedDj) {
     api.put(`/djs/${updatedDj.id}`, updatedDj)
       .then((data) => {
         setDjs((currentDjs) => currentDjs.map((dj) => (dj.id === data.id ? normalizeDj(data) : dj)))
+        showToast('DJ atualizado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao editar DJ: ' + err.message))
+      .catch((err) => showToast('Erro ao editar DJ: ' + err.message, 'error'))
   }
 
   function handleEditFestival(updatedFestival) {
@@ -225,8 +245,9 @@ export default function App() {
             festival.id === data.id ? normalizeFestival(data) : festival,
           ),
         )
+        showToast('Festival atualizado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao editar festival: ' + err.message))
+      .catch((err) => showToast('Erro ao editar festival: ' + err.message, 'error'))
   }
 
   function handleEditGenero(updatedGenero) {
@@ -237,48 +258,74 @@ export default function App() {
             genero.id === data.id ? data : genero,
           ),
         )
+        showToast('Género atualizado com sucesso!', 'success')
       })
-      .catch((err) => alert('Erro ao editar género: ' + err.message))
+      .catch((err) => showToast('Erro ao editar género: ' + err.message, 'error'))
   }
 
   function handleDeleteSet(id) {
+    const previousSets = sets
+    setSets((currentSets) => currentSets.filter((set) => set.id !== id))
+    showToast('Set eliminado com sucesso!', 'success')
+
     api.delete(`/sets/${id}`)
-      .then(() => {
-        setSets((currentSets) => currentSets.filter((set) => set.id !== id))
+      .catch((err) => {
+        setSets(previousSets)
+        showToast('Erro ao eliminar set: ' + err.message, 'error')
       })
-      .catch((err) => alert('Erro ao eliminar set: ' + err.message))
   }
 
   function handleDeleteGenero(id) {
+    const previousGeneros = generos
+    const previousDjs = djs
+
+    setGeneros((currentGeneros) => currentGeneros.filter((genero) => genero.id !== id))
+    setDjs((currentDjs) =>
+      currentDjs.map((dj) => ({
+        ...dj,
+        generoIds: Array.isArray(dj.generoIds) ? dj.generoIds.filter((generoId) => generoId !== id) : [],
+      })),
+    )
+    showToast('Género eliminado com sucesso!', 'success')
+
     api.delete(`/generos/${id}`)
-      .then(() => {
-        setGeneros((currentGeneros) => currentGeneros.filter((genero) => genero.id !== id))
-        setDjs((currentDjs) =>
-          currentDjs.map((dj) => ({
-            ...dj,
-            generoIds: Array.isArray(dj.generoIds) ? dj.generoIds.filter((generoId) => generoId !== id) : [],
-          })),
-        )
+      .catch((err) => {
+        setGeneros(previousGeneros)
+        setDjs(previousDjs)
+        showToast('Erro ao eliminar género: ' + err.message, 'error')
       })
-      .catch((err) => alert('Erro ao eliminar género: ' + err.message))
   }
 
   function handleDeleteDj(id) {
+    const previousDjs = djs
+    const previousSets = sets
+
+    setDjs((currentDjs) => currentDjs.filter((dj) => dj.id !== id))
+    setSets((currentSets) => currentSets.filter((set) => set.djId !== id))
+    showToast('DJ eliminado com sucesso!', 'success')
+
     api.delete(`/djs/${id}`)
-      .then(() => {
-        setDjs((currentDjs) => currentDjs.filter((dj) => dj.id !== id))
-        setSets((currentSets) => currentSets.filter((set) => set.djId !== id))
+      .catch((err) => {
+        setDjs(previousDjs)
+        setSets(previousSets)
+        showToast('Erro ao eliminar DJ: ' + err.message, 'error')
       })
-      .catch((err) => alert('Erro ao eliminar DJ: ' + err.message))
   }
 
   function handleDeleteFestival(id) {
+    const previousFestivais = festivais
+    const previousSets = sets
+
+    setFestivais((currentFestivais) => currentFestivais.filter((festival) => festival.id !== id))
+    setSets((currentSets) => currentSets.filter((set) => set.festivalId !== id))
+    showToast('Festival eliminado com sucesso!', 'success')
+
     api.delete(`/festivais/${id}`)
-      .then(() => {
-        setFestivais((currentFestivais) => currentFestivais.filter((festival) => festival.id !== id))
-        setSets((currentSets) => currentSets.filter((set) => set.festivalId !== id))
+      .catch((err) => {
+        setFestivais(previousFestivais)
+        setSets(previousSets)
+        showToast('Erro ao eliminar festival: ' + err.message, 'error')
       })
-      .catch((err) => alert('Erro ao eliminar festival: ' + err.message))
   }
 
   function toggleDarkMode(e) {
@@ -498,6 +545,31 @@ export default function App() {
           </div>
         </div>
       </div>
+      {toast && (
+        <div className="toast-container">
+          <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border backdrop-blur-md shadow-2xl text-sm font-semibold transition-all duration-300 ${
+            toast.type === 'error'
+              ? 'bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400'
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+          }`}>
+            {toast.type === 'error' ? (
+              <AlertCircle size={18} className="shrink-0" />
+            ) : (
+              <CheckCircle size={18} className="shrink-0" />
+            )}
+            <span>{toast.message}</span>
+            <button 
+              type="button" 
+              onClick={() => setToast(null)}
+              className="ml-2 shrink-0 hover:opacity-80 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              aria-label="Fechar"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </BrowserRouter>
   )
 }
+
