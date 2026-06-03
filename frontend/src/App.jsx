@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { api } from './services/api'
 import { AlertCircle, CheckCircle, X } from 'lucide-react'
