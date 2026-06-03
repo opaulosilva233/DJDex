@@ -145,6 +145,12 @@ class DJController extends Controller
     public function destroy($id): JsonResponse
     {
         $dj = DJ::findOrFail($id);
+
+        // Delete the DJ's image directory physically if it exists
+        if (Storage::disk('public')->exists("images/djs/{$id}")) {
+            Storage::disk('public')->deleteDirectory("images/djs/{$id}");
+        }
+
         $dj->delete();
 
         return response()->json(null, 204);

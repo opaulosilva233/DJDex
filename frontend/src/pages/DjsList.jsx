@@ -8,11 +8,10 @@ const fallbackImageDataUrl =
 export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
+  const [djToDelete, setDjToDelete] = useState(null)
 
-  const onDelete = (id) => {
-    if (handleDeleteDj) {
-      handleDeleteDj(id)
-    }
+  const onDelete = (dj) => {
+    setDjToDelete(dj)
   }
 
   const filteredDjs = useMemo(() => {
@@ -122,7 +121,7 @@ export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => onDelete(dj.id)}
+                    onClick={() => onDelete(dj)}
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-700 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-rose-200 dark:focus-visible:text-rose-200"
                     aria-label="Eliminar DJ"
                   >
@@ -175,6 +174,49 @@ export default function DjsList({ djs = [], generos = [], handleDeleteDj }) {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Nenhum DJ corresponde à pesquisa atual.
           </p>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {djToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-all duration-300">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200/60 bg-white/80 p-6 text-slate-900 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-100 transition-all transform scale-100">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
+                <Trash2 size={24} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                  Eliminar DJ
+                </h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Tem a certeza que deseja eliminar o DJ <span className="font-bold text-slate-800 dark:text-slate-200">{djToDelete.nome}</span>? Esta ação removerá permanentemente o DJ, as suas imagens e os sets associados do sistema.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDjToDelete(null)}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (handleDeleteDj) {
+                    handleDeleteDj(djToDelete.id)
+                  }
+                  setDjToDelete(null)
+                }}
+                className="rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 px-4 shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 transition-all text-sm"
+              >
+                Eliminar DJ
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
