@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 
-import { BarChart2, Compass, Download, Home, ListMusic, Loader2, Moon, Sun, Tag, Upload, User } from 'lucide-react'
+import { BarChart2, Compass, Download, Home, ListMusic, Loader2, Moon, Sun, Tag, Upload, User, LogIn, LogOut } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const sidebarStyle = {
 	height: '100vh',
@@ -109,6 +110,7 @@ const modalLoadingStyle = {
 }
 
 export default function Navbar({ generos, djs, festivais, sets, handleImportAllData, darkMode, toggleDarkMode }) {
+	const { isAuthenticated, logout, user } = useAuth()
 	const fileInputRef = useRef(null)
 	const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 	const [pendingImportFile, setPendingImportFile] = useState(null)
@@ -314,19 +316,42 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 										</div>
 									</div>
 								</button>
+								{isAuthenticated ? (
+									<div className="flex flex-col gap-2 mt-2">
+										<div className="px-3 py-2 rounded-xl bg-slate-800/10 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex flex-col">
+											<span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Utilizador</span>
+											<span className="text-xs font-semibold truncate text-slate-700 dark:text-slate-200">{user?.name || 'Administrador'}</span>
+										</div>
+										<button
+											type="button"
+											onClick={logout}
+											className="group flex w-full items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/5 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 px-4 py-3 text-sm font-medium transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+										>
+											<LogOut size={16} className="shrink-0" />
+											<span>Terminar Sessão</span>
+										</button>
+									</div>
+								) : (
+									<NavLink to="/login" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
+										<LogIn size={18} className={navIconStyle} />
+										<span>Iniciar Sessão</span>
+									</NavLink>
+								)}
 
-						<div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200/70 pt-4 dark:border-slate-800/60">
-							<button type="button" onClick={exportData} className={secondaryActionClassName}>
-								<Download size={14} className="shrink-0" />
-								<span>Exportar</span>
-							</button>
+						{isAuthenticated && (
+							<div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200/70 pt-4 dark:border-slate-800/60">
+								<button type="button" onClick={exportData} className={secondaryActionClassName}>
+									<Download size={14} className="shrink-0" />
+									<span>Exportar</span>
+								</button>
 
-							<button type="button" onClick={openImportPicker} className={secondaryActionClassName}>
-								<Upload size={14} className="shrink-0" />
-								<span>Importar</span>
-							</button>
-							<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
-						</div>
+								<button type="button" onClick={openImportPicker} className={secondaryActionClassName}>
+									<Upload size={14} className="shrink-0" />
+									<span>Importar</span>
+								</button>
+								<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
+							</div>
+						)}
 					</div>
 				</section>
 			</div>

@@ -10,6 +10,13 @@ async function request(path, options = {}) {
     if (!(options.body instanceof FormData)) {
         headers['Content-Type'] = headers['Content-Type'] || 'application/json';
     }
+
+    // TODO(security): Storing tokens in localStorage is vulnerable to XSS.
+    // For a production-ready application, use secure HttpOnly cookies instead.
+    const token = localStorage.getItem('ravedex_token');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
     
     const response = await fetch(url, {
         ...options,

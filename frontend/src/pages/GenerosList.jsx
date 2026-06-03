@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PlusCircle, Search } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import GeneroCard from '../components/GeneroCard'
 
 
 export default function GenerosList({ generos = [], handleDeleteGenero }) {
+  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -31,14 +33,16 @@ export default function GenerosList({ generos = [], handleDeleteGenero }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
-          onClick={() => navigate('/generos/adicionar')}
-        >
-          <PlusCircle size={16} />
-          Adicionar Género
-        </button>
+        {isAuthenticated && (
+          <button
+            type="button"
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
+            onClick={() => navigate('/generos/adicionar')}
+          >
+            <PlusCircle size={16} />
+            Adicionar Género
+          </button>
+        )}
       </div>
 
       <div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl shadow-xl">

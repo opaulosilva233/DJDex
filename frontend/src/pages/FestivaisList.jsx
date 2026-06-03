@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Globe, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const fallbackImageDataUrl =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" rx="80" fill="%23e2e8f0"/><path d="M36 106l22-30 16 18 18-24 32 36H36Z" fill="%2394a3b8"/><circle cx="60" cy="58" r="10" fill="%2394a3b8"/></svg>'
 
 export default function FestivaisList({ festivais = [], handleDeleteFestival, generos = [] }) {
+  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -70,14 +72,16 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival, ge
           </p>
         </div>
 
-        <button
-          type="button"
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
-          onClick={() => navigate('/festivais/adicionar')}
-        >
-          <PlusCircle size={16} />
-          Adicionar Festival
-        </button>
+        {isAuthenticated && (
+          <button
+            type="button"
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
+            onClick={() => navigate('/festivais/adicionar')}
+          >
+            <PlusCircle size={16} />
+            Adicionar Festival
+          </button>
+        )}
       </div>
 
       <div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl shadow-xl">
@@ -126,22 +130,26 @@ export default function FestivaisList({ festivais = [], handleDeleteFestival, ge
                     <Globe size={15} />
                   </a>
                 )}
-                <button
-                  type="button"
-                  onClick={() => navigate(`/festivais/adicionar?edit=${festival.id}`)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400/30 hover:bg-purple-400/10 hover:text-purple-700 focus-visible:border-purple-400/40 focus-visible:bg-purple-400/10 focus-visible:text-purple-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-purple-200 dark:focus-visible:text-purple-200"
-                  aria-label="Editar Festival"
-                >
-                  <Pencil size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteFestival && handleDeleteFestival(festival.id)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-700 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-rose-200 dark:focus-visible:text-rose-200"
-                  aria-label="Eliminar Festival"
-                >
-                  <Trash2 size={15} />
-                </button>
+                {isAuthenticated && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/festivais/adicionar?edit=${festival.id}`)}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400/30 hover:bg-purple-400/10 hover:text-purple-700 focus-visible:border-purple-400/40 focus-visible:bg-purple-400/10 focus-visible:text-purple-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-purple-200 dark:focus-visible:text-purple-200"
+                      aria-label="Editar Festival"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFestival && handleDeleteFestival(festival.id)}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/30 hover:bg-rose-400/10 hover:text-rose-700 focus-visible:border-rose-400/40 focus-visible:bg-rose-400/10 focus-visible:text-rose-700 dark:border-white/10 dark:bg-slate-950/55 dark:text-slate-200 dark:shadow-black/20 dark:hover:text-rose-200 dark:focus-visible:text-rose-200"
+                      aria-label="Eliminar Festival"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </>
+                )}
               </div>
 
               <div className="relative flex h-full flex-col gap-5 pr-16">

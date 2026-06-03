@@ -6,6 +6,7 @@ use App\Http\Controllers\GeneroController;
 use App\Http\Controllers\EdicaoController;
 use App\Http\Controllers\SetController;
 use App\Http\Controllers\EstatisticaController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,9 +20,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Public Authentication routes
+Route::post('login', [AuthController::class, 'login']);
+
+// Public Read-Only routes
 Route::get('estatisticas', [EstatisticaController::class, 'index']);
-Route::apiResource('djs', DJController::class);
-Route::apiResource('festivais', FestivalController::class);
-Route::apiResource('generos', GeneroController::class);
-Route::apiResource('edicoes', EdicaoController::class);
-Route::apiResource('sets', SetController::class);
+Route::apiResource('djs', DJController::class)->only(['index', 'show']);
+Route::apiResource('festivais', FestivalController::class)->only(['index', 'show']);
+Route::apiResource('generos', GeneroController::class)->only(['index', 'show']);
+Route::apiResource('edicoes', EdicaoController::class)->only(['index', 'show']);
+Route::apiResource('sets', SetController::class)->only(['index', 'show']);
+
+// Protected Write routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
+    
+    Route::apiResource('djs', DJController::class)->except(['index', 'show']);
+    Route::apiResource('festivais', FestivalController::class)->except(['index', 'show']);
+    Route::apiResource('generos', GeneroController::class)->except(['index', 'show']);
+    Route::apiResource('edicoes', EdicaoController::class)->except(['index', 'show']);
+    Route::apiResource('sets', SetController::class)->except(['index', 'show']);
+});

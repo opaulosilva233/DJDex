@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Route, Routes, Navigate } from 'react-router-dom'
 import { api } from './services/api'
 import { AlertCircle, CheckCircle, X } from 'lucide-react'
 
@@ -15,6 +15,13 @@ import EstatisticasPage from './pages/EstatisticasPage'
 import DjsList from './pages/DjsList'
 import GenerosList from './pages/GenerosList'
 import FestivaisList from './pages/FestivaisList'
+import LoginPage from './pages/LoginPage'
+import { AuthProvider, useAuth } from './context/AuthContext'
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth()
+  return isAuthenticated ? children : <Navigate to="/login" replace />
+}
 
 function normalizeGeneroIds(generoIds) {
   if (!Array.isArray(generoIds)) {
@@ -89,7 +96,7 @@ function normalizeFestival(festival) {
   }
 }
 
-export default function App() {
+function AppContent() {
   const [generos, setGeneros] = useState([])
   const [djs, setDjs] = useState([])
   const [festivais, setFestivais] = useState([])
@@ -385,116 +392,120 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <div className="app-shell w-screen font-sans antialiased">
-        <Navbar
-          generos={generos}
-          djs={djs}
-          festivais={festivais}
-          sets={sets}
-          handleImportAllData={handleImportAllData}
-          darkMode={darkMode}
-          toggleDarkMode={toggleDarkMode}
-        />
+    <div className="app-shell w-screen font-sans antialiased">
+      <Navbar
+        generos={generos}
+        djs={djs}
+        festivais={festivais}
+        sets={sets}
+        handleImportAllData={handleImportAllData}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+      />
 
-        <div className="app-main overflow-y-auto relative bg-transparent">
-          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-purple-600/20 dark:bg-purple-500/15 rounded-full blur-[110px] animate-aurora-1" />
-            <div className="absolute bottom-[10%] right-[-10%] w-[650px] h-[650px] bg-cyan-600/20 dark:bg-indigo-500/15 rounded-full blur-[130px] animate-aurora-2" />
-          </div>
+      <div className="app-main overflow-y-auto relative bg-transparent">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-purple-600/20 dark:bg-purple-500/15 rounded-full blur-[110px] animate-aurora-1" />
+          <div className="absolute bottom-[10%] right-[-10%] w-[650px] h-[650px] bg-cyan-600/20 dark:bg-indigo-500/15 rounded-full blur-[130px] animate-aurora-2" />
+        </div>
 
-          <div className="relative z-10 w-full min-h-full">
-            {isLoading ? (
-              <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 animate-pulse">
-                  A carregar dados da base de dados...
-                </p>
+        <div className="relative z-10 w-full min-h-full">
+          {isLoading ? (
+            <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 animate-pulse">
+                A carregar dados da base de dados...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
+              <div className="bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-300 p-6 rounded-2xl max-w-md text-center shadow-lg">
+                <h3 className="font-bold text-lg mb-2">Erro de Ligação</h3>
+                <p className="text-sm mb-4">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all"
+                >
+                  Tentar Novamente
+                </button>
               </div>
-            ) : error ? (
-              <div className="w-full p-8 md:p-12 flex flex-col items-center justify-center min-h-[400px] bg-transparent relative z-10">
-                <div className="bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-300 p-6 rounded-2xl max-w-md text-center shadow-lg">
-                  <h3 className="font-bold text-lg mb-2">Erro de Ligação</h3>
-                  <p className="text-sm mb-4">{error}</p>
-                  <button
-                    type="button"
-                    onClick={() => window.location.reload()}
-                    className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all"
-                  >
-                    Tentar Novamente
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <Home
-                      generos={generos}
-                      sets={sets}
-                      djs={djs}
-                      festivais={festivais}
-                      handleDeleteSet={handleDeleteSet}
-                      handleDeleteDj={handleDeleteDj}
-                      handleDeleteFestival={handleDeleteFestival}
-                      handleDeleteGenero={handleDeleteGenero}
-                    />
-                  }
-                />
-                <Route
-                  path="/lista"
-                  element={
-                    <SetList
-                      sets={sets}
-                      generos={generos}
-                      djs={djs}
-                      festivais={festivais}
-                      onDeleteSet={handleDeleteSet}
-                    />
-                  }
-                />
-                <Route
-                  path="/djs"
-                  element={
-                    <DjsList
-                      djs={djs}
-                      generos={generos}
-                      handleDeleteDj={handleDeleteDj}
-                    />
-                  }
-                />
-                <Route
-                  path="/generos"
-                  element={
-                    <GenerosList generos={generos} handleDeleteGenero={handleDeleteGenero} />
-                  }
-                />
-                <Route
-                  path="/festivais"
-                  element={
-                    <FestivaisList
-                      festivais={festivais}
-                      handleDeleteFestival={handleDeleteFestival}
-                      generos={generos}
-                    />
-                  }
-                />
-                <Route
-                  path="/estatisticas"
-                  element={
-                    <EstatisticasPage
-                      generos={generos}
-                      sets={sets}
-                      djs={djs}
-                      festivais={festivais}
-                      darkMode={darkMode}
-                    />
-                  }
-                />
-                <Route
-                  path="/adicionar"
-                  element={
+            </div>
+          ) : (
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <Home
+                    generos={generos}
+                    sets={sets}
+                    djs={djs}
+                    festivais={festivais}
+                    handleDeleteSet={handleDeleteSet}
+                    handleDeleteDj={handleDeleteDj}
+                    handleDeleteFestival={handleDeleteFestival}
+                    handleDeleteGenero={handleDeleteGenero}
+                  />
+                }
+              />
+              <Route
+                path="/lista"
+                element={
+                  <SetList
+                    sets={sets}
+                    generos={generos}
+                    djs={djs}
+                    festivais={festivais}
+                    onDeleteSet={handleDeleteSet}
+                  />
+                }
+              />
+              <Route
+                path="/djs"
+                element={
+                  <DjsList
+                    djs={djs}
+                    generos={generos}
+                    handleDeleteDj={handleDeleteDj}
+                  />
+                }
+              />
+              <Route
+                path="/generos"
+                element={
+                  <GenerosList generos={generos} handleDeleteGenero={handleDeleteGenero} />
+                }
+              />
+              <Route
+                path="/festivais"
+                element={
+                  <FestivaisList
+                    festivais={festivais}
+                    handleDeleteFestival={handleDeleteFestival}
+                    generos={generos}
+                  />
+                }
+              />
+              <Route
+                path="/estatisticas"
+                element={
+                  <EstatisticasPage
+                    generos={generos}
+                    sets={sets}
+                    djs={djs}
+                    festivais={festivais}
+                    darkMode={darkMode}
+                  />
+                }
+              />
+              <Route
+                path="/login"
+                element={<LoginPage />}
+              />
+              <Route
+                path="/adicionar"
+                element={
+                  <ProtectedRoute>
                     <AddSetPage
                       sets={sets}
                       generos={generos}
@@ -503,11 +514,13 @@ export default function App() {
                       handleAddSet={handleAddSet}
                       handleEditSet={handleEditSet}
                     />
-                  }
-                />
-                <Route
-                  path="/sets/editar/:id"
-                  element={
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sets/editar/:id"
+                element={
+                  <ProtectedRoute>
                     <AddSetPage
                       sets={sets}
                       generos={generos}
@@ -516,11 +529,13 @@ export default function App() {
                       handleAddSet={handleAddSet}
                       handleEditSet={handleEditSet}
                     />
-                  }
-                />
-                <Route
-                  path="/editar/:id"
-                  element={
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/editar/:id"
+                element={
+                  <ProtectedRoute>
                     <AddSetPage
                       sets={sets}
                       generos={generos}
@@ -529,11 +544,13 @@ export default function App() {
                       handleAddSet={handleAddSet}
                       handleEditSet={handleEditSet}
                     />
-                  }
-                />
-                <Route
-                  path="/djs/adicionar"
-                  element={
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/djs/adicionar"
+                element={
+                  <ProtectedRoute>
                     <AddDjPage
                       djs={djs}
                       generos={generos}
@@ -541,22 +558,26 @@ export default function App() {
                       handleEditDj={handleEditDj}
                       handleDeleteDj={handleDeleteDj}
                     />
-                  }
-                />
-                <Route
-                  path="/generos/adicionar"
-                  element={
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/generos/adicionar"
+                element={
+                  <ProtectedRoute>
                     <AddGeneroPage
                       generos={generos}
                       handleAddGenero={handleAddGenero}
                       handleEditGenero={handleEditGenero}
                       handleDeleteGenero={handleDeleteGenero}
                     />
-                  }
-                />
-                <Route
-                  path="/festivais/adicionar"
-                  element={
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/festivais/adicionar"
+                element={
+                  <ProtectedRoute>
                     <AddFestivalPage
                       festivais={festivais}
                       generos={generos}
@@ -564,11 +585,11 @@ export default function App() {
                       handleEditFestival={handleEditFestival}
                       handleDeleteFestival={handleDeleteFestival}
                     />
-                  }
-                />
-              </Routes>
-            )}
-          </div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          )}
         </div>
       </div>
       {toast && (
@@ -595,7 +616,17 @@ export default function App() {
           </div>
         </div>
       )}
-    </BrowserRouter>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

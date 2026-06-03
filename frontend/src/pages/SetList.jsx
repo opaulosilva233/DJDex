@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PlusCircle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import DjCard from '../components/DjCard'
 
 export default function SetList({ sets, djs = [], festivais = [], generos = [], onDeleteSet }) {
+	const { isAuthenticated } = useAuth()
 	const navigate = useNavigate()
 
 	const [djSearch, setDjSearch] = useState('')
@@ -52,16 +54,18 @@ export default function SetList({ sets, djs = [], festivais = [], generos = [], 
 						Todos os sets atualmente carregados na aplicação.
 					</p>
 				</div>
-				<div>
-					<button
-						type="button"
-						className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
-						onClick={() => navigate('/adicionar')}
-					>
-						<PlusCircle size={16} />
-						Adicionar Set
-					</button>
-				</div>
+				{isAuthenticated && (
+					<div>
+						<button
+							type="button"
+							className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all hover:-translate-y-0.5 text-sm flex items-center gap-2"
+							onClick={() => navigate('/adicionar')}
+						>
+							<PlusCircle size={16} />
+							Adicionar Set
+						</button>
+					</div>
+				)}
 			</div>
 
 			<div className="bg-white/40 dark:bg-slate-950/30 backdrop-blur-md border border-slate-200/50 dark:border-white/5 p-6 rounded-2xl flex flex-col gap-4 shadow-xl">
