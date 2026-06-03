@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { api } from '../services/api'
 import {
 	Area,
 	AreaChart,
@@ -339,6 +340,29 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const [showAllDjs, setShowAllDjs] = useState(false)
 	const [selectedFestivalId, setSelectedFestivalId] = useState('')
 	const [selectedGenreId, setSelectedGenreId] = useState('')
+	const [estatisticas, setEstatisticas] = useState(null)
+	const [loadingEst, setLoadingEst] = useState(true)
+
+	useEffect(() => {
+		let isMounted = true
+		setLoadingEst(true)
+		api.get('/estatisticas')
+			.then((data) => {
+				if (isMounted) {
+					setEstatisticas(data)
+					setLoadingEst(false)
+				}
+			})
+			.catch((err) => {
+				console.error('Erro ao carregar estatísticas:', err)
+				if (isMounted) {
+					setLoadingEst(false)
+				}
+			})
+		return () => {
+			isMounted = false
+		}
+	}, [])
 
 	// Configurar DJ selecionado padrão caso não esteja definido
 	useEffect(() => {
@@ -745,7 +769,9 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
 								<div className="flex flex-col gap-1 min-w-0">
 									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sets Assistidos</span>
-									<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.totalSets}</span>
+									<span className="text-2xl font-black text-slate-900 dark:text-white">
+										{loadingEst ? '...' : (estatisticas?.total_sets ?? 0)}
+									</span>
 								</div>
 								<div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-500/20 dark:border-purple-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(168,85,247,0.1)] shrink-0">
 									<Headphones className="w-5 h-5" />
@@ -754,8 +780,10 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							{/* Card 2: Festivals */}
 							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
 								<div className="flex flex-col gap-1 min-w-0">
-									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Festivais Únicos</span>
-									<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueFestivals}</span>
+									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Festivais / Edições</span>
+									<span className="text-2xl font-black text-slate-900 dark:text-white truncate">
+										{loadingEst ? '...' : `${estatisticas?.total_festivais ?? 0} / ${estatisticas?.total_edicoes ?? 0}`}
+									</span>
 								</div>
 								<div className="p-3 bg-pink-500/10 text-pink-600 dark:text-pink-400 rounded-xl border border-pink-500/20 dark:border-pink-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(236,72,153,0.1)] shrink-0">
 									<Ticket className="w-5 h-5" />
@@ -764,8 +792,10 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							{/* Card 3: DJs */}
 							<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
 								<div className="flex flex-col gap-1 min-w-0">
-									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">DJs Vistos</span>
-									<span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.uniqueDjs}</span>
+									<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">DJs Registados</span>
+									<span className="text-2xl font-black text-slate-900 dark:text-white">
+										{loadingEst ? '...' : (estatisticas?.total_djs ?? 0)}
+									</span>
 								</div>
 								<div className="p-3 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 rounded-xl border border-cyan-500/20 dark:border-cyan-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(6,182,212,0.1)] shrink-0">
 									<Users className="w-5 h-5" />
@@ -906,6 +936,57 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 									) : (
 										<p className="text-xs text-slate-500 italic text-center py-10">Nenhum festival registado com sets.</p>
 									)}
+								</section>
+							</div>
+
+							{/* Bloco DJs por Género (12 colunas) */}
+							<div className="lg:col-span-12">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row gap-8 items-center">
+									<div className="flex flex-col gap-2 md:w-1/3">
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<Flame className="text-purple-500 dark:text-purple-400 w-5 h-5" />
+											Distribuição de DJs por Género
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Visualização da contagem de DJs associados a cada género musical na base de dados (emojis removidos).
+										</p>
+									</div>
+
+									<div className="flex-1 w-full h-[300px]">
+										{estatisticas?.djs_por_genero && estatisticas.djs_por_genero.length > 0 ? (
+											<ResponsiveContainer width="100%" height="100%">
+												<PieChart>
+													<Pie
+														data={estatisticas.djs_por_genero}
+														cx="50%"
+														cy="50%"
+														labelLine={true}
+														label={({ name, value }) => `${name}: ${value}`}
+														outerRadius={80}
+														dataKey="value"
+													>
+														{estatisticas.djs_por_genero.map((entry, index) => (
+															<Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+														))}
+													</Pie>
+													<Tooltip
+														contentStyle={{
+															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+															borderColor: darkMode ? '#334155' : '#e2e8f0',
+															borderRadius: '12px',
+															color: darkMode ? '#fff' : '#0f172a',
+															fontSize: '11px',
+															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+														}}
+													/>
+												</PieChart>
+											</ResponsiveContainer>
+										) : (
+											<div className="flex h-full items-center justify-center text-xs text-slate-500 italic">
+												Sem dados de géneros registados.
+											</div>
+										)}
+									</div>
 								</section>
 							</div>
 						</div>

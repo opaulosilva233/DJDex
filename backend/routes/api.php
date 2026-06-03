@@ -5,6 +5,7 @@ use App\Http\Controllers\FestivalController;
 use App\Http\Controllers\GeneroController;
 use App\Http\Controllers\EdicaoController;
 use App\Http\Controllers\SetController;
+use App\Http\Controllers\EstatisticaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('estatisticas', [EstatisticaController::class, 'index']);
 Route::apiResource('djs', DJController::class);
 Route::apiResource('festivais', FestivalController::class);
 Route::apiResource('generos', GeneroController::class);
