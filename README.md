@@ -1,67 +1,77 @@
 # DJDex - O teu indexador pessoal de DJs, Festivais e Sets
 
-O **DJDex** é uma aplicação web completa (SPA + API) concebida para gerir, indexar e analisar estatísticas de DJs, festivais de música e sets ao vivo. O ecossistema oferece uma interface moderna, visualmente rica e interativa para utilizadores convidados e administradores, suportada por um painel analítico dinâmico.
+O **DJDex** é uma plataforma web moderna e integrada, concebida para indexar, catalogar e analisar informações detalhadas sobre DJs, festivais de música e sets de atuações ao vivo. O ecossistema oferece uma experiência fluida para utilizadores convidados e gestores, combinando um frontend intuitivo baseado em SPA com um backend robusto em formato API RESTful.
 
 ---
 
-## 🛠️ Arquitetura do Projeto
+## Arquitetura do Ecossistema
 
-O projeto está estruturado de forma desacoplada, separando as responsabilidades de cliente e servidor em dois diretórios autónomos, todos integrados e orquestrados num ambiente virtualizado via Docker.
+O projeto adota uma arquitetura desacoplada para separar as responsabilidades de cliente e servidor em dois diretórios autónomos. A infraestrutura completa é orquestrada de forma isolada através de containers Docker.
 
-### Estrutura de Diretórios e Stacks
+```mermaid
+graph TD
+    Client[Cliente: React SPA] -->|HTTPS Requests| API[API Gateway: Laravel]
+    API -->|Queries| DB[(Base de Dados: MySQL / MariaDB)]
+    Docker[Orquestração: Docker Compose] -.-> Client
+    Docker -.-> API
+    Docker -.-> DB
+```
 
-| Diretório | Componente | Stack Tecnológica | Descrição |
-| :--- | :--- | :--- | :--- |
-| `/frontend` | Interface de Utilizador (SPA) | React, Vite, Tailwind CSS, Recharts | Aplicação frontend focada em usabilidade, com gráficos interativos, design responsivo e transições rápidas. |
-| `/backend` | API Restful | Laravel 11, API Sanctum, MySQL | Servidor de backend responsável pelo armazenamento de dados, autenticação de utilizadores e validação de regras de negócio. |
+### Componentes da Aplicação
 
-### Orquestração com Docker
-
-Toda a infraestrutura do projeto (servidor web frontend, API do backend e servidor de base de dados MySQL) é gerida de forma unificada através do Docker Compose, facilitando o arranque imediato do ambiente de desenvolvimento sem necessidade de instalar dependências locais de PHP ou Node.js.
+*   **Frontend (`/frontend`)**:
+    *   **Tecnologias**: React, Vite, Tailwind CSS, Recharts.
+    *   **Descrição**: Interface de utilizador rica e de elevada performance, desenhada com componentes interativos, navegação dinâmica por rotas, painéis estatísticos responsivos e transições suaves.
+*   **Backend (`/backend`)**:
+    *   **Tecnologias**: Laravel 11, API Sanctum, MySQL / MariaDB.
+    *   **Descrição**: Servidor encarregue da persistência de dados, processamento de ficheiros, autenticação e autorização de utilizadores, expondo endpoints seguros para consumo pela aplicação cliente.
+*   **Orquestração (Docker)**:
+    *   **Descrição**: Ambiente virtualizado que isola cada camada do ecossistema, permitindo o arranque imediato de toda a stack sem necessidade de instalar dependências locais.
 
 ---
 
-## ✨ Funcionalidades Principais
+## Funcionalidades Implementadas
 
-*   **Gestão Completa (CRUD)**: Interface dedicada para criar, visualizar, atualizar e eliminar DJs, festivais e sets, permitindo gerir as suas informações detalhadas de forma simples.
-*   **Upload Dinâmico de Imagens**: Processo automatizado e estruturado de upload de imagens associadas a DJs e festivais, mapeadas de forma segura de acordo com os IDs únicos dos registos.
-*   **Painel Analítico de Estatísticas**: Dashboard dinâmico construído com Recharts que processa e apresenta métricas agregadas da base de dados, tais como a distribuição de géneros musicais, popularidade de festivais e duração acumulada de sets.
-*   **Autenticação Híbrida**: Sistema de segurança que distingue utilizadores Administradores (com direitos de alteração e manipulação de dados) e Convidados (perfil de consulta e visualização de estatísticas).
+O DJDex foi construído com as seguintes capacidades operacionais:
+
+*   **CRUD Completo com Upload de Média**:
+    *   Gestão detalhada das entidades principais: DJs, Festivais e Sets.
+    *   Persistência física e dinâmica de imagens estruturadas na seguinte árvore de caminhos: `images/{entidade}/{id}/{ficheiro}`.
+*   **Painel Analítico de Estatísticas**:
+    *   Processamento e agregação de dados em tempo real da base de dados.
+    *   Visualização gráfica interativa da distribuição de géneros musicais.
+    *   Métricas agregadas sobre a popularidade e lotação de festivais.
+    *   Análise da duração acumulada de sets registados.
+*   **Sistema Híbrido de Autenticação**:
+    *   **Acesso Público (Convidados)**: Perfil restrito para consulta rápida de DJs, festivais e sets, incluindo a visualização interativa do painel estatístico.
+    *   **Cadeado de Escrita (Administrador)**: Controlo restrito de gravação e modificação de registos (criação, edição e remoção) protegido por tokens de sessão.
 
 ---
 
-## 🚀 Como Instalar e Rodar Localmente
-
-Siga os passos abaixo para configurar e executar o projeto no seu ambiente de desenvolvimento.
+## Como Executar Localmente
 
 ### Pré-requisitos
-*   [Docker](https://www.docker.com/) e Docker Compose instalados na máquina.
+*   [Docker](https://www.docker.com/) e Docker Compose instalados no sistema de destino.
 
-### Passo 1: Variáveis de Ambiente
-Certifique-se de que os ficheiros `.env` estão configurados para estabelecer a ligação do backend com o MySQL e as credenciais necessárias. Caso precise de criar um ficheiro `.env` para o Laravel:
-```bash
-cp backend/.env.example backend/.env
-```
+### Passo a Passo de Instalação
 
-### Passo 2: Construir e Iniciar os Containers
-Na raiz do projeto, execute o comando abaixo para descarregar as imagens necessárias e iniciar todos os serviços em segundo plano:
-```bash
-docker compose up --build
-```
-Após o arranque dos containers, as aplicações estarão disponíveis em:
-*   **Frontend (React/Vite)**: [http://localhost:5173](http://localhost:5173)
-*   **Backend (Laravel API)**: [http://localhost:8000](http://localhost:8000)
+1.  **Configurar Variáveis de Ambiente**:
+    Crie o ficheiro de configuração local para o backend a partir do modelo de exemplo:
+    ```bash
+    cp backend/.env.example backend/.env
+    ```
 
-### Passo 3: Executar Migrações e Seeders
-Com os containers em execução, crie e povoe a base de dados MySQL executando as migrações e seeders do Artisan no container do backend:
-```bash
-docker compose exec backend php artisan migrate:fresh --seed
-```
+2.  **Iniciar a Stack com Docker**:
+    Execute o comando na raiz do projeto para construir as imagens e iniciar os serviços:
+    ```bash
+    docker compose up --build
+    ```
+    Após a inicialização bem-sucedida, as aplicações estarão acessíveis nas seguintes portas:
+    *   **Frontend (React/Vite)**: [http://localhost:5173](http://localhost:5173)
+    *   **Backend (Laravel API)**: [http://localhost:8000](http://localhost:8000)
 
----
-
-## 🔒 Segurança
-
-O DJDex foi desenvolvido a pensar em boas práticas de segurança Web:
-*   **Proteção de Endpoints**: A API do Laravel utiliza o Laravel Sanctum para autenticação segura baseada em tokens.
-*   **Gestão de Sessões**: Mecanismo dinâmico de controlo de estado no Frontend baseado em tokens locais geridos de forma segura.
+3.  **Preparar a Base de Dados**:
+    Com os containers em execução, corra as migrações e popule a base de dados com registos reais executando os comandos Artisan no container do backend:
+    ```bash
+    docker compose exec backend php artisan migrate:fresh --seed
+    ```
