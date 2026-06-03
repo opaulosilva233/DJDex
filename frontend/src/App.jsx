@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Route, Routes, Navigate } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { api } from './services/api'
 import { AlertCircle, CheckCircle, X } from 'lucide-react'
 
