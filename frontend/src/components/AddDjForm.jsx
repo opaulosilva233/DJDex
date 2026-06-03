@@ -14,6 +14,7 @@ const initialFormState = {
 export default function AddDjForm({ initialData, handleAddDj, handleEditDj, generos = [] }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [isCompressing, setIsCompressing] = useState(false)
+	const [selectedFile, setSelectedFile] = useState(null)
 	const fileInputRef = useRef(null)
 	const navigate = useNavigate()
 	const isEditing = Boolean(initialData)
@@ -30,10 +31,12 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 						? initialData.generos.map((genero) => genero.id).filter(Boolean)
 						: [],
 			})
+			setSelectedFile(null)
 			return
 		}
 
 		setFormData(initialFormState)
+		setSelectedFile(null)
 	}, [initialData])
 
 	function handleChange(event) {
@@ -63,6 +66,7 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 				...currentFormData,
 				imagem: '',
 			}))
+			setSelectedFile(null)
 			return
 		}
 
@@ -74,6 +78,14 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 				...currentFormData,
 				imagem: compressedImage,
 			}))
+
+			// Convert base64 data URL back to a File object for FormData upload
+			const res = await fetch(compressedImage)
+			const blob = await res.blob()
+			const compressedFile = new File([blob], file.name, { type: 'image/jpeg' })
+			setSelectedFile(compressedFile)
+		} catch (error) {
+			console.error("Erro a comprimir imagem:", error)
 		} finally {
 			setIsCompressing(false)
 		}
@@ -84,6 +96,7 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 			...currentFormData,
 			imagem: '',
 		}))
+		setSelectedFile(null)
 
 		if (fileInputRef.current) {
 			fileInputRef.current.value = ''
@@ -93,26 +106,31 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 	function handleSubmit(event) {
 		event.preventDefault()
 
-		const payload = {
-			nome: formData.nome,
-			biografia: formData.biografia,
-			imagem: formData.imagem,
-			generoIds: formData.generoIds,
+		const formDataToSend = new FormData()
+		formDataToSend.append('nome', formData.nome)
+		formDataToSend.append('biografia', formData.biografia)
+
+		// Append multiple genre IDs
+		formData.generoIds.forEach((id) => {
+			formDataToSend.append('generoIds[]', id)
+		})
+
+		if (selectedFile) {
+			formDataToSend.append('imagem', selectedFile)
+		} else if (formData.imagem) {
+			formDataToSend.append('imagem', formData.imagem)
+		} else {
+			formDataToSend.append('imagem', '')
 		}
 
 		if (isEditing) {
-			handleEditDj({
-				id: initialData.id,
-				...payload,
-			})
+			handleEditDj(formDataToSend, initialData.id)
 		} else {
-			handleAddDj({
-				id: crypto.randomUUID(),
-				...payload,
-			})
+			handleAddDj(formDataToSend)
 		}
 
 		setFormData(initialFormState)
+		setSelectedFile(null)
 		navigate('/djs')
 	}
 

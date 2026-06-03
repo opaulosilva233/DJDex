@@ -228,26 +228,52 @@ export default function App() {
       .catch((err) => showToast('Erro ao editar set: ' + err.message, 'error'))
   }
 
-  function handleEditDj(updatedDj) {
-    api.put(`/djs/${updatedDj.id}`, updatedDj)
-      .then((data) => {
-        setDjs((currentDjs) => currentDjs.map((dj) => (dj.id === data.id ? normalizeDj(data) : dj)))
-        showToast('DJ atualizado com sucesso!', 'success')
-      })
-      .catch((err) => showToast('Erro ao editar DJ: ' + err.message, 'error'))
+  function handleEditDj(formData, maybeId) {
+    const id = maybeId || formData.id
+    if (formData instanceof FormData) {
+      formData.append('_method', 'PUT')
+      api.post(`/djs/${id}`, formData)
+        .then((data) => {
+          setDjs((currentDjs) => currentDjs.map((dj) => (dj.id === data.id ? normalizeDj(data) : dj)))
+          showToast('DJ atualizado com sucesso!', 'success')
+        })
+        .catch((err) => showToast('Erro ao editar DJ: ' + err.message, 'error'))
+    } else {
+      api.put(`/djs/${id}`, formData)
+        .then((data) => {
+          setDjs((currentDjs) => currentDjs.map((dj) => (dj.id === data.id ? normalizeDj(data) : dj)))
+          showToast('DJ atualizado com sucesso!', 'success')
+        })
+        .catch((err) => showToast('Erro ao editar DJ: ' + err.message, 'error'))
+    }
   }
 
-  function handleEditFestival(updatedFestival) {
-    api.put(`/festivais/${updatedFestival.id}`, updatedFestival)
-      .then((data) => {
-        setFestivais((currentFestivais) =>
-          currentFestivais.map((festival) =>
-            festival.id === data.id ? normalizeFestival(data) : festival,
-          ),
-        )
-        showToast('Festival atualizado com sucesso!', 'success')
-      })
-      .catch((err) => showToast('Erro ao editar festival: ' + err.message, 'error'))
+  function handleEditFestival(formData, maybeId) {
+    const id = maybeId || formData.id
+    if (formData instanceof FormData) {
+      formData.append('_method', 'PUT')
+      api.post(`/festivais/${id}`, formData)
+        .then((data) => {
+          setFestivais((currentFestivais) =>
+            currentFestivais.map((festival) =>
+              festival.id === data.id ? normalizeFestival(data) : festival,
+            ),
+          )
+          showToast('Festival atualizado com sucesso!', 'success')
+        })
+        .catch((err) => showToast('Erro ao editar festival: ' + err.message, 'error'))
+    } else {
+      api.put(`/festivais/${id}`, formData)
+        .then((data) => {
+          setFestivais((currentFestivais) =>
+            currentFestivais.map((festival) =>
+              festival.id === data.id ? normalizeFestival(data) : festival,
+            ),
+          )
+          showToast('Festival atualizado com sucesso!', 'success')
+        })
+        .catch((err) => showToast('Erro ao editar festival: ' + err.message, 'error'))
+    }
   }
 
   function handleEditGenero(updatedGenero) {

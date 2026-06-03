@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Festival;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class FestivalController extends Controller
 {
@@ -32,14 +33,22 @@ class FestivalController extends Controller
     public function store(Request $request): JsonResponse
     {
         if ($request->has('generoIds') && !$request->has('generos')) {
-            $request->merge(['generos' => $request->input('generoIds')]);
+            $generoIds = $request->input('generoIds');
+            if (is_string($generoIds)) {
+                $generoIds = json_decode($generoIds, true);
+            }
+            $request->merge(['generos' => $generoIds]);
+        }
+
+        if ($request->has('edicoes') && is_string($request->input('edicoes'))) {
+            $request->merge(['edicoes' => json_decode($request->input('edicoes'), true)]);
         }
 
         $validated = $request->validate([
             'nome' => 'required|string|max:255',
             'tipo' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
-            'imagem' => 'nullable|string',
+            'imagem' => 'nullable', // Can be file or string
             'generos' => 'nullable|array',
             'generos.*' => 'integer|exists:generos,id',
             'edicoes' => 'nullable|array',
@@ -54,8 +63,22 @@ class FestivalController extends Controller
             'nome' => $validated['nome'],
             'tipo' => $validated['tipo'] ?? null,
             'website' => $validated['website'] ?? null,
-            'imagem' => $validated['imagem'] ?? null,
+            'imagem' => null,
         ]);
+
+        if ($request->hasFile('imagem')) {
+            $file = $request->file('imagem');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
+            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
+
+            $path = $file->storeAs('images/festivais/' . $festival->id, $fileName, 'public');
+
+            $festival->update([
+                'imagem' => $path,
+            ]);
+        }
 
         if (!empty($validated['generos'])) {
             $festival->generos()->attach($validated['generos']);
@@ -82,7 +105,15 @@ class FestivalController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         if ($request->has('generoIds') && !$request->has('generos')) {
-            $request->merge(['generos' => $request->input('generoIds')]);
+            $generoIds = $request->input('generoIds');
+            if (is_string($generoIds)) {
+                $generoIds = json_decode($generoIds, true);
+            }
+            $request->merge(['generos' => $generoIds]);
+        }
+
+        if ($request->has('edicoes') && is_string($request->input('edicoes'))) {
+            $request->merge(['edicoes' => json_decode($request->input('edicoes'), true)]);
         }
 
         $festival = Festival::findOrFail($id);
@@ -91,7 +122,7 @@ class FestivalController extends Controller
             'nome' => 'required|string|max:255',
             'tipo' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
-            'imagem' => 'nullable|string',
+            'imagem' => 'nullable',
             'generos' => 'nullable|array',
             'generos.*' => 'integer|exists:generos,id',
             'edicoes' => 'nullable|array',
@@ -102,12 +133,37 @@ class FestivalController extends Controller
             'edicoes.*.duracao' => 'required|integer',
         ]);
 
-        $festival->update([
+        $festivalData = [
             'nome' => $validated['nome'],
             'tipo' => $validated['tipo'] ?? null,
             'website' => $validated['website'] ?? null,
-            'imagem' => $validated['imagem'] ?? null,
-        ]);
+        ];
+
+        if ($request->hasFile('imagem')) {
+            // Delete old file if exists
+            $oldImage = $festival->getRawOriginal('imagem');
+            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                Storage::disk('public')->delete($oldImage);
+            }
+
+            $file = $request->file('imagem');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
+            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
+
+            $path = $file->storeAs('images/festivais/' . $festival->id, $fileName, 'public');
+            $festivalData['imagem'] = $path;
+        } elseif ($request->has('imagem') && ($request->input('imagem') === null || $request->input('imagem') === '')) {
+            // If explicit removal of image
+            $oldImage = $festival->getRawOriginal('imagem');
+            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                Storage::disk('public')->delete($oldImage);
+            }
+            $festivalData['imagem'] = null;
+        }
+
+        $festival->update($festivalData);
 
         $generos = $validated['generos'] ?? [];
         $festival->generos()->sync($generos);

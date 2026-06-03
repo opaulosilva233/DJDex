@@ -47,6 +47,7 @@ function formatDateValue(date) {
 export default function AddFestivalForm({ initialData, handleAddFestival, handleEditFestival, generos = [] }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [isCompressing, setIsCompressing] = useState(false)
+	const [selectedFile, setSelectedFile] = useState(null)
 	const fileInputRef = useRef(null)
 	const navigate = useNavigate()
 	const isEditing = Boolean(initialData)
@@ -90,11 +91,13 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 				website: initialData.website ?? '',
 			})
 			setEdicoes(Array.isArray(initialData.edicoes) ? initialData.edicoes : [])
+			setSelectedFile(null)
 			return
 		}
 
 		setFormData(initialFormState)
 		setEdicoes([])
+		setSelectedFile(null)
 	}, [initialData])
 
 	function handleChange(event) {
@@ -123,6 +126,7 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 				...currentFormData,
 				imagem: '',
 			}))
+			setSelectedFile(null)
 			return
 		}
 
@@ -134,6 +138,14 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 				...currentFormData,
 				imagem: compressedImage,
 			}))
+
+			// Convert base64 data URL back to a File object for FormData upload
+			const res = await fetch(compressedImage)
+			const blob = await res.blob()
+			const compressedFile = new File([blob], file.name, { type: 'image/jpeg' })
+			setSelectedFile(compressedFile)
+		} catch (error) {
+			console.error("Erro a comprimir imagem:", error)
 		} finally {
 			setIsCompressing(false)
 		}
@@ -144,6 +156,7 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 			...currentFormData,
 			imagem: '',
 		}))
+		setSelectedFile(null)
 
 		if (fileInputRef.current) {
 			fileInputRef.current.value = ''
@@ -192,29 +205,34 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 
 		setFormError('')
 
-		const payload = {
-			nome: formData.nome,
-			imagem: formData.imagem,
-			edicoes: edicoes,
-			generoIds: formData.generoIds,
-			tipo: formData.tipo,
-			website: formData.website,
+		const formDataToSend = new FormData()
+		formDataToSend.append('nome', formData.nome)
+		formDataToSend.append('tipo', formData.tipo || '')
+		formDataToSend.append('website', formData.website || '')
+		formDataToSend.append('edicoes', JSON.stringify(edicoes))
+
+		// Append multiple genre IDs
+		formData.generoIds.forEach((id) => {
+			formDataToSend.append('generoIds[]', id)
+		})
+
+		if (selectedFile) {
+			formDataToSend.append('imagem', selectedFile)
+		} else if (formData.imagem) {
+			formDataToSend.append('imagem', formData.imagem)
+		} else {
+			formDataToSend.append('imagem', '')
 		}
 
 		if (isEditing) {
-			handleEditFestival({
-				id: initialData.id,
-				...payload,
-			})
+			handleEditFestival(formDataToSend, initialData.id)
 		} else {
-			handleAddFestival({
-				id: crypto.randomUUID(),
-				...payload,
-			})
+			handleAddFestival(formDataToSend)
 		}
 
 		setFormData(initialFormState)
 		setEdicoes([])
+		setSelectedFile(null)
 		navigate('/festivais')
 	}
 

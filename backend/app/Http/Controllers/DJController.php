@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DJ;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DJController extends Controller
 {
@@ -35,13 +36,17 @@ class DJController extends Controller
     {
         // Normalise generoIds from frontend
         if ($request->has('generoIds') && !$request->has('generos')) {
-            $request->merge(['generos' => $request->input('generoIds')]);
+            $generoIds = $request->input('generoIds');
+            if (is_string($generoIds)) {
+                $generoIds = json_decode($generoIds, true);
+            }
+            $request->merge(['generos' => $generoIds]);
         }
 
         $validated = $request->validate([
             'nome' => 'required|string|max:255',
             'biografia' => 'required|string',
-            'imagem' => 'nullable|string',
+            'imagem' => 'nullable', // Can be file or string
             'generos' => 'nullable|array',
             'generos.*' => 'integer|exists:generos,id',
         ]);
@@ -49,8 +54,22 @@ class DJController extends Controller
         $dj = DJ::create([
             'nome' => $validated['nome'],
             'biografia' => $validated['biografia'],
-            'imagem' => $validated['imagem'] ?? null,
+            'imagem' => null,
         ]);
+
+        if ($request->hasFile('imagem')) {
+            $file = $request->file('imagem');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
+            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
+
+            $path = $file->storeAs('images/djs/' . $dj->id, $fileName, 'public');
+
+            $dj->update([
+                'imagem' => $path,
+            ]);
+        }
 
         if (!empty($validated['generos'])) {
             $dj->generos()->attach($validated['generos']);
@@ -66,7 +85,11 @@ class DJController extends Controller
     {
         // Normalise generoIds from frontend
         if ($request->has('generoIds') && !$request->has('generos')) {
-            $request->merge(['generos' => $request->input('generoIds')]);
+            $generoIds = $request->input('generoIds');
+            if (is_string($generoIds)) {
+                $generoIds = json_decode($generoIds, true);
+            }
+            $request->merge(['generos' => $generoIds]);
         }
 
         $dj = DJ::findOrFail($id);
@@ -74,16 +97,41 @@ class DJController extends Controller
         $validated = $request->validate([
             'nome' => 'required|string|max:255',
             'biografia' => 'required|string',
-            'imagem' => 'nullable|string',
+            'imagem' => 'nullable',
             'generos' => 'nullable|array',
             'generos.*' => 'integer|exists:generos,id',
         ]);
 
-        $dj->update([
+        $djData = [
             'nome' => $validated['nome'],
             'biografia' => $validated['biografia'],
-            'imagem' => $validated['imagem'] ?? null,
-        ]);
+        ];
+
+        if ($request->hasFile('imagem')) {
+            // Delete old file if exists
+            $oldImage = $dj->getRawOriginal('imagem');
+            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                Storage::disk('public')->delete($oldImage);
+            }
+
+            $file = $request->file('imagem');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
+            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
+
+            $path = $file->storeAs('images/djs/' . $dj->id, $fileName, 'public');
+            $djData['imagem'] = $path;
+        } elseif ($request->has('imagem') && ($request->input('imagem') === null || $request->input('imagem') === '')) {
+            // If explicit removal of image
+            $oldImage = $dj->getRawOriginal('imagem');
+            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                Storage::disk('public')->delete($oldImage);
+            }
+            $djData['imagem'] = null;
+        }
+
+        $dj->update($djData);
 
         $generos = $validated['generos'] ?? [];
         $dj->generos()->sync($generos);
