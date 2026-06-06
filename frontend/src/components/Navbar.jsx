@@ -266,86 +266,92 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 				<section style={{ marginTop: 'auto' }}>
 					<h2 className={sectionTitleStyle}>SISTEMA</h2>
 					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+						<div className="flex flex-col gap-1.5 px-1">
+							<span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+								Crossfade (Tema)
+							</span>
+							<div className="flex items-center gap-2.5">
+								<Sun
+									size={15}
+									className={[
+										'transition-colors duration-300',
+										darkMode ? 'text-slate-600' : 'text-amber-500 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]',
+									].join(' ')}
+								/>
 								<button
 									type="button"
 									onClick={(event) => toggleDarkMode(event)}
 									aria-label={darkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
-									aria-pressed={darkMode}
-									className={[
-										'group w-full h-11 rounded-xl relative flex items-center justify-between px-3 cursor-pointer select-none overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
-										darkMode
-											? 'bg-gradient-to-r from-purple-950/40 to-indigo-900/40 border border-purple-500/20 text-slate-100 shadow-[0_14px_34px_rgba(15,23,42,0.22)]'
-											: 'bg-gradient-to-r from-amber-500/20 to-orange-600/10 border border-amber-500/30 text-slate-900 shadow-[0_14px_34px_rgba(251,146,60,0.10)]',
-									].join(' ')}
+									className="flex-1 h-7 rounded-lg bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 relative flex items-center px-1.5 focus:outline-none transition-all cursor-pointer"
 								>
-									<span
-										className={[
-											'relative z-10 transition-all duration-300',
-											darkMode
-												? 'text-slate-600'
-												: 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]',
-										].join(' ')}
-									>
-										<Sun size={16} />
-									</span>
-
-									<span className="pointer-events-none absolute left-1/2 z-0 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-slate-500/50">
-										CROSSFADE
-									</span>
-
-									<span
-										className={[
-											'relative z-10 transition-all duration-300',
-											darkMode
-												? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]'
-												: 'text-slate-400',
-										].join(' ')}
-									>
-										<Moon size={16} />
-									</span>
-
+									{/* Track line */}
+									<div className="absolute inset-x-3 h-0.5 bg-slate-300/80 dark:bg-slate-800/80 rounded-full" />
+									{/* Center notch */}
+									<div className="absolute left-1/2 -translate-x-1/2 w-0.5 h-2 bg-slate-300/80 dark:bg-slate-700/80" />
+									
+									{/* Fader knob */}
 									<div
 										className={[
-											'absolute top-1 bottom-1 rounded-lg transition-all duration-300 ease-out shadow-md flex items-center justify-center',
-											darkMode ? 'bg-slate-800 border border-purple-500/40' : 'bg-white border border-amber-200',
+											'absolute w-8 h-5 rounded bg-white dark:bg-slate-700 shadow-md border flex items-center justify-center transition-all duration-300 ease-out',
+											darkMode ? 'border-purple-500/35 bg-purple-500/5' : 'border-slate-300 bg-white',
 										].join(' ')}
 										style={{
-											left: '4px',
-											width: 'calc(50% - 6px)',
-											transform: darkMode ? 'translateX(calc(100% + 4px))' : 'translateX(0)',
+											left: darkMode ? 'calc(100% - 38px)' : '6px',
 										}}
 									>
-										<div className="flex h-3 w-full items-center justify-center gap-0.5 opacity-60">
-											<span className="h-2.5 w-px rounded-full bg-slate-400/70" />
-											<span className="h-2.5 w-px rounded-full bg-slate-400/70" />
-											<span className="h-2.5 w-px rounded-full bg-slate-400/70" />
+										<div className="flex gap-0.5">
+											<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
+											<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
+											<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
 										</div>
 									</div>
 								</button>
-								{isAuthenticated ? (
-									<div className="flex flex-col gap-2 mt-2">
-										<div className="px-3 py-2 rounded-xl bg-slate-800/10 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex flex-col">
-											<span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Utilizador</span>
-											<span className="text-xs font-semibold truncate text-slate-700 dark:text-slate-200">{user?.name || 'Administrador'}</span>
+								<Moon
+									size={15}
+									className={[
+										'transition-colors duration-300',
+										darkMode ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]' : 'text-slate-400',
+									].join(' ')}
+								/>
+							</div>
+						</div>
+
+						{isAuthenticated ? (
+							<div className="flex flex-col gap-2 mt-1">
+								<div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+									<div className="flex items-center gap-2.5 min-w-0">
+										<div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-sm">
+											{user?.name ? user.name.split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'AD'}
 										</div>
-										<button
-											type="button"
-											onClick={logout}
-											className="group flex w-full items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/5 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 px-4 py-3 text-sm font-medium transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-										>
-											<LogOut size={16} className="shrink-0" />
-											<span>Terminar Sessão</span>
-										</button>
+										<div className="flex flex-col min-w-0">
+											<span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">
+												Utilizador
+											</span>
+											<span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate leading-none">
+												{user?.name || 'Administrador'}
+											</span>
+										</div>
 									</div>
-								) : (
-									<NavLink to="/login" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
-										<LogIn size={18} className={navIconStyle} />
-										<span>Iniciar Sessão</span>
-									</NavLink>
-								)}
+									<button
+										type="button"
+										onClick={logout}
+										title="Terminar Sessão"
+										aria-label="Terminar Sessão"
+										className="h-8 w-8 rounded-lg flex items-center justify-center text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 transition-colors shrink-0 cursor-pointer"
+									>
+										<LogOut size={15} />
+									</button>
+								</div>
+							</div>
+						) : (
+							<NavLink to="/login" className={({ isActive }) => getNavLinkClassName(isActive, isDark)}>
+								<LogIn size={18} className={navIconStyle} />
+								<span>Iniciar Sessão</span>
+							</NavLink>
+						)}
 
 						{isAuthenticated && (
-							<div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200/70 pt-4 dark:border-slate-800/60">
+							<div className="mt-1 flex items-center justify-between gap-2 border-t border-slate-200/50 pt-3 dark:border-slate-800/60">
 								<button type="button" onClick={exportData} className={secondaryActionClassName}>
 									<Download size={14} className="shrink-0" />
 									<span>Exportar</span>
