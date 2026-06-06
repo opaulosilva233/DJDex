@@ -410,12 +410,12 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	}
 
 	function getItemDetails(item) {
-		if (activeSelector === 'festival') {
+		if (activeSelector === 'festival' || selectorContext === 'festival') {
 			const info = getFestivalLocalAndYear(item)
 			return `${info.local} · ${info.ano}`
 		}
 
-		if (activeSelector === 'edicao') {
+		if (activeSelector === 'edicao' || selectorContext === 'edicao') {
 			return `${item.local ?? 'Local desconhecido'} · ${item.ano ?? 'Ano por definir'}`
 		}
 
@@ -423,12 +423,16 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	}
 
 	function getItemAvatar(item) {
-		if (activeSelector === 'edicao') {
+		if (activeSelector === 'edicao' || selectorContext === 'edicao') {
 			return String(item.ano).substring(2, 4) || 'ED'
 		}
 
 		if (item.imagem) {
 			return <img src={item.imagem} alt={item.nome} className="h-full w-full object-cover" />
+		}
+
+		if (!item.nome) {
+			return 'ED'
 		}
 
 		return item.nome
