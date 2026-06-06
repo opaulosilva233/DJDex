@@ -4,7 +4,7 @@ import AddSetForm from '../components/AddSetForm'
 
 export default function AddSetPage({ sets = [], djs = [], festivais = [], generos = [], handleAddSet, handleEditSet }) {
 	const { id } = useParams()
-	const initialData = id ? sets.find((set) => set.id === id) : undefined
+	const initialData = id ? sets.find((set) => String(set.id) === String(id)) : undefined
 	const isEditing = Boolean(initialData)
 
 	return (

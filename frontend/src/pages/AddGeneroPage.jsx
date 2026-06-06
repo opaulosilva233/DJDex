@@ -5,7 +5,7 @@ import AddGeneroForm from '../components/AddGeneroForm'
 export default function AddGeneroPage({ generos = [], handleAddGenero, handleEditGenero }) {
 	const [searchParams] = useSearchParams()
 	const editId = searchParams.get('edit')
-	const initialData = editId ? generos.find((g) => g.id === editId) : undefined
+	const initialData = editId ? generos.find((g) => String(g.id) === String(editId)) : undefined
 	const isEditing = Boolean(initialData)
 
 	return (

@@ -6,7 +6,7 @@ import AddDjForm from '../components/AddDjForm'
 export default function AddDjPage({ djs = [], handleAddDj, handleEditDj, generos = [] }) {
 	const [searchParams] = useSearchParams()
 	const editId = searchParams.get('edit')
-	const initialData = editId ? djs.find((dj) => dj.id === editId) : undefined
+	const initialData = editId ? djs.find((dj) => String(dj.id) === String(editId)) : undefined
 	const isEditing = Boolean(initialData)
 
 	return (

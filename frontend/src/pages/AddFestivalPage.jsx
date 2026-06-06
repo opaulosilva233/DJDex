@@ -6,7 +6,7 @@ import AddFestivalForm from '../components/AddFestivalForm'
 export default function AddFestivalPage({ festivais = [], handleAddFestival, handleEditFestival, generos = [] }) {
 	const [searchParams] = useSearchParams()
 	const editId = searchParams.get('edit')
-	const initialData = editId ? festivais.find((f) => f.id === editId) : undefined
+	const initialData = editId ? festivais.find((f) => String(f.id) === String(editId)) : undefined
 	const isEditing = Boolean(initialData)
 
 	return (
