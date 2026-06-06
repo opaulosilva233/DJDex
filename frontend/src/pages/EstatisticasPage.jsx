@@ -38,7 +38,10 @@ function LocaisTab({ sets = [], festivais = [], djs = [], darkMode = true }) {
 			if (!festival) return
 			// Resolve cidade: tenta edicoes[].local, fallback para festival.local
 			let cidade = festival.local || ''
-			if (Array.isArray(festival.edicoes) && festival.edicoes.length > 0) {
+			if (s.edicaoId) {
+				const edicao = festival.edicoes?.find((e) => e.id === s.edicaoId)
+				if (edicao && edicao.local) cidade = edicao.local
+			} else if (Array.isArray(festival.edicoes) && festival.edicoes.length > 0) {
 				// Encontrar a edição pelo ano do set
 				const ano = s.data ? Number(s.data.substring(0, 4)) : null
 				const edicao = ano
@@ -89,7 +92,10 @@ function LocaisTab({ sets = [], festivais = [], djs = [], darkMode = true }) {
 
 				// Resolver local/recinto para este ano
 				if (!byYear[ano].local) {
-					if (Array.isArray(f.edicoes) && f.edicoes.length > 0) {
+					if (s.edicaoId) {
+						const edicao = f.edicoes?.find((e) => e.id === s.edicaoId)
+						byYear[ano].local = edicao?.local || f.local || '—'
+					} else if (Array.isArray(f.edicoes) && f.edicoes.length > 0) {
 						const edicao = f.edicoes.find((e) => String(e.ano) === ano) || f.edicoes[0]
 						byYear[ano].local = edicao?.local || f.local || '—'
 					} else {
@@ -417,6 +423,9 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			if (s.djId) {
 				counts[s.djId] = (counts[s.djId] || 0) + 1
 			}
+			if (s.dj2Id) {
+				counts[s.dj2Id] = (counts[s.dj2Id] || 0) + 1
+			}
 		})
 
 		return djs
@@ -434,7 +443,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const modalSets = useMemo(() => {
 		if (!modalDjData) return []
 		return sets
-			.filter((s) => s.djId === modalDjData.id)
+			.filter((s) => s.djId === modalDjData.id || s.dj2Id === modalDjData.id)
 			.map((s) => {
 				const festival = festivais.find((f) => f.id === s.festivalId)
 				return {
@@ -515,7 +524,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		if (!selectedDjId) return distribution
 
 		sets.forEach((set) => {
-			if (set.djId === selectedDjId && set.avaliacao !== null && set.avaliacao !== undefined && set.avaliacao !== '') {
+			if ((set.djId === selectedDjId || set.dj2Id === selectedDjId) && set.avaliacao !== null && set.avaliacao !== undefined && set.avaliacao !== '') {
 				const rounded = Math.round(Number(set.avaliacao))
 				if (rounded >= 1 && rounded <= 10) {
 					distribution[rounded - 1].quantidade++
@@ -582,7 +591,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			const normalizedBpm = Math.min(10, Math.max(0, ((avgBpm - 60) / 140) * 10))
 			data[1][dj.id] = Number(normalizedBpm.toFixed(1))
 
-			const djSets = sets.filter((s) => s.djId === dj.id)
+			const djSets = sets.filter((s) => s.djId === dj.id || s.dj2Id === dj.id)
 			const setsRating = Math.min(10, djSets.length * 2)
 			data[2][dj.id] = Number(setsRating.toFixed(1))
 		})
@@ -605,7 +614,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		if (!selectedDjId) return []
 
 		return sets
-			.filter((s) => s.djId === selectedDjId)
+			.filter((s) => s.djId === selectedDjId || s.dj2Id === selectedDjId)
 			.map((s) => {
 				const festival = festivais.find((f) => f.id === s.festivalId)
 				return {
@@ -1480,6 +1489,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 														<tbody className="divide-y divide-slate-200/60 dark:divide-white/5 text-slate-700 dark:text-slate-300">
 															{festivalHistorySets.map((s) => {
 																const dj = djs.find((d) => d.id === s.djId)
+																const dj2 = s.dj2Id ? djs.find((d) => d.id === s.dj2Id) : null
 																return (
 																	<tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
 																		<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold">
@@ -1490,7 +1500,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 																			{s.hora && <span className="text-slate-500 font-normal"> às {s.hora}</span>}
 																		</td>
 																		<td className="py-3.5 px-4 text-slate-900 dark:text-white font-medium">
-																			{dj ? dj.nome : 'Desconhecido'}
+																			{dj ? (dj2 ? `${dj.nome} B2B ${dj2.nome}` : dj.nome) : 'Desconhecido'}
 																		</td>
 																		<td className="py-3.5 px-4 text-center">
 																			{getRatingBadge(s.avaliacao)}
@@ -1540,7 +1550,10 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 					const setCountByGenre = generos.reduce((acc, g) => {
 						const count = sets.filter((s) => {
 							const dj = djs.find((d) => d.id === s.djId)
-							return dj && Array.isArray(dj.generoIds) && dj.generoIds.includes(g.id)
+							const dj2 = s.dj2Id ? djs.find((d) => d.id === s.dj2Id) : null
+							const djMatch = dj && Array.isArray(dj.generoIds) && dj.generoIds.includes(g.id)
+							const dj2Match = dj2 && Array.isArray(dj2.generoIds) && dj2.generoIds.includes(g.id)
+							return djMatch || dj2Match
 						}).length
 						acc[g.id] = count
 						return acc
@@ -1559,10 +1572,11 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 					const genreSetsRated = activeGenre
 						? sets.filter((s) => {
 								const dj = djs.find((d) => d.id === s.djId)
+								const dj2 = s.dj2Id ? djs.find((d) => d.id === s.dj2Id) : null
+								const djMatch = dj && Array.isArray(dj.generoIds) && dj.generoIds.includes(activeGenre.id)
+								const dj2Match = dj2 && Array.isArray(dj2.generoIds) && dj2.generoIds.includes(activeGenre.id)
 								return (
-									dj &&
-									Array.isArray(dj.generoIds) &&
-									dj.generoIds.includes(activeGenre.id) &&
+									(djMatch || dj2Match) &&
 									s.avaliacao !== null &&
 									s.avaliacao !== undefined &&
 									s.avaliacao !== ''

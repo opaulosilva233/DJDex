@@ -13,7 +13,7 @@ class SetController extends Controller
      */
     public function index(): JsonResponse
     {
-        $sets = Set::with(['dj', 'festival'])->get();
+        $sets = Set::with(['dj', 'dj2', 'festival', 'edicao'])->get();
         return response()->json($sets);
     }
 
@@ -22,7 +22,7 @@ class SetController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $set = Set::with(['dj', 'festival'])->findOrFail($id);
+        $set = Set::with(['dj', 'dj2', 'festival', 'edicao'])->findOrFail($id);
         return response()->json($set);
     }
 
@@ -35,7 +35,11 @@ class SetController extends Controller
 
         $validated = $request->validate([
             'dj_id' => 'required|integer|exists:djs,id',
+            'dj2_id' => 'nullable|integer|exists:djs,id|different:dj_id',
             'festival_id' => 'required|integer|exists:festivais,id',
+            'edicao_id' => 'nullable|integer|exists:edicoes,id',
+            'especial' => 'nullable|boolean',
+            'nome_especial' => 'nullable|string|max:255',
             'data' => 'required|date',
             'hora_inicio' => 'required|string',
             'hora_fim' => 'nullable|string',
@@ -44,7 +48,7 @@ class SetController extends Controller
 
         $set = Set::create($validated);
 
-        return response()->json($set->load(['dj', 'festival']), 201);
+        return response()->json($set->load(['dj', 'dj2', 'festival', 'edicao']), 201);
     }
 
     /**
@@ -58,7 +62,11 @@ class SetController extends Controller
 
         $validated = $request->validate([
             'dj_id' => 'required|integer|exists:djs,id',
+            'dj2_id' => 'nullable|integer|exists:djs,id|different:dj_id',
             'festival_id' => 'required|integer|exists:festivais,id',
+            'edicao_id' => 'nullable|integer|exists:edicoes,id',
+            'especial' => 'nullable|boolean',
+            'nome_especial' => 'nullable|string|max:255',
             'data' => 'required|date',
             'hora_inicio' => 'required|string',
             'hora_fim' => 'nullable|string',
@@ -67,7 +75,7 @@ class SetController extends Controller
 
         $set->update($validated);
 
-        return response()->json($set->load(['dj', 'festival']));
+        return response()->json($set->load(['dj', 'dj2', 'festival', 'edicao']));
     }
 
     /**
@@ -89,8 +97,17 @@ class SetController extends Controller
         if ($request->has('djId') && !$request->has('dj_id')) {
             $request->merge(['dj_id' => $request->input('djId')]);
         }
+        if ($request->has('dj2Id') && !$request->has('dj2_id')) {
+            $request->merge(['dj2_id' => $request->input('dj2Id')]);
+        }
         if ($request->has('festivalId') && !$request->has('festival_id')) {
             $request->merge(['festival_id' => $request->input('festivalId')]);
+        }
+        if ($request->has('edicaoId') && !$request->has('edicao_id')) {
+            $request->merge(['edicao_id' => $request->input('edicaoId')]);
+        }
+        if ($request->has('nomeEspecial') && !$request->has('nome_especial')) {
+            $request->merge(['nome_especial' => $request->input('nomeEspecial')]);
         }
         if ($request->has('horaInicio') && !$request->has('hora_inicio')) {
             $request->merge(['hora_inicio' => $request->input('horaInicio')]);

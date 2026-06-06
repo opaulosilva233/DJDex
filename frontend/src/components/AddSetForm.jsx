@@ -4,7 +4,11 @@ import { Calendar, ChevronLeft, ChevronRight, Clock, Disc3, Search, Star, X } fr
 
 const initialFormState = {
 	djId: '',
+	dj2Id: '',
 	festivalId: '',
+	edicaoId: '',
+	especial: false,
+	nomeEspecial: '',
 	data: '',
 	horaInicio: '',
 	horaFim: '',
@@ -94,6 +98,21 @@ function capitalizeFirstLetter(value) {
 	return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function getFestivalLocalAndYear(festival) {
+	if (!festival) return { local: 'Local desconhecido', ano: 'Ano por definir' }
+	if (Array.isArray(festival.edicoes) && festival.edicoes.length > 0) {
+		const sorted = [...festival.edicoes].sort((a, b) => b.ano - a.ano)
+		return {
+			local: sorted[0].local || 'Local desconhecido',
+			ano: sorted[0].ano || 'Ano por definir'
+		}
+	}
+	return {
+		local: festival.local || 'Local desconhecido',
+		ano: festival.ano || 'Ano por definir'
+	}
+}
+
 export default function AddSetForm({ initialData, djs = [], festivais = [], generos = [], handleAddSet, handleEditSet }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [hoverRating, setHoverRating] = useState(0)
@@ -122,7 +141,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 			setFormData({
 				djId: initialData.djId ?? initialData.dj?.id ?? '',
+				dj2Id: initialData.dj2Id ?? initialData.dj2_id ?? initialData.dj2?.id ?? '',
 				festivalId: initialData.festivalId ?? initialData.festival?.id ?? '',
+				edicaoId: initialData.edicaoId ?? initialData.edicao_id ?? initialData.edicao?.id ?? '',
+				especial: Boolean(initialData.especial ?? false),
+				nomeEspecial: initialData.nomeEspecial ?? initialData.nome_especial ?? '',
 				data: resolvedData,
 				horaInicio: resolvedStartTime,
 				horaFim: resolvedEndTime,
@@ -205,28 +228,40 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	}, [activeSelector, recentSelection])
 
 	const selectedDj = djs.find((dj) => dj.id === formData.djId)
+	const selectedDj2 = djs.find((dj) => dj.id === formData.dj2Id)
 	const selectedFestival = festivais.find((festival) => festival.id === formData.festivalId)
+	const selectedEdicao = selectedFestival?.edicoes?.find((e) => e.id === formData.edicaoId)
 	const selectedDjGenres = generos.filter(
 		(genero) => Array.isArray(selectedDj?.generoIds) && selectedDj.generoIds.includes(genero.id),
 	)
 	const isSelectorActive = activeSelector !== null
 	const selectorContext = activeSelector ?? panelSelector
-	const isEntitySelector = selectorContext === 'festival' || selectorContext === 'dj'
+	const isEntitySelector = selectorContext === 'festival' || selectorContext === 'dj' || selectorContext === 'dj2' || selectorContext === 'edicao'
 	const isCalendarSelector = selectorContext === 'data'
 	const isTimeSelector = selectorContext === 'horaInicio' || selectorContext === 'horaFim'
 	const isRatingSelector = selectorContext === 'avaliacao'
-	const selectorItems = selectorContext === 'festival' ? festivais : djs
+	const selectorItems = selectorContext === 'festival'
+		? festivais
+		: (selectorContext === 'dj' || selectorContext === 'dj2')
+			? djs
+			: (selectorContext === 'edicao' && selectedFestival)
+				? (selectedFestival.edicoes ?? [])
+				: []
 	const selectorTitleByContext = {
-		dj: 'Escolher Artista',
+		dj: 'Escolher Artista Principal',
+		dj2: 'Escolher Artista Secundário (B2B)',
 		festival: 'Escolher Festival',
+		edicao: 'Escolher Edição',
 		data: 'Escolher Data',
 		horaInicio: 'Escolher Hora de Início',
 		horaFim: 'Escolher Hora de Fim',
 		avaliacao: 'Pontuar a Energia do Set',
 	}
 	const selectorSubtitleByContext = {
-		dj: 'Filtra por nome e escolhe o artista que vai assinar o set.',
+		dj: 'Filtra por nome e escolhe o artista principal que vai assinar o set.',
+		dj2: 'Escolhe o segundo artista para esta atuação em B2B.',
 		festival: 'Filtra por nome e escolhe o festival que vai guardar o set.',
+		edicao: 'Seleciona a edição específica do festival selecionado.',
 		data: 'Seleciona a data num calendário compacto, sem sair do painel.',
 		horaInicio: 'Escolhe a hora de início com uma grelha rápida e precisa.',
 		horaFim: 'Escolhe a hora de fim com uma grelha rápida e precisa.',
@@ -236,6 +271,9 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	const selectorSubtitle = selectorSubtitleByContext[selectorContext] ?? 'Usa o painel lateral para ajustar o valor selecionado.'
 	const normalizedSearchTerm = searchTerm.trim().toLowerCase()
 	const filteredSelectorItems = selectorItems.filter((item) => {
+		if (selectorContext === 'dj2' && item.id === formData.djId) {
+			return false
+		}
 		if (!normalizedSearchTerm) {
 			return true
 		}
@@ -243,7 +281,9 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		const baseText =
 			selectorContext === 'festival'
 				? `${item.nome ?? ''} ${item.local ?? ''} ${item.ano ?? ''}`
-				: `${item.nome ?? ''} ${item.biografia ?? ''}`
+				: selectorContext === 'edicao'
+					? `${item.ano ?? ''} ${item.local ?? ''}`
+					: `${item.nome ?? ''} ${item.biografia ?? ''}`
 
 		return baseText.toLowerCase().includes(normalizedSearchTerm)
 	})
@@ -269,10 +309,16 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	}
 
 	function handleEntitySelect(selector, id) {
-		setFormData((currentFormData) => ({
-			...currentFormData,
-			[selector === 'festival' ? 'festivalId' : 'djId']: id,
-		}))
+		setFormData((currentFormData) => {
+			const updated = {
+				...currentFormData,
+				[selector === 'festival' ? 'festivalId' : selector === 'dj' ? 'djId' : selector === 'dj2' ? 'dj2Id' : 'edicaoId']: id,
+			}
+			if (selector === 'festival') {
+				updated.edicaoId = ''
+			}
+			return updated
+		})
 		setRecentSelection({ selector, id })
 	}
 
@@ -281,8 +327,16 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 			return selectedFestival ? selectedFestival.nome : 'Seleciona um Festival'
 		}
 
+		if (selector === 'edicao') {
+			return selectedEdicao ? `${selectedEdicao.ano} - ${selectedEdicao.local}` : 'Seleciona a Edição'
+		}
+
 		if (selector === 'dj') {
 			return selectedDj ? selectedDj.nome : 'Seleciona um DJ'
+		}
+
+		if (selector === 'dj2') {
+			return selectedDj2 ? selectedDj2.nome : 'Seleciona o DJ 2'
 		}
 
 		if (selector === 'data') {
@@ -307,13 +361,25 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 	function getSelectorTriggerMeta(selector) {
 		if (selector === 'festival') {
-			return selectedFestival ? `${selectedFestival.local ?? 'Local desconhecido'} · ${selectedFestival.ano ?? 'Ano por definir'}` : 'Abre o painel para escolher um festival'
+			if (!selectedFestival) return 'Abre o painel para escolher um festival'
+			const info = getFestivalLocalAndYear(selectedFestival)
+			return `${info.local} · ${info.ano}`
+		}
+
+		if (selector === 'edicao') {
+			return selectedEdicao ? `Edição de ${selectedEdicao.ano} em ${selectedEdicao.local}` : 'Abre o painel para escolher a edição'
 		}
 
 		if (selector === 'dj') {
 			return selectedDj
 				? `Géneros: ${selectedDjGenres.length > 0 ? selectedDjGenres.map((genero) => genero.nome).join(', ') : 'Sem géneros definidos'}`
 				: 'Abre o painel para escolher um DJ'
+		}
+
+		if (selector === 'dj2') {
+			return selectedDj2
+				? `B2B com ${selectedDj?.nome ?? 'DJ'}`
+				: 'Abre o painel para escolher o DJ secundário'
 		}
 
 		if (selector === 'data') {
@@ -339,6 +405,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 	function getItemDetails(item) {
 		if (activeSelector === 'festival') {
+			const info = getFestivalLocalAndYear(item)
+			return `${info.local} · ${info.ano}`
+		}
+
+		if (activeSelector === 'edicao') {
 			return `${item.local ?? 'Local desconhecido'} · ${item.ano ?? 'Ano por definir'}`
 		}
 
@@ -346,6 +417,10 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 	}
 
 	function getItemAvatar(item) {
+		if (activeSelector === 'edicao') {
+			return String(item.ano).substring(2, 4) || 'ED'
+		}
+
 		if (item.imagem) {
 			return <img src={item.imagem} alt={item.nome} className="h-full w-full object-cover" />
 		}
@@ -425,7 +500,11 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 
 		const payload = {
 			djId: formData.djId,
+			dj2Id: formData.dj2Id || null,
 			festivalId: formData.festivalId,
+			edicaoId: formData.edicaoId || null,
+			especial: formData.especial,
+			nomeEspecial: formData.especial ? formData.nomeEspecial : '',
 			data: formData.data,
 			horaInicio: formData.horaInicio,
 			horaFim: formData.horaFim,
@@ -495,7 +574,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 			>
 				<div className="grid w-full gap-4 lg:grid-cols-2 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
 					<div>
-						<span className={labelClassName}>DJ</span>
+						<span className={labelClassName}>DJ Principal</span>
 						<button
 							type="button"
 							onClick={() => openSelector('dj')}
@@ -522,6 +601,26 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 							<ChevronRight className="h-4 w-4 text-purple-500" />
 						</button>
 						<p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{getSelectorTriggerMeta('festival')}</p>
+					</div>
+
+					<div>
+						<span className={labelClassName}>Edição</span>
+						<button
+							type="button"
+							onClick={() => {
+								if (formData.festivalId) {
+									openSelector('edicao')
+								}
+							}}
+							disabled={!formData.festivalId}
+							className={`${triggerButtonClassName} group ${!formData.festivalId ? 'opacity-50 cursor-not-allowed' : ''}`}
+						>
+							<span className={formData.edicaoId ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
+								{formData.festivalId ? getSelectorTriggerLabel('edicao') : 'Seleciona o festival primeiro'}
+							</span>
+							<ChevronRight className="h-4 w-4 text-purple-500" />
+						</button>
+						<p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{formData.festivalId ? getSelectorTriggerMeta('edicao') : 'Requer festival selecionado'}</p>
 					</div>
 
 					<div>
@@ -586,6 +685,67 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 						</button>
 						<p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{getSelectorTriggerMeta('avaliacao')}</p>
 						<input type="hidden" name="avaliacao" value={formData.avaliacao} />
+					</div>
+				</div>
+
+				{/* Checkboxes de Configurações Especiais */}
+				<div className="mt-6 border-t border-slate-200/60 dark:border-white/10 pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+					{/* Bloco Set Especial */}
+					<div className="flex flex-col gap-3 p-4 rounded-xl border border-slate-200/50 bg-white/40 dark:border-white/5 dark:bg-slate-900/20">
+						<label className="flex items-center gap-3 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={formData.especial}
+								onChange={(e) => setFormData(prev => ({ ...prev, especial: e.target.checked }))}
+								className="h-4.5 w-4.5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-slate-800 dark:bg-slate-950"
+							/>
+							<span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Set Especial?</span>
+						</label>
+						{formData.especial && (
+							<input
+								type="text"
+								placeholder="Nome do set especial (ex: Hardcore Closing)"
+								value={formData.nomeEspecial}
+								onChange={(e) => setFormData(prev => ({ ...prev, nomeEspecial: e.target.value }))}
+								className="mt-2 w-full rounded-xl border border-slate-200 bg-white/80 p-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+							/>
+						)}
+					</div>
+
+					{/* Bloco B2B */}
+					<div className="flex flex-col gap-3 p-4 rounded-xl border border-slate-200/50 bg-white/40 dark:border-white/5 dark:bg-slate-900/20">
+						<label className="flex items-center gap-3 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={formData.dj2Id !== '' || Boolean(formData.isB2B)}
+								onChange={(e) => {
+									const checked = e.target.checked
+									setFormData(prev => ({
+										...prev,
+										isB2B: checked,
+										dj2Id: checked ? prev.dj2Id : ''
+									}))
+								}}
+								className="h-4.5 w-4.5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-slate-800 dark:bg-slate-950"
+							/>
+							<span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Atuação B2B?</span>
+						</label>
+						{(formData.dj2Id !== '' || formData.isB2B) && (
+							<div className="mt-2">
+								<span className="block mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">DJ 2 (B2B)</span>
+								<button
+									type="button"
+									onClick={() => openSelector('dj2')}
+									className="w-full rounded-xl border border-slate-200 bg-white/80 p-2.5 text-sm text-slate-900 transition-all focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white flex items-center justify-between group"
+								>
+									<span className={formData.dj2Id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
+										{getSelectorTriggerLabel('dj2')}
+									</span>
+									<ChevronRight className="h-4 w-4 text-purple-500" />
+								</button>
+								<p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">{getSelectorTriggerMeta('dj2')}</p>
+							</div>
+						)}
 					</div>
 				</div>
 				<div className="mt-6 flex items-center justify-end gap-3">
@@ -707,7 +867,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 									type="text"
 									value={searchTerm}
 									onChange={(event) => setSearchTerm(event.target.value)}
-									placeholder={activeSelector === 'festival' ? 'Pesquisar festival...' : 'Pesquisar artista...'}
+									placeholder={activeSelector === 'festival' ? 'Pesquisar festival...' : activeSelector === 'edicao' ? 'Pesquisar edição...' : 'Pesquisar artista...'}
 									className="w-full rounded-2xl border border-cyan-400/20 bg-slate-950/5 py-3 pl-10 pr-4 text-sm text-slate-900 shadow-[0_0_0_1px_rgba(34,211,238,0.08)] transition-all placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
 								/>
 							</div>
@@ -715,7 +875,13 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 							<div className="flex max-h-[360px] flex-1 min-h-0 flex-col items-center gap-2 overflow-y-auto pr-2">
 								{filteredSelectorItems.length > 0 ? (
 									filteredSelectorItems.map((item) => {
-										const isSelected = activeSelector === 'festival' ? formData.festivalId === item.id : formData.djId === item.id
+										const isSelected = activeSelector === 'festival' 
+											? formData.festivalId === item.id 
+											: activeSelector === 'dj'
+												? formData.djId === item.id
+												: activeSelector === 'dj2'
+													? formData.dj2Id === item.id
+													: formData.edicaoId === item.id
 										const details = getItemDetails(item)
 										const avatarContent = getItemAvatar(item)
 										const isRecentlySelected = recentSelection?.selector === activeSelector && recentSelection?.id === item.id

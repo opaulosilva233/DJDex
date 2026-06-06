@@ -44,7 +44,9 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const dj = djs.find((entry) => entry.id === set.djId)
+  const dj2 = set.dj2Id ? djs.find((entry) => entry.id === set.dj2Id) : null
   const festival = festivais.find((entry) => entry.id === set.festivalId)
+  const edicao = festival?.edicoes?.find((entry) => entry.id === set.edicaoId)
   const djImagemSrc = dj?.imagem || '/images/default-dj.png'
   const scoreValue = Number(set.avaliacao ?? 0)
   const scorePercent = Math.max(0, Math.min(100, scoreValue * 10))
@@ -141,20 +143,42 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
 
       <div className="relative flex h-full flex-col gap-5 pr-4 pt-1 md:pr-2">
         <div className="flex min-w-0 items-start gap-4">
-          <img
-            src={djImagemSrc}
-            alt={dj?.nome ?? 'DJ'}
-            onError={handleImageError}
-            className="h-20 w-20 shrink-0 rounded-full border border-slate-200/80 object-cover shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_18px_40px_rgba(15,23,42,0.14)] dark:border-white/10 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.35)]"
-          />
+          <div className="flex shrink-0 items-center">
+            <img
+              src={djImagemSrc}
+              alt={dj?.nome ?? 'DJ'}
+              onError={handleImageError}
+              className="h-20 w-20 rounded-full border border-slate-200/80 object-cover shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_18px_40px_rgba(15,23,42,0.14)] dark:border-white/10 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.35)]"
+            />
+            {dj2 && (
+              <img
+                src={dj2.imagem || '/images/default-dj.png'}
+                alt={dj2.nome}
+                onError={handleImageError}
+                className="h-20 w-20 rounded-full border border-slate-200/80 object-cover shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_18px_40px_rgba(15,23,42,0.14)] dark:border-white/10 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.35)] -ml-8 relative z-10 ring-4 ring-white dark:ring-slate-900"
+              />
+            )}
+          </div>
 
           <div className="min-w-0 pt-1">
             <h2 className="truncate text-xl font-black leading-none text-slate-900 dark:text-white">
-              {dj?.nome ?? 'DJ desconhecido'}
+              {dj ? (dj2 ? `${dj.nome} B2B ${dj2.nome}` : dj.nome) : 'DJ desconhecido'}
             </h2>
             <p className="mt-2 truncate text-sm font-medium text-slate-600 dark:text-purple-300/80">
               {festival?.nome ?? 'Festival desconhecido'}
             </p>
+            {edicao && (
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                📍 {edicao.local} · {edicao.ano}
+              </p>
+            )}
+            {set.especial && (
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className="inline-flex items-center rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 ring-1 ring-inset ring-amber-500/20 dark:bg-amber-500/25 dark:text-amber-300 dark:ring-amber-500/30">
+                  ⚡ {set.nomeEspecial || 'Set Especial'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

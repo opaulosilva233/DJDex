@@ -52,7 +52,11 @@ function normalizeSet(set) {
   return {
     ...set,
     djId: set.djId ?? set.dj?.id ?? '',
+    dj2Id: set.dj2Id ?? set.dj2_id ?? set.dj2?.id ?? '',
     festivalId: set.festivalId ?? set.festival?.id ?? '',
+    edicaoId: set.edicaoId ?? set.edicao_id ?? set.edicao?.id ?? '',
+    especial: Boolean(set.especial ?? false),
+    nomeEspecial: set.nomeEspecial ?? set.nome_especial ?? '',
     data: set.data ?? '',
     horaInicio: set.horaInicio ?? set.hora ?? '',
     horaFim: set.horaFim ?? '',
