@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, Disc3, MapPin, Plus, Trash2, UploadCloud, X } from 'lucide-react'
+import { Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, Disc3, MapPin, Plus, Search, Trash2, UploadCloud, X } from 'lucide-react'
 
 import { compressImage } from '../utils/imageHelper'
 
@@ -51,6 +51,7 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 	const fileInputRef = useRef(null)
 	const navigate = useNavigate()
 	const isEditing = Boolean(initialData)
+	const [searchGenero, setSearchGenero] = useState('')
 
 	// Estado das edições associadas
 	const [edicoes, setEdicoes] = useState([])
@@ -115,7 +116,7 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 			...currentFormData,
 			generoIds: checked
 				? [...currentFormData.generoIds, value]
-				: currentFormData.generoIds.filter((generoId) => generoId !== value),
+				: currentFormData.generoIds.filter((generoId) => String(generoId) !== String(value)),
 		}))
 	}
 
@@ -391,35 +392,60 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 
 					{/* Chips de Géneros Predominantes (como na ficha dos DJs) */}
 					<div className="grid gap-2">
-						<span className={labelClassName}>Géneros Predominantes</span>
+						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+							<span className={labelClassName}>Géneros Predominantes</span>
+							<div className="relative w-full sm:w-44">
+								<Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+								<input
+									type="text"
+									placeholder="Filtrar géneros..."
+									value={searchGenero}
+									onChange={(e) => setSearchGenero(e.target.value)}
+									className="rounded-lg border border-slate-200/50 bg-white/50 pl-8 pr-7 py-1 text-xs text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-purple-500 dark:border-white/10 dark:bg-slate-800/40 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-purple-500 w-full"
+								/>
+								{searchGenero && (
+									<button
+										type="button"
+										onClick={() => setSearchGenero('')}
+										className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+									>
+										<X className="h-3 w-3" />
+									</button>
+								)}
+							</div>
+						</div>
 						<div className="flex flex-wrap gap-2 rounded-xl border border-slate-200/30 bg-slate-100/40 p-3 backdrop-blur-sm dark:border-white/5 dark:bg-slate-950/20 max-h-[105px] overflow-y-auto">
-							{generos.map((genero) => {
-								const isChecked = selectedGeneroIds.includes(genero.id)
+							{generos
+								.filter((genero) => genero.nome.toLowerCase().includes(searchGenero.toLowerCase()))
+								.map((genero) => {
+									const isChecked = selectedGeneroIds.some((id) => String(id) === String(genero.id))
 
-								return (
-									<label key={genero.id} className="relative select-none">
-										<input
-											type="checkbox"
-											value={genero.id}
-											checked={isChecked}
-											onChange={handleGeneroToggle}
-											className="hidden"
-										/>
-										<span
-											className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-[10px] font-semibold tracking-wide uppercase transition-all duration-200 hover:scale-105 active:scale-95 ${
-												isChecked
-													? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border border-transparent shadow-lg shadow-purple-500/30'
-													: 'bg-slate-800/30 dark:bg-slate-950/20 backdrop-blur-sm border border-slate-700/40 dark:border-white/5 text-slate-400 dark:text-slate-500 hover:border-purple-500/40 hover:text-slate-200'
-											}`}
-										>
-											{isChecked ? <Check className="h-2.5 w-2.5" /> : <span className="h-1 w-1 rounded-full bg-current opacity-40" />}
-											{genero.nome}
-										</span>
-									</label>
-								)
-							})}
-							{generos.length === 0 && (
-								<p className="text-xs text-slate-400 dark:text-slate-500">Ainda não existem géneros guardados.</p>
+									return (
+										<label key={genero.id} className="relative select-none">
+											<input
+												type="checkbox"
+												value={genero.id}
+												checked={isChecked}
+												onChange={handleGeneroToggle}
+												className="hidden"
+											/>
+											<span
+												className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-[10px] font-semibold tracking-wide uppercase transition-all duration-200 hover:scale-105 active:scale-95 ${
+													isChecked
+														? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border border-transparent shadow-lg shadow-purple-500/30'
+														: 'bg-slate-800/30 dark:bg-slate-950/20 backdrop-blur-sm border border-slate-700/40 dark:border-white/5 text-slate-400 dark:text-slate-500 hover:border-purple-500/40 hover:text-slate-200'
+												}`}
+											>
+												{isChecked ? <Check className="h-2.5 w-2.5" /> : <span className="h-1 w-1 rounded-full bg-current opacity-40" />}
+												{genero.nome}
+											</span>
+										</label>
+									)
+								})}
+							{generos.filter((genero) => genero.nome.toLowerCase().includes(searchGenero.toLowerCase())).length === 0 && (
+								<p className="text-xs text-slate-400 dark:text-slate-500">
+									{generos.length === 0 ? 'Ainda não existem géneros guardados.' : 'Nenhum género corresponde à pesquisa.'}
+								</p>
 							)}
 						</div>
 					</div>
