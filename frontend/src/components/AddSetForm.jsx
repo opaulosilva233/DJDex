@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, ChevronLeft, ChevronRight, Clock, Disc3, Search, Star, X } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, Clock, Copy, Disc3, Search, Star, X } from 'lucide-react'
 
 const initialFormState = {
 	djId: '',
@@ -113,7 +113,7 @@ function getFestivalLocalAndYear(festival) {
 	}
 }
 
-export default function AddSetForm({ initialData, djs = [], festivais = [], generos = [], handleAddSet, handleEditSet }) {
+export default function AddSetForm({ initialData, sets = [], djs = [], festivais = [], generos = [], handleAddSet, handleEditSet }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [hoverRating, setHoverRating] = useState(0)
 	const [selectedRating, setSelectedRating] = useState(0)
@@ -480,6 +480,38 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		}))
 	}
 
+	function handleCopyPrevious() {
+		if (!sets || sets.length === 0) return
+
+		const sortedSets = [...sets].sort((a, b) => {
+			const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+			const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+			if (dateA !== dateB) return dateB - dateA
+			const idA = typeof a.id === 'number' ? a.id : 0
+			const idB = typeof b.id === 'number' ? b.id : 0
+			return idB - idA
+		})
+
+		const previous = sortedSets[0]
+		if (!previous) return
+
+		setFormData((prev) => ({
+			...prev,
+			festivalId: previous.festivalId ?? '',
+			edicaoId: previous.edicaoId ?? '',
+			data: previous.data ?? '',
+			horaInicio: previous.horaInicio ?? previous.hora ?? '',
+			horaFim: previous.horaFim ?? '',
+			avaliacao: previous.avaliacao !== null && previous.avaliacao !== undefined ? String(previous.avaliacao) : '',
+			especial: Boolean(previous.especial ?? false),
+			nomeEspecial: previous.nomeEspecial ?? '',
+		}))
+
+		if (previous.avaliacao !== null && previous.avaliacao !== undefined) {
+			setSelectedRating(Number(previous.avaliacao))
+		}
+	}
+
 	function handleSubmit(event) {
 		event.preventDefault()
 
@@ -582,6 +614,18 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 					isPanelMounted ? 'lg:col-span-7' : 'mx-auto max-w-2xl'
 				}`}
 			>
+				{!isEditing && sets && sets.length > 0 && (
+					<div className="mb-6 flex justify-end">
+						<button
+							type="button"
+							onClick={handleCopyPrevious}
+							className="inline-flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-purple-600 hover:bg-purple-500/10 dark:border-purple-400/30 dark:bg-purple-400/5 dark:text-purple-400 dark:hover:bg-purple-400/10 transition-all duration-200"
+						>
+							<Copy className="h-3.5 w-3.5" />
+							Copiar do anterior
+						</button>
+					</div>
+				)}
 				<div className="grid w-full gap-4 lg:grid-cols-2 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
 					<div>
 						<span className={labelClassName}>DJ Principal</span>

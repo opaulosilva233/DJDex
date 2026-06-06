@@ -23,6 +23,7 @@ export default function AddSetPage({ sets = [], djs = [], festivais = [], genero
 
 				<AddSetForm
 					initialData={initialData}
+					sets={sets}
 					djs={djs}
 					festivais={festivais}
 					generos={generos}
