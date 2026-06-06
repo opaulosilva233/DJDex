@@ -701,59 +701,68 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 				{/* Checkboxes de Configurações Especiais */}
 				<div className="mt-6 border-t border-slate-200/60 dark:border-white/10 pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 					{/* Bloco Set Especial */}
-					<div className="flex flex-col gap-3 p-4 rounded-xl border border-slate-200/50 bg-white/40 dark:border-white/5 dark:bg-slate-900/20">
-						<label className="flex items-center gap-3 cursor-pointer">
-							<input
-								type="checkbox"
-								checked={formData.especial}
-								onChange={(e) => setFormData(prev => ({ ...prev, especial: e.target.checked }))}
-								className="h-4.5 w-4.5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-slate-800 dark:bg-slate-950"
-							/>
-							<span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Set Especial?</span>
+					<div className="flex flex-col gap-3 p-5 rounded-2xl border border-slate-200/60 bg-white/40 dark:border-white/10 dark:bg-slate-900/30">
+						<label className="flex items-center gap-3 cursor-pointer group w-fit">
+							<div className="relative flex items-center justify-center h-5 w-5 shrink-0 rounded-md border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 transition-all group-hover:border-purple-500 dark:group-hover:border-purple-400">
+								<input
+									type="checkbox"
+									checked={formData.especial}
+									onChange={(e) => setFormData(prev => ({ ...prev, especial: e.target.checked }))}
+									className="sr-only"
+								/>
+								<div className={`h-2.5 w-2.5 rounded-sm bg-gradient-to-r from-purple-600 to-indigo-600 transition-all ${formData.especial ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} />
+							</div>
+							<span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">Set Especial?</span>
 						</label>
 						{formData.especial && (
-							<input
-								type="text"
-								placeholder="Nome do set especial (ex: Hardcore Closing)"
-								value={formData.nomeEspecial}
-								onChange={(e) => setFormData(prev => ({ ...prev, nomeEspecial: e.target.value }))}
-								className="mt-2 w-full rounded-xl border border-slate-200 bg-white/80 p-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-							/>
+							<div className="animate-[fadeIn_0.25s_ease-out_1]">
+								<span className={labelClassName}>Nome do Set Especial</span>
+								<input
+									type="text"
+									placeholder="Nome do set especial (ex: Hardcore Closing)"
+									value={formData.nomeEspecial}
+									onChange={(e) => setFormData(prev => ({ ...prev, nomeEspecial: e.target.value }))}
+									className={inputClassName}
+								/>
+							</div>
 						)}
 					</div>
 
 					{/* Bloco B2B */}
-					<div className="flex flex-col gap-3 p-4 rounded-xl border border-slate-200/50 bg-white/40 dark:border-white/5 dark:bg-slate-900/20">
-						<label className="flex items-center gap-3 cursor-pointer">
-							<input
-								type="checkbox"
-								checked={formData.dj2Id !== '' || Boolean(formData.isB2B)}
-								onChange={(e) => {
-									const checked = e.target.checked
-									setFormData(prev => ({
-										...prev,
-										isB2B: checked,
-										dj2Id: checked ? prev.dj2Id : ''
-									}))
-								}}
-								className="h-4.5 w-4.5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-slate-800 dark:bg-slate-950"
-							/>
-							<span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Atuação B2B?</span>
+					<div className="flex flex-col gap-3 p-5 rounded-2xl border border-slate-200/60 bg-white/40 dark:border-white/10 dark:bg-slate-900/30">
+						<label className="flex items-center gap-3 cursor-pointer group w-fit">
+							<div className="relative flex items-center justify-center h-5 w-5 shrink-0 rounded-md border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 transition-all group-hover:border-purple-500 dark:group-hover:border-purple-400">
+								<input
+									type="checkbox"
+									checked={formData.dj2Id !== '' || Boolean(formData.isB2B)}
+									onChange={(e) => {
+										const checked = e.target.checked
+										setFormData(prev => ({
+											...prev,
+											isB2B: checked,
+											dj2Id: checked ? prev.dj2Id : ''
+										}))
+									}}
+									className="sr-only"
+								/>
+								<div className={`h-2.5 w-2.5 rounded-sm bg-gradient-to-r from-purple-600 to-indigo-600 transition-all ${(formData.dj2Id !== '' || formData.isB2B) ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} />
+							</div>
+							<span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">Atuação B2B?</span>
 						</label>
 						{(formData.dj2Id !== '' || formData.isB2B) && (
-							<div className="mt-2">
-								<span className="block mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">DJ 2 (B2B)</span>
+							<div className="animate-[fadeIn_0.25s_ease-out_1]">
+								<span className={labelClassName}>DJ 2 (B2B)</span>
 								<button
 									type="button"
 									onClick={() => openSelector('dj2')}
-									className="w-full rounded-xl border border-slate-200 bg-white/80 p-2.5 text-sm text-slate-900 transition-all focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white flex items-center justify-between group"
+									className={`${triggerButtonClassName} group`}
 								>
 									<span className={formData.dj2Id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
 										{getSelectorTriggerLabel('dj2')}
 									</span>
 									<ChevronRight className="h-4 w-4 text-purple-500" />
 								</button>
-								<p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">{getSelectorTriggerMeta('dj2')}</p>
+								<p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{getSelectorTriggerMeta('dj2')}</p>
 							</div>
 						)}
 					</div>
