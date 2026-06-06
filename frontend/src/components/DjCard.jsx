@@ -1,4 +1,4 @@
-import { Clock, Pencil, Trash2 } from 'lucide-react'
+import { Clock, Pencil, Trash2, MapPin, Zap } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -168,14 +168,16 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
               {festival?.nome ?? 'Festival desconhecido'}
             </p>
             {edicao && (
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                📍 {edicao.local} · {edicao.ano}
+              <p className="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                <MapPin size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                <span>{edicao.local} · {edicao.ano}</span>
               </p>
             )}
             {set.especial && (
               <div className="mt-1.5 flex items-center gap-1.5">
                 <span className="inline-flex items-center rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 ring-1 ring-inset ring-amber-500/20 dark:bg-amber-500/25 dark:text-amber-300 dark:ring-amber-500/30">
-                  ⚡ {set.nomeEspecial || 'Set Especial'}
+                  <Zap size={10} className="mr-1 shrink-0" />
+                  {set.nomeEspecial || 'Set Especial'}
                 </span>
               </div>
             )}

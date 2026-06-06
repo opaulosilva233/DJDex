@@ -21,7 +21,7 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
-import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation } from 'lucide-react'
+import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation, Star } from 'lucide-react'
 
 const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1']
 
@@ -1796,7 +1796,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 												{/* Origem Geográfica */}
 												<div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
-													<span className="text-base shrink-0">📍</span>
+													<MapPin size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
 													<div className="flex flex-col min-w-0">
 														<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Origem Geográfica</span>
 														<span className="text-sm font-semibold text-slate-200 truncate">
@@ -1807,7 +1807,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 												{/* Média de Notas */}
 												<div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
-													<span className="text-base shrink-0">⭐</span>
+													<Star size={16} className="text-amber-500 shrink-0" />
 													<div className="flex flex-col flex-1 min-w-0">
 														<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Média de Notas</span>
 														<div className="flex items-baseline gap-1.5">
@@ -1832,7 +1832,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 												<div className="flex flex-col gap-2 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
 													<div className="flex items-center justify-between">
 														<div className="flex items-center gap-2">
-															<span className="text-base">🔥</span>
+															<Flame size={16} className="text-orange-500 shrink-0" />
 															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Energia / Intensidade</span>
 														</div>
 														<span
@@ -1871,7 +1871,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 												{/* Elemento Sonoro */}
 												{activeGenre.elementoSonoro && (
 													<div className="flex items-start gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
-														<span className="text-base shrink-0">🎵</span>
+														<Music size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
 														<div className="flex flex-col min-w-0">
 															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Elemento Sonoro</span>
 															<span className="text-sm text-slate-300 leading-snug">{activeGenre.elementoSonoro}</span>
