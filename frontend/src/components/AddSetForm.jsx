@@ -320,6 +320,12 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 			return updated
 		})
 		setRecentSelection({ selector, id })
+
+		if (selector === 'festival') {
+			setTimeout(() => {
+				openSelector('edicao')
+			}, 100)
+		}
 	}
 
 	function getSelectorTriggerLabel(selector) {
@@ -568,7 +574,7 @@ export default function AddSetForm({ initialData, djs = [], festivais = [], gene
 		>
 			<form
 				onSubmit={handleSubmit}
-				className={`w-full h-full max-h-[500px] overflow-hidden bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-xl ${
+				className={`w-full bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-xl ${
 					isPanelMounted ? 'lg:col-span-7' : 'mx-auto max-w-2xl'
 				}`}
 			>
