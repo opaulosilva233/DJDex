@@ -74,6 +74,7 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 		'Indoor',
 		'Clubbing',
 		'Underground / Warehouse',
+		'Romaria',
 		'Outro / Misto'
 	]
 
