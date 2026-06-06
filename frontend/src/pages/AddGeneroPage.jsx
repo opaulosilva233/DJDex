@@ -8,6 +8,8 @@ export default function AddGeneroPage({ generos = [], handleAddGenero, handleEdi
 	const initialData = editId ? generos.find((g) => String(g.id) === String(editId)) : undefined
 	const isEditing = Boolean(initialData)
 
+	console.log('AddGeneroPage debug:', { editId, generosCount: generos.length, generos, initialData, isEditing })
+
 	return (
 		<section className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
 			<div className="flex flex-col gap-2 max-w-3xl mx-auto w-full">

@@ -9,6 +9,8 @@ export default function AddFestivalPage({ festivais = [], handleAddFestival, han
 	const initialData = editId ? festivais.find((f) => String(f.id) === String(editId)) : undefined
 	const isEditing = Boolean(initialData)
 
+	console.log('AddFestivalPage debug:', { editId, festivaisCount: festivais.length, festivais, initialData, isEditing })
+
 	return (
 		<section className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
 			<div className="flex flex-col gap-2 max-w-4xl mx-auto w-full">

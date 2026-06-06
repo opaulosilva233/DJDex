@@ -9,6 +9,8 @@ export default function AddDjPage({ djs = [], handleAddDj, handleEditDj, generos
 	const initialData = editId ? djs.find((dj) => String(dj.id) === String(editId)) : undefined
 	const isEditing = Boolean(initialData)
 
+	console.log('AddDjPage debug:', { editId, djsCount: djs.length, djs, initialData, isEditing })
+
 	return (
 		<section className="w-full p-8 md:p-12 flex flex-col gap-8 bg-transparent relative z-10">
 			<div className="flex flex-col gap-2 max-w-5xl mx-auto w-full">
