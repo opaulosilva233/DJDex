@@ -66,14 +66,27 @@ class FestivalController extends Controller
             'imagem' => null,
         ]);
 
+        \Illuminate\Support\Facades\Log::info('Festival store: Checking image field', [
+            'has_file' => $request->hasFile('imagem'),
+            'all_inputs' => $request->except(['imagem']),
+            'imagem_input' => $request->input('imagem'),
+        ]);
+
         if ($request->hasFile('imagem')) {
             $file = $request->file('imagem');
+            \Illuminate\Support\Facades\Log::info('Festival store: Image file detected', [
+                'name' => $file->getClientOriginalName(),
+                'mime' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ]);
+
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension();
             $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
             $fileName = $sanitizedName . '_' . time() . '.' . $extension;
 
             $path = $file->storeAs('images/festivais/' . $festival->id, $fileName, 'public');
+            \Illuminate\Support\Facades\Log::info('Festival store: Image saved', ['path' => $path]);
 
             $festival->update([
                 'imagem' => $path,
@@ -139,22 +152,40 @@ class FestivalController extends Controller
             'website' => $validated['website'] ?? null,
         ];
 
+        \Illuminate\Support\Facades\Log::info('Festival update: Checking image field', [
+            'has_file' => $request->hasFile('imagem'),
+            'all_inputs' => $request->except(['imagem']),
+            'imagem_input' => $request->input('imagem'),
+        ]);
+
         if ($request->hasFile('imagem')) {
             // Delete old file if exists
             $oldImage = $festival->getRawOriginal('imagem');
+            \Illuminate\Support\Facades\Log::info('Festival update: Deleting old image if exists', [
+                'old_image' => $oldImage,
+                'exists_on_disk' => $oldImage ? Storage::disk('public')->exists($oldImage) : false
+            ]);
             if ($oldImage && Storage::disk('public')->exists($oldImage)) {
                 Storage::disk('public')->delete($oldImage);
             }
 
             $file = $request->file('imagem');
+            \Illuminate\Support\Facades\Log::info('Festival update: New image file detected', [
+                'name' => $file->getClientOriginalName(),
+                'mime' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ]);
+
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension();
             $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
             $fileName = $sanitizedName . '_' . time() . '.' . $extension;
 
             $path = $file->storeAs('images/festivais/' . $festival->id, $fileName, 'public');
+            \Illuminate\Support\Facades\Log::info('Festival update: New image saved', ['path' => $path]);
             $festivalData['imagem'] = $path;
         } elseif ($request->has('imagem') && ($request->input('imagem') === null || $request->input('imagem') === '')) {
+            \Illuminate\Support\Facades\Log::info('Festival update: Image explicitly removed');
             // If explicit removal of image
             $oldImage = $festival->getRawOriginal('imagem');
             if ($oldImage && Storage::disk('public')->exists($oldImage)) {
