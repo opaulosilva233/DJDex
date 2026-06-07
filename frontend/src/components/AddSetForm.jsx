@@ -535,10 +535,6 @@ export default function AddSetForm({ initialData, sets = [], djs = [], festivais
 			return
 		}
 
-		if (!formData.horaFim) {
-			openSelector('horaFim')
-			return
-		}
 
 		const payload = {
 			djId: formData.djId,

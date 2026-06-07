@@ -51,8 +51,8 @@ export default function DjCard({ set, djs = [], festivais = [], onDelete }) {
   const scoreValue = Number(set.avaliacao ?? 0)
   const scorePercent = Math.max(0, Math.min(100, scoreValue * 10))
   const dateTicket = getDateTicketParts(set.data)
-  const startTime = set.horaInicio ?? set.hora ?? '--:--'
-  const endTime = set.horaFim ?? null
+  const startTime = set.horaInicio && set.horaInicio !== '' ? set.horaInicio : (set.hora && set.hora !== '' ? set.hora : '--:--')
+  const endTime = set.horaFim && set.horaFim !== '' ? set.horaFim : null
 
   function parseTimeToMinutes(value) {
     if (!value || typeof value !== 'string') return null
