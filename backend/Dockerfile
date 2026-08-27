@@ -1,14 +1,3 @@
-# ── Stage 1: Build React Frontend ──
-FROM node:20-alpine AS frontend-builder
-WORKDIR /app
-COPY frontend/package*.json ./frontend/
-RUN cd ./frontend && npm install
-COPY frontend/ ./frontend/
-COPY backend/public ./backend/public
-WORKDIR /app/frontend
-RUN npm run build
-
-# ── Stage 2: PHP / Laravel Backend ──
 FROM php:8.4-cli
 
 # Install system dependencies
@@ -35,10 +24,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # Copy backend source code
-COPY backend/ /var/www
-
-# Copy freshly compiled frontend assets from Stage 1 into /var/www/public
-COPY --from=frontend-builder /app/backend/public /var/www/public
+COPY . /var/www
 
 # Install composer dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
