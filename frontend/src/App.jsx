@@ -29,7 +29,15 @@ function normalizeGeneroIds(generoIds) {
   }
 
   return generoIds
-    .map((genero) => (typeof genero === 'string' ? genero : genero?.id))
+    .map((genero) => {
+      if (typeof genero === 'string' || typeof genero === 'number') {
+        return String(genero)
+      }
+      if (genero && genero.id !== undefined && genero.id !== null) {
+        return String(genero.id)
+      }
+      return null
+    })
     .filter(Boolean)
 }
 

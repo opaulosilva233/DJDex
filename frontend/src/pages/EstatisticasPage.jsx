@@ -372,10 +372,24 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 	// Configurar DJ selecionado padrão caso não esteja definido
 	useEffect(() => {
-		if (djs.length > 0 && (!selectedDjId || !djs.some(dj => dj.id === selectedDjId))) {
-			setSelectedDjId(djs[0].id)
+		if (djs.length > 0 && (!selectedDjId || !djs.some(dj => String(dj.id) === String(selectedDjId)))) {
+			setSelectedDjId(String(djs[0].id))
 		}
 	}, [djs, selectedDjId])
+
+	// Configurar Festival selecionado padrão caso não esteja definido
+	useEffect(() => {
+		if (festivais.length > 0 && (!selectedFestivalId || !festivais.some(f => String(f.id) === String(selectedFestivalId)))) {
+			setSelectedFestivalId(String(festivais[0].id))
+		}
+	}, [festivais, selectedFestivalId])
+
+	// Configurar Género selecionado padrão caso não esteja definido
+	useEffect(() => {
+		if (generos.length > 0 && (!selectedGenreId || !generos.some(g => String(g.id) === String(selectedGenreId)))) {
+			setSelectedGenreId(String(generos[0].id))
+		}
+	}, [generos, selectedGenreId])
 
 	// Calculations for the "Geral" dashboard
 	const kpis = useMemo(() => {
@@ -383,16 +397,30 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 		const uniqueFestivals = new Set(sets.map((s) => s.festivalId).filter(Boolean)).size
 
-		const uniqueDjs = new Set(sets.map((s) => s.djId).filter(Boolean)).size
+		const uniqueDjs = new Set(
+			sets.flatMap((s) => [s.djId, s.dj2Id]).filter(Boolean).map(String)
+		).size
 
 		// Compute most popular genre based on sets seen
 		const genreCounts = {}
 		sets.forEach((set) => {
-			const dj = djs.find((d) => d.id === set.djId)
-			if (dj && Array.isArray(dj.generoIds)) {
-				dj.generoIds.forEach((gid) => {
-					genreCounts[gid] = (genreCounts[gid] || 0) + 1
-				})
+			if (set.djId) {
+				const dj = djs.find((d) => String(d.id) === String(set.djId))
+				if (dj && Array.isArray(dj.generoIds)) {
+					dj.generoIds.forEach((gid) => {
+						const key = String(gid)
+						genreCounts[key] = (genreCounts[key] || 0) + 1
+					})
+				}
+			}
+			if (set.dj2Id) {
+				const dj2 = djs.find((d) => String(d.id) === String(set.dj2Id))
+				if (dj2 && Array.isArray(dj2.generoIds)) {
+					dj2.generoIds.forEach((gid) => {
+						const key = String(gid)
+						genreCounts[key] = (genreCounts[key] || 0) + 1
+					})
+				}
 			}
 		})
 
@@ -401,12 +429,20 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		Object.entries(genreCounts).forEach(([gid, count]) => {
 			if (count > maxCount) {
 				maxCount = count
-				const genre = generos.find((g) => g.id === gid)
-				if (genre) {
+				const genre = generos.find((g) => String(g.id) === String(gid))
+				if (genre && genre.nome) {
 					topGenreName = genre.nome
 				}
 			}
 		})
+
+		// Fallback: se nenhum set tiver género associado, verificar os géneros com mais DJs do backend
+		if (topGenreName === 'Nenhum' && estatisticas?.djs_por_genero && estatisticas.djs_por_genero.length > 0) {
+			const sortedByBackend = [...estatisticas.djs_por_genero].sort((a, b) => b.value - a.value)
+			if (sortedByBackend[0] && sortedByBackend[0].name) {
+				topGenreName = sortedByBackend[0].name
+			}
+		}
 
 		return {
 			totalSets,
@@ -414,24 +450,26 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			uniqueDjs,
 			topGenreName,
 		}
-	}, [sets, djs, generos])
+	}, [sets, djs, generos, estatisticas])
 
 	// List of DJs sorted by number of sets
 	const topDjsList = useMemo(() => {
 		const counts = {}
 		sets.forEach((s) => {
 			if (s.djId) {
-				counts[s.djId] = (counts[s.djId] || 0) + 1
+				const id = String(s.djId)
+				counts[id] = (counts[id] || 0) + 1
 			}
 			if (s.dj2Id) {
-				counts[s.dj2Id] = (counts[s.dj2Id] || 0) + 1
+				const id = String(s.dj2Id)
+				counts[id] = (counts[id] || 0) + 1
 			}
 		})
 
 		return djs
 			.map((dj) => ({
 				...dj,
-				count: counts[dj.id] || 0,
+				count: counts[String(dj.id)] || 0,
 			}))
 			.filter((dj) => dj.count > 0)
 			.sort((a, b) => b.count - a.count || a.nome.localeCompare(b.nome, 'pt'))
@@ -443,9 +481,9 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const modalSets = useMemo(() => {
 		if (!modalDjData) return []
 		return sets
-			.filter((s) => s.djId === modalDjData.id || s.dj2Id === modalDjData.id)
+			.filter((s) => String(s.djId) === String(modalDjData.id) || String(s.dj2Id) === String(modalDjData.id))
 			.map((s) => {
-				const festival = festivais.find((f) => f.id === s.festivalId)
+				const festival = festivais.find((f) => String(f.id) === String(s.festivalId))
 				return {
 					id: s.id,
 					festivalNome: festival ? festival.nome : 'Set Individual',
@@ -500,14 +538,15 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		const counts = {}
 		sets.forEach((s) => {
 			if (s.festivalId) {
-				counts[s.festivalId] = (counts[s.festivalId] || 0) + 1
+				const id = String(s.festivalId)
+				counts[id] = (counts[id] || 0) + 1
 			}
 		})
 
 		return festivais
 			.map((f) => ({
 				name: f.nome,
-				quantidade: counts[f.id] || 0,
+				quantidade: counts[String(f.id)] || 0,
 			}))
 			.filter((item) => item.quantidade > 0)
 			.sort((a, b) => b.quantidade - a.quantidade || a.name.localeCompare(b.name, 'pt'))
@@ -524,7 +563,12 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		if (!selectedDjId) return distribution
 
 		sets.forEach((set) => {
-			if ((set.djId === selectedDjId || set.dj2Id === selectedDjId) && set.avaliacao !== null && set.avaliacao !== undefined && set.avaliacao !== '') {
+			if (
+				(String(set.djId) === String(selectedDjId) || String(set.dj2Id) === String(selectedDjId)) &&
+				set.avaliacao !== null &&
+				set.avaliacao !== undefined &&
+				set.avaliacao !== ''
+			) {
 				const rounded = Math.round(Number(set.avaliacao))
 				if (rounded >= 1 && rounded <= 10) {
 					distribution[rounded - 1].quantidade++
@@ -538,7 +582,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	// 2. Sets por Festival
 	const setsPorFestival = useMemo(() => {
 		const contagemFestivais = sets.reduce((accumulator, set) => {
-			const festival = festivais.find((entry) => entry.id === set.festivalId)
+			const festival = festivais.find((entry) => String(entry.id) === String(set.festivalId))
 
 			if (!festival) {
 				return accumulator
@@ -579,7 +623,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		]
 
 		djs.forEach((dj) => {
-			const djGenres = generos.filter((g) => dj.generoIds?.includes(g.id))
+			const djGenres = generos.filter((g) => dj.generoIds?.some(gid => String(gid) === String(g.id)))
 			const avgIntensidade = djGenres.length > 0
 				? djGenres.reduce((acc, g) => acc + (Number(g.intensidade) || 5), 0) / djGenres.length
 				: 5
@@ -591,7 +635,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			const normalizedBpm = Math.min(10, Math.max(0, ((avgBpm - 60) / 140) * 10))
 			data[1][dj.id] = Number(normalizedBpm.toFixed(1))
 
-			const djSets = sets.filter((s) => s.djId === dj.id || s.dj2Id === dj.id)
+			const djSets = sets.filter((s) => String(s.djId) === String(dj.id) || String(s.dj2Id) === String(dj.id))
 			const setsRating = Math.min(10, djSets.length * 2)
 			data[2][dj.id] = Number(setsRating.toFixed(1))
 		})
@@ -601,11 +645,11 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 
 	// Obter DJ selecionado
 	const selectedDj = useMemo(() => {
-		return djs.find((dj) => dj.id === selectedDjId)
+		return djs.find((dj) => String(dj.id) === String(selectedDjId))
 	}, [djs, selectedDjId])
 
 	const selectedDjColor = useMemo(() => {
-		const idx = djs.findIndex((dj) => dj.id === selectedDjId)
+		const idx = djs.findIndex((dj) => String(dj.id) === String(selectedDjId))
 		return idx !== -1 ? pieColors[idx % pieColors.length] : '#a855f7'
 	}, [djs, selectedDjId])
 
@@ -614,9 +658,9 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		if (!selectedDjId) return []
 
 		return sets
-			.filter((s) => s.djId === selectedDjId || s.dj2Id === selectedDjId)
+			.filter((s) => String(s.djId) === String(selectedDjId) || String(s.dj2Id) === String(selectedDjId))
 			.map((s) => {
-				const festival = festivais.find((f) => f.id === s.festivalId)
+				const festival = festivais.find((f) => String(f.id) === String(s.festivalId))
 				return {
 					id: s.id,
 					data: s.data || 'Sem data',
@@ -652,7 +696,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		const term = djSearchTerm.toLowerCase()
 		return djs.filter((dj) => {
 			const djGenres = generos
-				.filter((g) => dj.generoIds?.includes(g.id))
+				.filter((g) => dj.generoIds?.some(gid => String(gid) === String(g.id)))
 				.map((g) => g.nome)
 				.join(' ')
 			return (
@@ -666,7 +710,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	// Calculations for the selected festival in "Festivais" tab
 	const festivalSets = useMemo(() => {
 		if (!selectedFestivalId) return []
-		return sets.filter((s) => s.festivalId === selectedFestivalId)
+		return sets.filter((s) => String(s.festivalId) === String(selectedFestivalId))
 	}, [sets, selectedFestivalId])
 
 	const festivalKpis = useMemo(() => {
@@ -676,8 +720,8 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		const anos = festivalSets.map((s) => s.data ? s.data.substring(0, 4) : '').filter(Boolean)
 		const edicoesCount = new Set(anos).size
 
-		// Unique DJs seen in this festival
-		const djIds = festivalSets.map((s) => s.djId).filter(Boolean)
+		// Unique DJs seen in this festival (including B2B)
+		const djIds = festivalSets.flatMap((s) => [s.djId, s.dj2Id]).filter(Boolean).map(String)
 		const djsCount = new Set(djIds).size
 
 		// Average rating of sets at this festival
@@ -698,12 +742,17 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		const counts = {}
 		festivalSets.forEach((s) => {
 			if (s.djId) {
-				counts[s.djId] = (counts[s.djId] || 0) + 1
+				const id = String(s.djId)
+				counts[id] = (counts[id] || 0) + 1
+			}
+			if (s.dj2Id) {
+				const id = String(s.dj2Id)
+				counts[id] = (counts[id] || 0) + 1
 			}
 		})
 		return Object.entries(counts)
 			.map(([djId, count]) => {
-				const dj = djs.find((d) => d.id === djId)
+				const dj = djs.find((d) => String(d.id) === String(djId))
 				return {
 					name: dj ? dj.nome : 'Desconhecido',
 					quantidade: count,
@@ -1488,8 +1537,8 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 														</thead>
 														<tbody className="divide-y divide-slate-200/60 dark:divide-white/5 text-slate-700 dark:text-slate-300">
 															{festivalHistorySets.map((s) => {
-																const dj = djs.find((d) => d.id === s.djId)
-																const dj2 = s.dj2Id ? djs.find((d) => d.id === s.dj2Id) : null
+																const dj = djs.find((d) => String(d.id) === String(s.djId))
+																const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
 																return (
 																	<tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
 																		<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold">
@@ -1545,358 +1594,545 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				)}
 
 				{activeTab === 'generos' && (() => {
-					// ── Derived data for the Géneros tab ──
-					// Count sets per genre (via DJ → generoIds)
+					// ── Dados Derivados para a Aba de Géneros ──
+					const activeGenre = generos.find((g) => String(g.id) === String(selectedGenreId)) || generos[0] || null
+
+					// Contagem de sets por cada género
 					const setCountByGenre = generos.reduce((acc, g) => {
 						const count = sets.filter((s) => {
-							const dj = djs.find((d) => d.id === s.djId)
-							const dj2 = s.dj2Id ? djs.find((d) => d.id === s.dj2Id) : null
-							const djMatch = dj && Array.isArray(dj.generoIds) && dj.generoIds.includes(g.id)
-							const dj2Match = dj2 && Array.isArray(dj2.generoIds) && dj2.generoIds.includes(g.id)
+							const dj = djs.find((d) => String(d.id) === String(s.djId))
+							const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
+							const djMatch = dj && Array.isArray(dj.generoIds) && dj.generoIds.some(gid => String(gid) === String(g.id))
+							const dj2Match = dj2 && Array.isArray(dj2.generoIds) && dj2.generoIds.some(gid => String(gid) === String(g.id))
 							return djMatch || dj2Match
 						}).length
-						acc[g.id] = count
+						acc[String(g.id)] = count
 						return acc
 					}, {})
 
-					// Count DJs per genre
+					// Contagem de DJs por cada género
 					const djCountByGenre = generos.reduce((acc, g) => {
-						acc[g.id] = djs.filter((d) => Array.isArray(d.generoIds) && d.generoIds.includes(g.id)).length
+						acc[String(g.id)] = djs.filter((d) => Array.isArray(d.generoIds) && d.generoIds.some(gid => String(gid) === String(g.id))).length
 						return acc
 					}, {})
 
-					// Selected genre object
-					const activeGenre = generos.find((g) => g.id === selectedGenreId) || null
-
-					// Average rating of sets for the selected genre
-					const genreSetsRated = activeGenre
+					// Sets associados ao género ativo
+					const genreSets = activeGenre
 						? sets.filter((s) => {
-								const dj = djs.find((d) => d.id === s.djId)
-								const dj2 = s.dj2Id ? djs.find((d) => d.id === s.dj2Id) : null
-								const djMatch = dj && Array.isArray(dj.generoIds) && dj.generoIds.includes(activeGenre.id)
-								const dj2Match = dj2 && Array.isArray(dj2.generoIds) && dj2.generoIds.includes(activeGenre.id)
-								return (
-									(djMatch || dj2Match) &&
-									s.avaliacao !== null &&
-									s.avaliacao !== undefined &&
-									s.avaliacao !== ''
-								)
-							})
+								const dj = djs.find((d) => String(d.id) === String(s.djId))
+								const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
+								const djMatch = dj && Array.isArray(dj.generoIds) && dj.generoIds.some(gid => String(gid) === String(activeGenre.id))
+								const dj2Match = dj2 && Array.isArray(dj2.generoIds) && dj2.generoIds.some(gid => String(gid) === String(activeGenre.id))
+								return djMatch || dj2Match
+						  })
 						: []
-					const avgRating =
-						genreSetsRated.length > 0
-							? (genreSetsRated.reduce((acc, s) => acc + Number(s.avaliacao), 0) / genreSetsRated.length).toFixed(1)
-							: null
+
+					// Média de notas dos sets deste género
+					const ratedGenreSets = genreSets.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
+					const avgRating = ratedGenreSets.length > 0
+						? (ratedGenreSets.reduce((acc, s) => acc + Number(s.avaliacao), 0) / ratedGenreSets.length).toFixed(1)
+						: null
+
+					// Top DJs que tocaram neste género
+					const topDjsInGenre = (() => {
+						if (!activeGenre || genreSets.length === 0) return []
+						const counts = {}
+						genreSets.forEach((s) => {
+							const dj = djs.find((d) => String(d.id) === String(s.djId))
+							if (dj && Array.isArray(dj.generoIds) && dj.generoIds.some(gid => String(gid) === String(activeGenre.id))) {
+								counts[String(dj.id)] = (counts[String(dj.id)] || 0) + 1
+							}
+							if (s.dj2Id) {
+								const dj2 = djs.find((d) => String(d.id) === String(s.dj2Id))
+								if (dj2 && Array.isArray(dj2.generoIds) && dj2.generoIds.some(gid => String(gid) === String(activeGenre.id))) {
+									counts[String(dj2.id)] = (counts[String(dj2.id)] || 0) + 1
+								}
+							}
+						})
+						return Object.entries(counts)
+							.map(([djId, count]) => {
+								const dj = djs.find((d) => String(d.id) === String(djId))
+								return {
+									name: dj ? dj.nome : 'Desconhecido',
+									quantidade: count,
+								}
+							})
+							.sort((a, b) => b.quantidade - a.quantidade || a.name.localeCompare(b.name, 'pt'))
+							.slice(0, 8)
+					})()
+
+					// Histórico cronológico de sets deste género
+					const genreHistorySets = [...genreSets].sort((a, b) => {
+						const dateA = new Date(`${a.data || '2000-01-01'}T${a.hora || '00:00'}`)
+						const dateB = new Date(`${b.data || '2000-01-01'}T${b.hora || '00:00'}`)
+						return dateB - dateA
+					})
 
 					const genreColor = activeGenre?.cor || '#a855f7'
-					const intensidade = activeGenre ? Math.min(10, Math.max(1, Number(activeGenre.intensidade) || 5)) : 0
+					const intensidade = activeGenre ? Math.min(10, Math.max(1, Number(activeGenre.intensidade) || 5)) : 5
+					const totalGenreSets = genreSets.length
+					const totalGenreDjs = activeGenre ? (djCountByGenre[String(activeGenre.id)] || 0) : 0
 
 					return (
-						<div className="flex flex-col gap-8 animate-fadeIn">
-
-							{/* ── TOP: Espectro de Ritmo (AreaChart) ── */}
-							<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
-								<div>
-									<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-										<TrendingUp className="text-cyan-500 dark:text-cyan-400 w-5 h-5" stroke="#22d3ee" />
-										Espectro de Ritmo (BPM por Género)
-									</h2>
-									<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-										Mapeamento do andamento/velocidade (BPM) de cada género registado.
-									</p>
-								</div>
-
-								{bpmPorGenero.length > 0 ? (
-									<div style={{ width: '100%', height: '320px' }}>
-										<ResponsiveContainer width="100%" height="100%">
-											<AreaChart data={bpmPorGenero}>
-												<defs>
-													<linearGradient id="bpmGradient" x1="0" y1="0" x2="0" y2="1">
-														<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.3} />
-														<stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
-													</linearGradient>
-												</defs>
-												<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.3 : 0.5} vertical={false} />
-												<XAxis
-													dataKey="name"
-													tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
-													axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
-													tickLine={false}
-												/>
-												<YAxis
-													domain={['auto', 'auto']}
-													tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontFamily: 'sans-serif' }}
-													axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.1)' }}
-													tickLine={false}
-												/>
-												<Tooltip
-													contentStyle={{
-														backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-														borderColor: darkMode ? '#334155' : '#e2e8f0',
-														borderRadius: '12px',
-														color: darkMode ? '#fff' : '#0f172a',
-													}}
-													itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
-												/>
-												<Area type="monotone" dataKey="bpm" stroke="#06b6d4" strokeWidth={2} fill="url(#bpmGradient)" />
-											</AreaChart>
-										</ResponsiveContainer>
+						<div className="flex flex-col gap-6 animate-fadeIn">
+							
+							{/* Seletor de Género */}
+							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40 dark:bg-slate-900/20 backdrop-blur-md border border-slate-200/60 dark:border-white/5 p-4 rounded-2xl shadow-lg">
+								<div className="flex items-center gap-3">
+									<div 
+										className="p-2.5 rounded-xl border shrink-0 transition-colors"
+										style={{
+											backgroundColor: `${genreColor}15`,
+											borderColor: `${genreColor}35`,
+											color: genreColor,
+										}}
+									>
+										<Sliders className="w-5 h-5" />
 									</div>
-								) : (
-									<div className="text-sm text-slate-500 italic py-10 text-center">Nenhum género registado.</div>
-								)}
-							</section>
-
-							{/* ── BOTTOM TWO-COLUMN GRID ── */}
-							<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-								{/* ── LEFT: Grelha de Afinidade Estética (Top Géneros) ── */}
-								<section className="bg-white/5 border border-white/5 rounded-2xl p-6 flex flex-col gap-5">
 									<div>
-										<h3 className="text-sm font-bold text-slate-200 tracking-tight flex items-center gap-2">
-											<Sliders className="w-4 h-4 text-purple-400" />
-											Grelha de Afinidade
-										</h3>
-										<p className="text-xs text-slate-400 mt-1">Clica num género para o explorar em detalhe.</p>
+										<h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Selecionar Género</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400">Escolhe um género musical para explorar a sua análise, andamento e histórico de sets.</p>
 									</div>
-
-									{generos.length > 0 ? (
-										<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-											{generos.map((g) => {
-												const isActive = selectedGenreId === g.id
-												const color = g.cor || '#a855f7'
-												const sCount = setCountByGenre[g.id] || 0
-												return (
-													<button
-														key={g.id}
-														type="button"
-														onClick={() => setSelectedGenreId(isActive ? '' : g.id)}
-														className="group relative flex flex-col items-start gap-2 rounded-xl p-4 border transition-all duration-200 text-left focus:outline-none"
-														style={{
-															background: isActive
-																? `linear-gradient(135deg, ${color}22, ${color}08)`
-																: 'rgba(255,255,255,0.03)',
-															borderColor: isActive ? `${color}60` : 'rgba(255,255,255,0.07)',
-															boxShadow: isActive ? `0 0 18px ${color}25, inset 0 0 12px ${color}08` : 'none',
-														}}
-													>
-														{/* Sigla em destaque */}
-														<span
-															className="text-lg font-black tracking-widest leading-none"
-															style={{
-																color,
-																textShadow: isActive ? `0 0 14px ${color}` : `0 0 8px ${color}60`,
-															}}
-														>
-															{g.sigla || g.nome.substring(0, 4).toUpperCase()}
-														</span>
-
-														{/* Nome completo */}
-														<span className="text-xs font-semibold text-slate-300 truncate w-full">{g.nome}</span>
-
-														{/* Contador de sets */}
-														<span
-															className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
-															style={{
-																color,
-																borderColor: `${color}40`,
-																background: `${color}12`,
-															}}
-														>
-															{sCount} {sCount === 1 ? 'set' : 'sets'}
-														</span>
-													</button>
-												)
-											})}
-										</div>
-									) : (
-										<div className="flex flex-col items-center justify-center py-10 text-center gap-3 border border-dashed border-white/10 rounded-xl">
-											<Sliders className="w-7 h-7 text-slate-500" />
-											<p className="text-sm text-slate-400">Nenhum género registado.</p>
-										</div>
-									)}
-								</section>
-
-								{/* ── RIGHT: Explorador Dinâmico de Género ── */}
-								<section className="bg-white/5 border border-white/5 rounded-2xl p-6 flex flex-col gap-5">
-									{/* Header com selector */}
-									<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-										<div>
-											<h3 className="text-sm font-bold text-slate-200 tracking-tight flex items-center gap-2">
-												<Flame className="w-4 h-4 text-orange-400" />
-												Explorador de Género
-											</h3>
-											<p className="text-xs text-slate-400 mt-0.5">Painel de curadoria detalhada.</p>
-										</div>
-
-										{/* Select de género */}
-										<select
-											id="genero-explorer-select"
-											value={selectedGenreId}
-											onChange={(e) => setSelectedGenreId(e.target.value)}
-											className="shrink-0 rounded-xl border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold px-3 py-2 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all cursor-pointer"
-										>
-											<option value="">— Selecionar Género —</option>
-											{generos.map((g) => (
-												<option key={g.id} value={g.id}>{g.nome}</option>
-											))}
-										</select>
+								</div>
+								<div className="relative min-w-[240px]">
+									<select
+										id="genero-main-select"
+										value={selectedGenreId}
+										onChange={(e) => setSelectedGenreId(e.target.value)}
+										className="w-full appearance-none rounded-xl border border-slate-200 bg-white/80 dark:bg-slate-900/60 px-4 py-2.5 pr-10 text-sm text-slate-900 dark:text-white dark:border-slate-800 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all cursor-pointer font-semibold shadow-sm"
+									>
+										<option value="" className="dark:bg-slate-950 font-normal">Selecione um género...</option>
+										{generos.map((g) => (
+											<option key={g.id} value={g.id} className="dark:bg-slate-950 font-medium">
+												{g.nome}
+											</option>
+										))}
+									</select>
+									<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 dark:text-slate-400">
+										<Sliders className="w-4 h-4" />
 									</div>
+								</div>
+							</div>
 
-									{/* Painel detalhado ou empty state */}
-									{activeGenre ? (
-										<div className="flex flex-col gap-5">
-
-											{/* Cabeçalho do género selecionado */}
-											<div
-												className="flex items-center gap-4 rounded-xl p-4 border"
+							{activeGenre ? (
+								<>
+									{/* Fila de KPIs Rápidos do Género (4 Cards) */}
+									<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+										{/* KPI 1: Sets Assistidos */}
+										<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+											<div className="flex flex-col gap-1 min-w-0">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sets Registados</span>
+												<span className="text-2xl font-black text-slate-900 dark:text-white">{totalGenreSets}</span>
+											</div>
+											<div 
+												className="p-3 rounded-xl border group-hover:scale-110 transition-transform duration-300 shrink-0"
 												style={{
-													background: `linear-gradient(135deg, ${genreColor}18, ${genreColor}06)`,
-													borderColor: `${genreColor}40`,
+													backgroundColor: `${genreColor}15`,
+													borderColor: `${genreColor}30`,
+													color: genreColor,
+													boxShadow: `0 0 15px ${genreColor}20`,
 												}}
 											>
-												{/* Sigla grande */}
-												<div
-													className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl font-black text-base tracking-widest"
+												<Headphones className="w-5 h-5" />
+											</div>
+										</div>
+
+										{/* KPI 2: DJs no Género */}
+										<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+											<div className="flex flex-col gap-1 min-w-0">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">DJs Associados</span>
+												<span className="text-2xl font-black text-slate-900 dark:text-white">{totalGenreDjs}</span>
+											</div>
+											<div className="p-3 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 rounded-xl border border-cyan-500/20 dark:border-cyan-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(6,182,212,0.1)] shrink-0">
+												<Users className="w-5 h-5" />
+											</div>
+										</div>
+
+										{/* KPI 3: Nota Média */}
+										<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+											<div className="flex flex-col gap-1 min-w-0">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nota Média</span>
+												<span className="text-2xl font-black text-amber-500 dark:text-amber-400">{avgRating ? `${avgRating}/10` : '—'}</span>
+											</div>
+											<div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-500/20 dark:border-amber-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(245,158,11,0.1)] shrink-0">
+												<Star className="w-5 h-5" />
+											</div>
+										</div>
+
+										{/* KPI 4: BPM e Intensidade */}
+										<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+											<div className="flex flex-col gap-1 min-w-0">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Andamento / BPM</span>
+												<span className="text-2xl font-black text-purple-600 dark:text-purple-400">{activeGenre.bpm ? `${activeGenre.bpm} BPM` : '120 BPM'}</span>
+											</div>
+											<div className="p-3 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 rounded-xl border border-fuchsia-500/20 dark:border-fuchsia-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(217,70,239,0.1)] shrink-0">
+												<Flame className="w-5 h-5" />
+											</div>
+										</div>
+									</div>
+
+									{/* Grid Principal de 12 Colunas */}
+									<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+										
+										{/* Coluna Esquerda: Top DJs no Género, BPM Spectrum e Grelha de Navegação (5 colunas) */}
+										<div className="lg:col-span-5 flex flex-col gap-6">
+											
+											{/* Bloco 1: Top DJs neste Género */}
+											<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+												<div>
+													<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+														<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
+														Top DJs em {activeGenre.nome}
+													</h2>
+													<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+														Artistas com maior número de sets assistidos deste género.
+													</p>
+												</div>
+
+												{topDjsInGenre.length > 0 ? (
+													<div style={{ width: '100%', height: '260px' }}>
+														<ResponsiveContainer width="100%" height="100%">
+															<BarChart data={topDjsInGenre} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+																<defs>
+																	<linearGradient id="genreDjGradient" x1="0" y1="0" x2="1" y2="0">
+																		<stop offset="0%" stopColor={genreColor} stopOpacity={0.9} />
+																		<stop offset="100%" stopColor="#06b6d4" stopOpacity={0.6} />
+																	</linearGradient>
+																</defs>
+																<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} horizontal={false} />
+																<XAxis type="number" allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+																<YAxis dataKey="name" type="category" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+																<Tooltip
+																	contentStyle={{
+																		backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+																		borderColor: darkMode ? '#334155' : '#e2e8f0',
+																		borderRadius: '12px',
+																		color: darkMode ? '#fff' : '#0f172a',
+																		fontSize: '11px',
+																		boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+																	}}
+																	cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}
+																/>
+																<Bar dataKey="quantidade" name="Sets" fill="url(#genreDjGradient)" radius={[0, 4, 4, 0]} barSize={16} />
+															</BarChart>
+														</ResponsiveContainer>
+													</div>
+												) : (
+													<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+														<Info className="w-7 h-7 text-slate-400 dark:text-slate-500" />
+														<p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Sem atuações registadas</p>
+														<p className="text-[11px] text-slate-500 max-w-xs">
+															Não existem sets gravados para DJs com este género.
+														</p>
+													</div>
+												)}
+											</section>
+
+											{/* Bloco 2: Espectro de Ritmo / BPM */}
+											<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-5">
+												<div>
+													<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+														<TrendingUp className="text-purple-500 dark:text-purple-400 w-5 h-5" />
+														Espectro de Ritmo (BPM)
+													</h2>
+													<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+														Comparação do andamento (BPM) entre os diferentes géneros.
+													</p>
+												</div>
+
+												{bpmPorGenero.length > 0 ? (
+													<div style={{ width: '100%', height: '220px' }}>
+														<ResponsiveContainer width="100%" height="100%">
+															<AreaChart data={bpmPorGenero} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+																<defs>
+																	<linearGradient id="genreBpmGradient" x1="0" y1="0" x2="0" y2="1">
+																		<stop offset="0%" stopColor="#a855f7" stopOpacity={0.4} />
+																		<stop offset="100%" stopColor="#06b6d4" stopOpacity={0.05} />
+																	</linearGradient>
+																</defs>
+																<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} vertical={false} />
+																<XAxis dataKey="name" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 9 }} axisLine={false} tickLine={false} />
+																<YAxis domain={['auto', 'auto']} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 9 }} axisLine={false} tickLine={false} />
+																<Tooltip
+																	contentStyle={{
+																		backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+																		borderColor: darkMode ? '#334155' : '#e2e8f0',
+																		borderRadius: '12px',
+																		color: darkMode ? '#fff' : '#0f172a',
+																		fontSize: '11px',
+																	}}
+																	formatter={(value) => [`${value} BPM`, 'Velocidade']}
+																/>
+																<Area type="monotone" dataKey="bpm" stroke="#a855f7" strokeWidth={2} fill="url(#genreBpmGradient)" />
+															</AreaChart>
+														</ResponsiveContainer>
+													</div>
+												) : (
+													<p className="text-xs text-slate-500 italic text-center py-6">Sem dados de BPM registados.</p>
+												)}
+											</section>
+
+											{/* Bloco 3: Grelha de Navegação Rápida entre Géneros */}
+											<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+												<div>
+													<h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+														<Sliders className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+														Outros Géneros da Coleção
+													</h3>
+													<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Clica num género para alternar a análise.</p>
+												</div>
+
+												{generos.length > 0 ? (
+													<div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+														{generos.map((g) => {
+															const isCurrent = String(selectedGenreId) === String(g.id)
+															const color = g.cor || '#a855f7'
+															const count = setCountByGenre[String(g.id)] || 0
+															return (
+																<button
+																	key={g.id}
+																	type="button"
+																	onClick={() => setSelectedGenreId(String(g.id))}
+																	className={`group relative flex flex-col items-start gap-1 rounded-xl p-3 border transition-all duration-200 text-left focus:outline-none cursor-pointer ${
+																		isCurrent 
+																			? 'bg-purple-500/10 border-purple-500/40 shadow-sm' 
+																			: 'bg-white/60 dark:bg-white/5 border-slate-200/70 dark:border-white/5 hover:border-purple-500/30 dark:hover:border-white/10 hover:bg-slate-50/80 dark:hover:bg-white/10'
+																	}`}
+																>
+																	<div className="flex items-center justify-between w-full">
+																		<span 
+																			className="text-xs font-black tracking-wider leading-none"
+																			style={{ color }}
+																		>
+																			{g.sigla || g.nome.substring(0, 3).toUpperCase()}
+																		</span>
+																		<span 
+																			className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+																			style={{
+																				color,
+																				borderColor: `${color}30`,
+																				backgroundColor: `${color}12`,
+																			}}
+																		>
+																			{count} sets
+																		</span>
+																	</div>
+																	<span className="text-[11px] font-semibold text-slate-800 dark:text-slate-300 truncate w-full mt-1">
+																		{g.nome}
+																	</span>
+																</button>
+															)
+														})}
+													</div>
+												) : (
+													<p className="text-xs text-slate-500 italic text-center py-4">Nenhum género registado.</p>
+												)}
+											</section>
+
+										</div>
+
+										{/* Coluna Direita: Ficha Técnica do Género e Histórico de Sets (7 colunas) */}
+										<div className="lg:col-span-7 flex flex-col gap-6">
+											
+											{/* Bloco Ficha Técnica */}
+											<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-5">
+												{/* Cabeçalho do Género Selecionado */}
+												<div 
+													className="flex items-center gap-4 rounded-xl p-4 border transition-all"
 													style={{
-														background: `${genreColor}20`,
-														color: genreColor,
-														textShadow: `0 0 16px ${genreColor}`,
-														border: `1px solid ${genreColor}40`,
+														background: `linear-gradient(135deg, ${genreColor}18, ${genreColor}06)`,
+														borderColor: `${genreColor}35`,
 													}}
 												>
-													{activeGenre.sigla || activeGenre.nome.substring(0, 4).toUpperCase()}
-												</div>
-												<div className="flex flex-col gap-1 min-w-0">
-													<h4
-														className="text-base font-black text-white leading-tight truncate"
-														style={{ textShadow: `0 0 20px ${genreColor}50` }}
+													<div 
+														className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl font-black text-lg tracking-widest shadow-lg"
+														style={{
+															backgroundColor: `${genreColor}25`,
+															color: genreColor,
+															border: `1px solid ${genreColor}50`,
+														}}
 													>
-														{activeGenre.nome}
-													</h4>
-													<div className="flex gap-2 flex-wrap">
-														<span
-															className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-															style={{ background: `${genreColor}20`, color: genreColor, border: `1px solid ${genreColor}40` }}
-														>
-															{setCountByGenre[activeGenre.id] || 0} sets
-														</span>
-														<span
-															className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-															style={{ background: `${genreColor}20`, color: genreColor, border: `1px solid ${genreColor}40` }}
-														>
-															{djCountByGenre[activeGenre.id] || 0} DJs
-														</span>
+														{activeGenre.sigla || activeGenre.nome.substring(0, 4).toUpperCase()}
 													</div>
-												</div>
-											</div>
-
-											{/* Separador de métricas */}
-											<div className="grid grid-cols-1 gap-3">
-
-												{/* Origem Geográfica */}
-												<div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
-													<MapPin size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
-													<div className="flex flex-col min-w-0">
-														<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Origem Geográfica</span>
-														<span className="text-sm font-semibold text-slate-200 truncate">
-															{activeGenre.origem || <span className="text-slate-500 italic">Não definida</span>}
-														</span>
-													</div>
-												</div>
-
-												{/* Média de Notas */}
-												<div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
-													<Star size={16} className="text-amber-500 shrink-0" />
-													<div className="flex flex-col flex-1 min-w-0">
-														<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Média de Notas</span>
-														<div className="flex items-baseline gap-1.5">
-															{avgRating !== null ? (
-																<>
-																	<span
-																		className="text-2xl font-black tabular-nums leading-none"
-																		style={{ color: genreColor, textShadow: `0 0 12px ${genreColor}60` }}
-																	>
-																		{avgRating}
-																	</span>
-																	<span className="text-xs text-slate-500 font-bold">/10</span>
-																</>
-															) : (
-																<span className="text-sm text-slate-500 italic">Sem avaliações</span>
-															)}
+													<div className="flex flex-col gap-1 min-w-0">
+														<h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight truncate">
+															{activeGenre.nome}
+														</h3>
+														<div className="flex gap-2 flex-wrap items-center mt-0.5">
+															<span 
+																className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
+																style={{
+																	backgroundColor: `${genreColor}15`,
+																	color: genreColor,
+																	borderColor: `${genreColor}30`,
+																}}
+															>
+																{totalGenreSets} {totalGenreSets === 1 ? 'set assistido' : 'sets assistidos'}
+															</span>
+															<span 
+																className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
+																style={{
+																	backgroundColor: `${genreColor}15`,
+																	color: genreColor,
+																	borderColor: `${genreColor}30`,
+																}}
+															>
+																{totalGenreDjs} {totalGenreDjs === 1 ? 'DJ registado' : 'DJs registados'}
+															</span>
 														</div>
 													</div>
 												</div>
 
-												{/* Nível de Intensidade */}
-												<div className="flex flex-col gap-2 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
+												{/* Grid de Atributos do Género */}
+												<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+													{/* Origem Geográfica */}
+													<div className="flex items-center gap-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 px-4 py-3">
+														<div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 shrink-0">
+															<MapPin size={16} />
+														</div>
+														<div className="flex flex-col min-w-0">
+															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Origem Geográfica</span>
+															<span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+																{activeGenre.origem || <span className="text-slate-400 italic">Não definida</span>}
+															</span>
+														</div>
+													</div>
+
+													{/* Elemento Sonoro */}
+													<div className="flex items-center gap-3 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 px-4 py-3">
+														<div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+															<Music size={16} />
+														</div>
+														<div className="flex flex-col min-w-0">
+															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Elemento Sonoro</span>
+															<span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+																{activeGenre.elementoSonoro || <span className="text-slate-400 italic">Não especificado</span>}
+															</span>
+														</div>
+													</div>
+												</div>
+
+												{/* Nível de Energia / Intensidade */}
+												<div className="flex flex-col gap-2.5 rounded-xl bg-slate-100/60 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 p-4">
 													<div className="flex items-center justify-between">
 														<div className="flex items-center gap-2">
 															<Flame size={16} className="text-orange-500 shrink-0" />
-															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Energia / Intensidade</span>
+															<span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+																Energia &amp; Intensidade
+															</span>
 														</div>
-														<span
-															className="text-sm font-black tabular-nums"
-															style={{ color: genreColor, textShadow: `0 0 10px ${genreColor}80` }}
+														<span 
+															className="text-xs font-black tabular-nums"
+															style={{ color: genreColor }}
 														>
-															{intensidade}/10
+															{intensidade} / 10
 														</span>
 													</div>
-													{/* Barra de intensidade */}
-													<div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
-														<div
+
+													{/* Barra contínua */}
+													<div className="w-full h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+														<div 
 															className="h-full rounded-full transition-all duration-700"
 															style={{
 																width: `${(intensidade / 10) * 100}%`,
-																background: `linear-gradient(90deg, ${genreColor}80, ${genreColor})`,
-																boxShadow: `0 0 10px ${genreColor}60`,
+																background: `linear-gradient(90deg, ${genreColor}70, ${genreColor})`,
+																boxShadow: `0 0 10px ${genreColor}50`,
 															}}
 														/>
 													</div>
-													{/* Segmentos de 1 a 10 */}
-													<div className="flex gap-1">
+
+													{/* 10 Segmentos */}
+													<div className="flex gap-1 pt-0.5">
 														{Array.from({ length: 10 }, (_, i) => (
-															<div
+															<div 
 																key={i}
-																className="flex-1 h-1 rounded-sm transition-all duration-500"
+																className="flex-1 h-1 rounded-sm transition-all duration-300"
 																style={{
-																	background: i < intensidade ? genreColor : 'rgba(255,255,255,0.08)',
-																	boxShadow: i < intensidade ? `0 0 4px ${genreColor}` : 'none',
+																	backgroundColor: i < intensidade ? genreColor : (darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
+																	boxShadow: i < intensidade ? `0 0 4px ${genreColor}80` : 'none',
 																}}
 															/>
 														))}
 													</div>
 												</div>
+											</section>
 
-												{/* Elemento Sonoro */}
-												{activeGenre.elementoSonoro && (
-													<div className="flex items-start gap-3 rounded-xl bg-white/5 border border-white/5 px-4 py-3">
-														<Music size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
-														<div className="flex flex-col min-w-0">
-															<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Elemento Sonoro</span>
-															<span className="text-sm text-slate-300 leading-snug">{activeGenre.elementoSonoro}</span>
-														</div>
+											{/* Bloco Histórico de Sets com este Género */}
+											<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+												<div>
+													<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+														<Calendar className="text-purple-500 dark:text-purple-400 w-5 h-5" />
+														Histórico de Sets ({activeGenre.nome})
+													</h2>
+													<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+														Todos os sets assistidos associados a artistas deste género musical.
+													</p>
+												</div>
+
+												{genreHistorySets.length > 0 ? (
+													<div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5">
+														<table className="w-full text-left text-sm border-collapse">
+															<thead>
+																<tr className="bg-slate-100/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-white/10">
+																	<th className="py-3 px-4">Festival / Edição</th>
+																	<th className="py-3 px-4">Data e Hora</th>
+																	<th className="py-3 px-4">DJ</th>
+																	<th className="py-3 px-4 text-center">Avaliação</th>
+																</tr>
+															</thead>
+															<tbody className="divide-y divide-slate-200/60 dark:divide-white/5 text-slate-700 dark:text-slate-300">
+																{genreHistorySets.map((s) => {
+																	const festival = festivais.find((f) => String(f.id) === String(s.festivalId))
+																	const dj = djs.find((d) => String(d.id) === String(s.djId))
+																	const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
+																	return (
+																		<tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
+																			<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold">
+																				{festival ? festival.nome : 'Set Individual'}
+																			</td>
+																			<td className="py-3.5 px-4">
+																				{s.data ? s.data.split('-').reverse().join('/') : 'Sem data'}
+																				{s.hora && <span className="text-slate-500 font-normal"> às {s.hora}</span>}
+																			</td>
+																			<td className="py-3.5 px-4 text-slate-900 dark:text-white font-medium">
+																				{dj ? (dj2 ? `${dj.nome} B2B ${dj2.nome}` : dj.nome) : 'Desconhecido'}
+																			</td>
+																			<td className="py-3.5 px-4 text-center">
+																				{getRatingBadge(s.avaliacao)}
+																			</td>
+																		</tr>
+																	)
+																})}
+															</tbody>
+														</table>
+													</div>
+												) : (
+													<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+														<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+														<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhum set registado</p>
+														<p className="text-xs text-slate-500 max-w-xs">
+															Não existem sets associados a DJs deste género no histórico.
+														</p>
 													</div>
 												)}
-											</div>
-										</div>
-									) : (
-										<div className="flex flex-col items-center justify-center flex-1 py-12 text-center gap-4 border border-dashed border-white/10 rounded-xl">
-											<div className="relative">
-												<Flame className="w-10 h-10 text-slate-600" />
-												<div className="absolute inset-0 flex items-center justify-center">
-													<div className="w-6 h-6 rounded-full bg-slate-700/50" />
-												</div>
-											</div>
-											<div>
-												<p className="text-sm font-semibold text-slate-400">Seleciona um género</p>
-												<p className="text-xs text-slate-600 mt-1 max-w-[200px] mx-auto">Escolhe pela grelha à esquerda ou pelo selector acima.</p>
-											</div>
-										</div>
-									)}
-								</section>
+											</section>
 
-							</div>{/* /grid */}
+										</div>
+
+									</div>
+								</>
+							) : (
+								/* Estado Inicial Vazio */
+								<div className="flex flex-col items-center justify-center py-20 text-center gap-4 bg-white/40 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 backdrop-blur-md rounded-2xl animate-fadeIn p-6">
+									<div className="p-4 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl border border-purple-500/20 dark:border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+										<Sliders className="w-8 h-8" />
+									</div>
+									<p className="text-slate-600 dark:text-slate-400 text-sm font-semibold max-w-md">
+										Por favor, seleciona um género musical para ver o perfil detalhado e o histórico de atuações.
+									</p>
+								</div>
+							)}
+
 						</div>
 					)
 				})()}

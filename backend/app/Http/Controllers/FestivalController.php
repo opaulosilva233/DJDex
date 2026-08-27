@@ -78,6 +78,10 @@ class FestivalController extends Controller
             $festival->update([
                 'imagem' => $path,
             ]);
+        } elseif ($request->filled('imagem') && is_string($request->input('imagem'))) {
+            $festival->update([
+                'imagem' => $request->input('imagem'),
+            ]);
         }
 
         if (!empty($validated['generos'])) {
@@ -154,13 +158,17 @@ class FestivalController extends Controller
 
             $path = $file->storeAs('images/festivais/' . $festival->id, $fileName, 'public');
             $festivalData['imagem'] = $path;
-        } elseif ($request->has('imagem') && ($request->input('imagem') === null || $request->input('imagem') === '')) {
-            // If explicit removal of image
-            $oldImage = $festival->getRawOriginal('imagem');
-            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-                Storage::disk('public')->delete($oldImage);
+        } elseif ($request->has('imagem')) {
+            $imagemInput = $request->input('imagem');
+            if ($imagemInput === null || $imagemInput === '') {
+                $oldImage = $festival->getRawOriginal('imagem');
+                if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                    Storage::disk('public')->delete($oldImage);
+                }
+                $festivalData['imagem'] = null;
+            } elseif (is_string($imagemInput)) {
+                $festivalData['imagem'] = $imagemInput;
             }
-            $festivalData['imagem'] = null;
         }
 
         $festival->update($festivalData);

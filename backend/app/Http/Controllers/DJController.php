@@ -69,6 +69,10 @@ class DJController extends Controller
             $dj->update([
                 'imagem' => $path,
             ]);
+        } elseif ($request->filled('imagem') && is_string($request->input('imagem'))) {
+            $dj->update([
+                'imagem' => $request->input('imagem'),
+            ]);
         }
 
         if (!empty($validated['generos'])) {
@@ -122,13 +126,17 @@ class DJController extends Controller
 
             $path = $file->storeAs('images/djs/' . $dj->id, $fileName, 'public');
             $djData['imagem'] = $path;
-        } elseif ($request->has('imagem') && ($request->input('imagem') === null || $request->input('imagem') === '')) {
-            // If explicit removal of image
-            $oldImage = $dj->getRawOriginal('imagem');
-            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-                Storage::disk('public')->delete($oldImage);
+        } elseif ($request->has('imagem')) {
+            $imagemInput = $request->input('imagem');
+            if ($imagemInput === null || $imagemInput === '') {
+                $oldImage = $dj->getRawOriginal('imagem');
+                if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                    Storage::disk('public')->delete($oldImage);
+                }
+                $djData['imagem'] = null;
+            } elseif (is_string($imagemInput)) {
+                $djData['imagem'] = $imagemInput;
             }
-            $djData['imagem'] = null;
         }
 
         $dj->update($djData);
