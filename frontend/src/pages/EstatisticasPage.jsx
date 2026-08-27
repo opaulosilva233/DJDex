@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { api } from '../services/api'
 import {
@@ -21,9 +21,50 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
-import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation, Star } from 'lucide-react'
+import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation, Star, ChevronDown, ChevronRight, Trophy, Award, Sparkles, History } from 'lucide-react'
 
 const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1']
+
+function getFestivalLocalAndYear(festival) {
+	if (!festival) return { local: 'Local desconhecido', ano: 'Ano por definir' }
+	if (Array.isArray(festival.edicoes) && festival.edicoes.length > 0) {
+		const sorted = [...festival.edicoes].sort((a, b) => (Number(b.ano) || 0) - (Number(a.ano) || 0))
+		return {
+			local: sorted[0].local || festival.local || 'Local desconhecido',
+			ano: sorted[0].ano || festival.ano || 'Ano por definir'
+		}
+	}
+	return {
+		local: festival.local || 'Local desconhecido',
+		ano: festival.ano || 'Ano por definir'
+	}
+}
+
+function getFestivalAvatar(festival) {
+	if (festival?.imagem) {
+		return <img src={festival.imagem} alt={festival.nome} className="h-full w-full object-cover" />
+	}
+	if (!festival?.nome) return 'FE'
+	return festival.nome
+		.split(' ')
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((part) => part.charAt(0).toUpperCase())
+		.join('')
+}
+
+function getDjAvatar(dj) {
+	if (dj?.imagem) {
+		return <img src={dj.imagem} alt={dj.nome} className="h-full w-full object-cover" />
+	}
+	if (!dj?.nome) return 'DJ'
+	return dj.nome
+		.split(' ')
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((part) => part.charAt(0).toUpperCase())
+		.join('')
+}
 
 // ──────────────────────────────────────────────
 // Aba Locais — Análise Geográfica dos Festivais
@@ -345,6 +386,10 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const [modalDjData, setModalDjData] = useState(null)
 	const [showAllDjs, setShowAllDjs] = useState(false)
 	const [selectedFestivalId, setSelectedFestivalId] = useState('')
+	const [isFestivalDropdownOpen, setIsFestivalDropdownOpen] = useState(false)
+	const [festivalSearchTerm, setFestivalSearchTerm] = useState('')
+	const festivalDropdownRef = useRef(null)
+	const [selectedRecurringDjId, setSelectedRecurringDjId] = useState('')
 	const [selectedGenreId, setSelectedGenreId] = useState('')
 	const [estatisticas, setEstatisticas] = useState(null)
 	const [loadingEst, setLoadingEst] = useState(true)
@@ -390,6 +435,50 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			setSelectedGenreId(String(generos[0].id))
 		}
 	}, [generos, selectedGenreId])
+
+	// Fechar dropdown de festival ao clicar fora ou pressionar Escape
+	useEffect(() => {
+		if (!isFestivalDropdownOpen) return
+
+		function handleClickOutside(event) {
+			if (festivalDropdownRef.current && !festivalDropdownRef.current.contains(event.target)) {
+				setIsFestivalDropdownOpen(false)
+			}
+		}
+
+		function handleKeyDown(event) {
+			if (event.key === 'Escape') {
+				setIsFestivalDropdownOpen(false)
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside)
+		document.addEventListener('keydown', handleKeyDown)
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside)
+			document.removeEventListener('keydown', handleKeyDown)
+		}
+	}, [isFestivalDropdownOpen])
+
+	// Festival selecionado e metadados
+	const selectedFestival = useMemo(() => {
+		return festivais.find((f) => String(f.id) === String(selectedFestivalId))
+	}, [festivais, selectedFestivalId])
+
+	const selectedFestivalInfo = useMemo(() => {
+		return getFestivalLocalAndYear(selectedFestival)
+	}, [selectedFestival])
+
+	// Festivais filtrados pela pesquisa no seletor
+	const filteredFestivais = useMemo(() => {
+		if (!festivalSearchTerm.trim()) return festivais
+		const term = festivalSearchTerm.toLowerCase()
+		return festivais.filter((f) => {
+			const info = getFestivalLocalAndYear(f)
+			const searchString = `${f.nome ?? ''} ${info.local} ${info.ano}`.toLowerCase()
+			return searchString.includes(term)
+		})
+	}, [festivais, festivalSearchTerm])
 
 	// Calculations for the "Geral" dashboard
 	const kpis = useMemo(() => {
@@ -718,8 +807,21 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		return sets.filter((s) => String(s.festivalId) === String(selectedFestivalId))
 	}, [sets, selectedFestivalId])
 
+	const festivalBestSets = useMemo(() => {
+		if (festivalSets.length === 0) return []
+		return [...festivalSets]
+			.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
+			.sort((a, b) => {
+				const diff = Number(b.avaliacao) - Number(a.avaliacao)
+				if (diff !== 0) return diff
+				const dateA = new Date(`${a.data || '2000-01-01'}T${a.hora || '00:00'}`)
+				const dateB = new Date(`${b.data || '2000-01-01'}T${b.hora || '00:00'}`)
+				return dateB - dateA
+			})
+	}, [festivalSets])
+
 	const festivalKpis = useMemo(() => {
-		if (festivalSets.length === 0) return { edicoes: 0, djs: 0, media: '—' }
+		if (festivalSets.length === 0) return { edicoes: 0, djs: 0, media: '—', bestRating: '—', bestDjName: '—' }
 		
 		// Unique years / editions attended
 		const anos = festivalSets.map((s) => s.data ? s.data.substring(0, 4) : '').filter(Boolean)
@@ -735,12 +837,20 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			? (ratedSets.reduce((acc, s) => acc + Number(s.avaliacao), 0) / ratedSets.length).toFixed(1)
 			: '—'
 
+		const topRatedSet = ratedSets.length > 0
+			? [...ratedSets].sort((a, b) => Number(b.avaliacao) - Number(a.avaliacao))[0]
+			: null
+
+		const topDj = topRatedSet ? djs.find((d) => String(d.id) === String(topRatedSet.djId)) : null
+
 		return {
 			edicoes: edicoesCount,
 			djs: djsCount,
 			media,
+			bestRating: topRatedSet ? Number(topRatedSet.avaliacao) : '—',
+			bestDjName: topDj ? topDj.nome : '—',
 		}
-	}, [festivalSets])
+	}, [festivalSets, djs])
 
 	const festivalTopDjs = useMemo(() => {
 		if (festivalSets.length === 0) return []
@@ -766,6 +876,97 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			.sort((a, b) => b.quantidade - a.quantidade || a.name.localeCompare(b.name, 'pt'))
 			.slice(0, 10)
 	}, [festivalSets, djs])
+
+	// DJs com múltiplas presenças no festival selecionado (2+ sets)
+	const festivalRecurringDjs = useMemo(() => {
+		if (festivalSets.length === 0) return []
+		
+		const djSetMap = new Map()
+
+		festivalSets.forEach((s) => {
+			const addDjSet = (djId) => {
+				if (!djId) return
+				const idStr = String(djId)
+				if (!djSetMap.has(idStr)) {
+					djSetMap.set(idStr, [])
+				}
+				djSetMap.get(idStr).push(s)
+			}
+
+			addDjSet(s.djId)
+			if (s.dj2Id) addDjSet(s.dj2Id)
+		})
+
+		const recurring = []
+		djSetMap.forEach((setsList, djIdStr) => {
+			if (setsList.length >= 2) {
+				const djObj = djs.find((d) => String(d.id) === djIdStr)
+				if (djObj) {
+					const sortedSets = [...setsList].sort((a, b) => {
+						const dateA = new Date(`${a.data || '2000-01-01'}T${a.hora || '00:00'}`)
+						const dateB = new Date(`${b.data || '2000-01-01'}T${b.hora || '00:00'}`)
+						return dateA - dateB
+					})
+
+					const ratedSets = sortedSets.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
+					const avg = ratedSets.length > 0
+						? (ratedSets.reduce((acc, s) => acc + Number(s.avaliacao), 0) / ratedSets.length).toFixed(1)
+						: '—'
+					const maxRating = ratedSets.length > 0
+						? Math.max(...ratedSets.map((s) => Number(s.avaliacao)))
+						: '—'
+
+					recurring.push({
+						dj: djObj,
+						totalSets: setsList.length,
+						ratedCount: ratedSets.length,
+						avgRating: avg,
+						maxRating,
+						sets: sortedSets,
+					})
+				}
+			}
+		})
+
+		return recurring.sort((a, b) => b.totalSets - a.totalSets || a.dj.nome.localeCompare(b.dj.nome, 'pt'))
+	}, [festivalSets, djs])
+
+	// Sincronizar o DJ recorrente selecionado
+	useEffect(() => {
+		if (festivalRecurringDjs.length > 0) {
+			if (!selectedRecurringDjId || !festivalRecurringDjs.some((item) => String(item.dj.id) === String(selectedRecurringDjId))) {
+				setSelectedRecurringDjId(String(festivalRecurringDjs[0].dj.id))
+			}
+		} else {
+			setSelectedRecurringDjId('')
+		}
+	}, [festivalRecurringDjs, selectedRecurringDjId])
+
+	const activeRecurringDjData = useMemo(() => {
+		if (!selectedRecurringDjId) return null
+		return festivalRecurringDjs.find((item) => String(item.dj.id) === String(selectedRecurringDjId)) || null
+	}, [festivalRecurringDjs, selectedRecurringDjId])
+
+	const activeRecurringDjChartData = useMemo(() => {
+		if (!activeRecurringDjData) return []
+		return activeRecurringDjData.sets
+			.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
+			.map((s) => {
+				const ano = s.data ? s.data.substring(0, 4) : 'Edição'
+				const formattedDate = s.data ? s.data.split('-').reverse().slice(0, 2).join('/') : ''
+				return {
+					id: s.id,
+					data: s.data,
+					ano,
+					hora: s.hora || s.horaInicio || '',
+					exibicao: s.data ? `${ano} (${formattedDate})` : 'Set',
+					avaliacao: Number(s.avaliacao),
+					especial: s.especial,
+					nomeEspecial: s.nomeEspecial || s.nome_especial || '',
+					isB2B: Boolean(s.dj2Id),
+				}
+			})
+	}, [activeRecurringDjData])
 
 	const festivalHistorySets = useMemo(() => {
 		if (festivalSets.length === 0) return []
@@ -1394,8 +1595,8 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				{activeTab === 'festivais' && (
 					<div className="flex flex-col gap-6 animate-fadeIn">
 						
-						{/* Seletor de Festival */}
-						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40 dark:bg-slate-900/20 backdrop-blur-md border border-slate-200/60 dark:border-white/5 p-4 rounded-2xl shadow-lg">
+						{/* Seletor de Festival Estilo Adicionar Set */}
+						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40 dark:bg-slate-900/20 backdrop-blur-md border border-slate-200/60 dark:border-white/5 p-4 rounded-2xl shadow-lg relative z-30">
 							<div className="flex items-center gap-3">
 								<div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-600 dark:text-purple-400 shrink-0">
 									<Calendar className="w-5 h-5" />
@@ -1405,27 +1606,113 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 									<p className="text-xs text-slate-500 dark:text-slate-400">Escolhe um festival para visualizar o histórico de atuações e métricas.</p>
 								</div>
 							</div>
-							<div className="relative min-w-[240px]">
-								<select
-									value={selectedFestivalId}
-									onChange={(e) => setSelectedFestivalId(e.target.value)}
-									className="w-full appearance-none rounded-xl border border-slate-200 bg-white/80 dark:bg-slate-900/60 px-4 py-2.5 pr-10 text-sm text-slate-900 dark:text-white dark:border-slate-800 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all cursor-pointer font-semibold shadow-sm"
+
+							<div className="relative" ref={festivalDropdownRef}>
+								<button
+									type="button"
+									onClick={() => {
+										setIsFestivalDropdownOpen((prev) => !prev)
+										setFestivalSearchTerm('')
+									}}
+									className="w-full sm:w-[320px] rounded-xl border border-slate-200 bg-white/80 dark:bg-slate-900/60 p-2.5 px-3.5 text-sm text-slate-900 dark:text-white dark:border-slate-800 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all cursor-pointer font-semibold shadow-sm flex items-center justify-between gap-3 hover:border-purple-500/40 dark:hover:border-purple-400/40 group"
 								>
-									<option value="" className="dark:bg-slate-950 font-normal">Selecione um festival...</option>
-									{festivais.map((f) => (
-										<option key={f.id} value={f.id} className="dark:bg-slate-950 font-medium">{f.nome}</option>
-									))}
-								</select>
-								<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 dark:text-slate-400">
-									<Sliders className="w-4 h-4" />
-								</div>
+									<div className="flex items-center gap-2.5 min-w-0">
+										<div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-xs font-bold text-slate-700 ring-1 ring-white/20 dark:text-white">
+											{getFestivalAvatar(selectedFestival)}
+										</div>
+										<div className="min-w-0 text-left">
+											<p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+												{selectedFestival ? selectedFestival.nome : 'Seleciona um festival...'}
+											</p>
+											<p className="truncate text-[10px] font-normal text-slate-500 dark:text-slate-400">
+												{selectedFestival ? `${selectedFestivalInfo.local} · ${selectedFestivalInfo.ano}` : 'Clica para escolher'}
+											</p>
+										</div>
+									</div>
+									<ChevronDown className={`h-4 w-4 shrink-0 text-purple-500 transition-transform duration-200 ${isFestivalDropdownOpen ? 'rotate-180' : ''}`} />
+								</button>
+
+								{/* Dropdown Menu com visual de Adicionar Set */}
+								{isFestivalDropdownOpen && (
+									<div className="absolute right-0 top-full mt-2 w-full sm:w-[360px] rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-2xl backdrop-blur-xl animate-fadeIn dark:border-white/10 dark:bg-slate-950/95 z-50">
+										{/* Barra de Pesquisa */}
+										<div className="relative mb-2.5">
+											<Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cyan-500 dark:text-cyan-400" />
+											<input
+												type="text"
+												autoFocus
+												value={festivalSearchTerm}
+												onChange={(e) => setFestivalSearchTerm(e.target.value)}
+												placeholder="Pesquisar festival por nome, cidade ou ano..."
+												className="w-full rounded-xl border border-cyan-400/20 bg-slate-100/60 py-2 pl-9 pr-8 text-xs text-slate-900 shadow-[0_0_0_1px_rgba(34,211,238,0.08)] transition-all placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+											/>
+											{festivalSearchTerm && (
+												<button
+													type="button"
+													onClick={() => setFestivalSearchTerm('')}
+													className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+												>
+													<X className="h-3.5 w-3.5" />
+												</button>
+											)}
+										</div>
+
+										{/* Lista com Scroll */}
+										<div className="flex max-h-[300px] flex-col gap-1.5 overflow-y-auto pr-1">
+											{filteredFestivais.length > 0 ? (
+												filteredFestivais.map((fest) => {
+													const isSelected = String(fest.id) === String(selectedFestivalId)
+													const festInfo = getFestivalLocalAndYear(fest)
+
+													return (
+														<button
+															key={fest.id}
+															type="button"
+															onClick={() => {
+																setSelectedFestivalId(String(fest.id))
+																setIsFestivalDropdownOpen(false)
+																setFestivalSearchTerm('')
+															}}
+															className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border p-2 text-left transition-all duration-100 transition-transform active:scale-[0.98] ${
+																isSelected
+																	? 'border-purple-500/40 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.12)] text-slate-900 dark:text-white'
+																	: 'border-transparent bg-slate-100/40 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:border-purple-500/30 hover:bg-purple-500/5 dark:hover:bg-purple-500/10'
+															}`}
+														>
+															<div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-xs font-bold text-slate-700 ring-1 ring-white/20 dark:text-white">
+																{getFestivalAvatar(fest)}
+															</div>
+															<div className="min-w-0 flex-1">
+																<div className="flex items-center justify-between gap-2">
+																	<p className="truncate text-xs font-bold text-slate-900 dark:text-white">{fest.nome}</p>
+																	{isSelected && (
+																		<span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-purple-600 dark:text-purple-400 whitespace-nowrap">
+																			Selecionado
+																		</span>
+																	)}
+																</div>
+																<p className="mt-0.5 truncate text-[10px] leading-4 text-slate-500 dark:text-slate-400">
+																	{festInfo.local} · {festInfo.ano}
+																</p>
+															</div>
+														</button>
+													)
+												})
+											) : (
+												<div className="py-6 text-center text-xs text-slate-500 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">
+													Nenhum festival encontrado para a pesquisa.
+												</div>
+											)}
+										</div>
+									</div>
+								)}
 							</div>
 						</div>
 
 						{selectedFestivalId ? (
 							<>
-								{/* KPIs rápidos do Festival */}
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+								{/* KPIs rápidos do Festival (4 Cards) */}
+								<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
 									{/* KPI 1: Edições Assistidas */}
 									<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
 										<div className="flex flex-col gap-1 min-w-0">
@@ -1451,21 +1738,39 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 									{/* KPI 3: Nota Média */}
 									<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
 										<div className="flex flex-col gap-1 min-w-0">
-											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nota Média do Festival</span>
+											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nota Média</span>
 											<span className="text-2xl font-black text-purple-600 dark:text-purple-400">{festivalKpis.media}</span>
 										</div>
 										<div className="p-3 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 rounded-xl border border-fuchsia-500/20 dark:border-fuchsia-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(217,70,239,0.1)] shrink-0">
 											<Flame className="w-5 h-5" />
 										</div>
 									</div>
+
+									{/* KPI 4: Melhor Set */}
+									<div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-5 shadow-lg flex items-center justify-between hover:scale-[1.01] transition-transform duration-200 group">
+										<div className="flex flex-col gap-1 min-w-0">
+											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Melhor Set</span>
+											<div className="flex items-baseline gap-1.5">
+												<span className="text-2xl font-black text-amber-500 dark:text-amber-400">{festivalKpis.bestRating}</span>
+												{festivalKpis.bestDjName !== '—' && (
+													<span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[90px] sm:max-w-[120px]">
+														· {festivalKpis.bestDjName}
+													</span>
+												)}
+											</div>
+										</div>
+										<div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-500/20 dark:border-amber-500/30 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(245,158,11,0.1)] shrink-0">
+											<Trophy className="w-5 h-5" />
+										</div>
+									</div>
 								</div>
 
-								{/* Grid de Análise Detalhada */}
+								{/* Linha 1 do Grid: Top DJs e Melhores Sets */}
 								<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 									
 									{/* Coluna Esquerda: Top DJs no Festival (5 colunas) */}
 									<div className="lg:col-span-5 flex flex-col gap-6">
-										<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+										<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 h-full">
 											<div>
 												<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
 													<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
@@ -1505,7 +1810,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 													</ResponsiveContainer>
 												</div>
 											) : (
-												<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+												<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20 flex-1">
 													<Info className="w-8 h-8 text-slate-400 dark:text-slate-500" />
 													<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhum set registado</p>
 													<p className="text-xs text-slate-500 max-w-xs">
@@ -1516,61 +1821,98 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 										</section>
 									</div>
 
-									{/* Coluna Direita: Histórico de Atuações (7 colunas) */}
+									{/* Coluna Direita: Melhores Sets do Festival (7 colunas) */}
 									<div className="lg:col-span-7 flex flex-col gap-6">
-										<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
-											<div>
-												<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-													<Calendar className="text-purple-500 dark:text-purple-400 w-5 h-5" />
-													Histórico de Atuações
-												</h2>
-												<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-													Lista de todos os sets assistidos associados a este festival.
-												</p>
+										<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4 h-full">
+											<div className="flex items-center justify-between">
+												<div>
+													<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+														<Trophy className="text-amber-500 dark:text-amber-400 w-5 h-5" />
+														Melhores Sets do Festival
+													</h2>
+													<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+														Atuações com as avaliações mais elevadas registadas neste festival.
+													</p>
+												</div>
+												{festivalBestSets.length > 0 && (
+													<span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl shrink-0">
+														{festivalBestSets.length} {festivalBestSets.length === 1 ? 'set avaliado' : 'sets avaliados'}
+													</span>
+												)}
 											</div>
 
-											{festivalHistorySets.length > 0 ? (
-												<div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5">
-													<table className="w-full text-left text-sm border-collapse">
-														<thead>
-															<tr className="bg-slate-100/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-white/10">
-																<th className="py-3 px-4">Edição/Ano</th>
-																<th className="py-3 px-4">Data e Hora</th>
-																<th className="py-3 px-4">DJ</th>
-																<th className="py-3 px-4 text-center">Avaliação</th>
-															</tr>
-														</thead>
-														<tbody className="divide-y divide-slate-200/60 dark:divide-white/5 text-slate-700 dark:text-slate-300">
-															{festivalHistorySets.map((s) => {
-																const dj = djs.find((d) => String(d.id) === String(s.djId))
-																const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
-																return (
-																	<tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
-																		<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold">
-																			{s.data ? s.data.substring(0, 4) : '—'}
-																		</td>
-																		<td className="py-3.5 px-4">
-																			{s.data ? s.data.split('-').reverse().join('/') : 'Sem data'}
-																			{s.hora && <span className="text-slate-500 font-normal"> às {s.hora}</span>}
-																		</td>
-																		<td className="py-3.5 px-4 text-slate-900 dark:text-white font-medium">
-																			{dj ? (dj2 ? `${dj.nome} B2B ${dj2.nome}` : dj.nome) : 'Desconhecido'}
-																		</td>
-																		<td className="py-3.5 px-4 text-center">
-																			{getRatingBadge(s.avaliacao)}
-																		</td>
-																	</tr>
-																)
-															})}
-														</tbody>
-													</table>
+											{festivalBestSets.length > 0 ? (
+												<div className="flex flex-col gap-2.5 max-h-[330px] overflow-y-auto pr-1">
+													{festivalBestSets.slice(0, 8).map((set, index) => {
+														const dj = djs.find((d) => String(d.id) === String(set.djId))
+														const dj2 = set.dj2Id ? djs.find((d) => String(d.id) === String(set.dj2Id)) : null
+														const djName = dj ? (dj2 ? `${dj.nome} B2B ${dj2.nome}` : dj.nome) : 'Desconhecido'
+														const ano = set.data ? set.data.substring(0, 4) : ''
+														const formattedDate = set.data ? set.data.split('-').reverse().join('/') : ''
+
+														// Estilos de medalha/posição
+														const medalClasses = index === 0
+															? 'bg-amber-400/20 text-amber-500 border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.25)] ring-1 ring-amber-400/30'
+															: index === 1
+																? 'bg-cyan-400/20 text-cyan-400 border-cyan-400/40 ring-1 ring-cyan-400/20'
+																: index === 2
+																	? 'bg-purple-400/20 text-purple-400 border-purple-400/40 ring-1 ring-purple-400/20'
+																	: 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10'
+
+														return (
+															<div
+																key={set.id}
+																onClick={() => {
+																	if (dj) {
+																		setModalDjData(dj)
+																		setIsModalOpen(true)
+																	}
+																}}
+																className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.03] hover:bg-purple-500/5 dark:hover:bg-purple-500/10 hover:border-purple-500/30 transition-all cursor-pointer group"
+															>
+																<div className="flex items-center gap-3 min-w-0">
+																	{/* Medalha / Posição */}
+																	<div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-black ${medalClasses}`}>
+																		{index + 1}
+																	</div>
+
+																	{/* Avatar */}
+																	<div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-xs font-bold text-slate-700 ring-1 ring-slate-200 dark:ring-white/20 dark:text-white">
+																		{getDjAvatar(dj)}
+																	</div>
+
+																	{/* Info */}
+																	<div className="min-w-0">
+																		<div className="flex items-center gap-2 flex-wrap">
+																			<p className="truncate text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+																				{djName}
+																			</p>
+																			{set.especial && (
+																				<span className="rounded-md bg-purple-500/15 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400 border border-purple-500/20 truncate">
+																					{set.nomeEspecial || set.nome_especial || 'Especial'}
+																				</span>
+																			)}
+																		</div>
+																		<p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+																			{ano ? `Edição de ${ano}` : ''} {formattedDate ? `· ${formattedDate}` : ''} {set.hora ? `às ${set.hora}` : ''}
+																		</p>
+																	</div>
+																</div>
+
+																{/* Badge de Avaliação */}
+																<div className="flex items-center gap-1.5 shrink-0">
+																	{getRatingBadge(set.avaliacao)}
+																</div>
+															</div>
+														)
+													})}
 												</div>
 											) : (
-												<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
-													<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
-													<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhum set registado</p>
+												<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20 flex-1">
+													<Trophy className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+													<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhum set avaliado</p>
 													<p className="text-xs text-slate-500 max-w-xs">
-														Não existem sets gravados para este festival no histórico.
+														Atribui notas aos sets deste festival para gerar o ranking dos melhores momentos.
 													</p>
 												</div>
 											)}
@@ -1578,6 +1920,242 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 									</div>
 
 								</div>
+
+								{/* Linha 2 do Grid: Evolução de Avaliação por DJ no Festival */}
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 animate-fadeIn">
+									<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+										<div>
+											<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+												<TrendingUp className="text-purple-500 dark:text-purple-400 w-5 h-5" />
+												Evolução de Avaliação por DJ no Festival
+											</h2>
+											<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+												Acompanha a consistência e a evolução das notas dos artistas que já atuaram em 2 ou mais edições deste festival.
+											</p>
+										</div>
+
+										{festivalRecurringDjs.length > 0 && (
+											<span className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-xl self-start sm:self-auto shrink-0 flex items-center gap-1.5">
+												<Users className="w-3.5 h-3.5" />
+												{festivalRecurringDjs.length} {festivalRecurringDjs.length === 1 ? 'DJ com 2+ sets' : 'DJs com 2+ sets'}
+											</span>
+										)}
+									</div>
+
+									{festivalRecurringDjs.length > 0 ? (
+										<div className="flex flex-col gap-5">
+											{/* Seletor horizontal de DJs recorrentes */}
+											<div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+												{festivalRecurringDjs.map((item) => {
+													const isSelected = String(item.dj.id) === String(selectedRecurringDjId)
+
+													return (
+														<button
+															key={item.dj.id}
+															type="button"
+															onClick={() => setSelectedRecurringDjId(String(item.dj.id))}
+															className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+																isSelected
+																	? 'border-purple-500/50 bg-purple-500/15 text-purple-600 dark:text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.15)] ring-1 ring-purple-500/30'
+																	: 'border-slate-200/60 dark:border-white/5 bg-slate-100/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:border-purple-500/30 hover:bg-purple-500/5'
+															}`}
+														>
+															<div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-[10px] font-bold text-slate-700 ring-1 ring-white/20 dark:text-white">
+																{getDjAvatar(item.dj)}
+															</div>
+															<span>{item.dj.nome}</span>
+															<span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+																isSelected
+																	? 'bg-purple-500/25 text-purple-700 dark:text-purple-200'
+																	: 'bg-slate-200/80 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+															}`}>
+																{item.totalSets} sets
+															</span>
+														</button>
+													)
+												})}
+											</div>
+
+											{/* Análise e Gráfico do DJ selecionado */}
+											{activeRecurringDjData && (
+												<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 rounded-2xl p-5">
+													
+													{/* Mini KPIs do DJ no Festival (4 colunas) */}
+													<div className="lg:col-span-4 flex flex-col justify-between gap-4">
+														<div className="flex items-center gap-3">
+															<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-sm font-bold text-slate-700 ring-1 ring-white/20 dark:text-white">
+																{getDjAvatar(activeRecurringDjData.dj)}
+															</div>
+															<div className="min-w-0">
+																<h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+																	{activeRecurringDjData.dj.nome}
+																</h3>
+																<p className="text-xs text-slate-500 dark:text-slate-400">
+																	Histórico de atuações neste festival
+																</p>
+															</div>
+														</div>
+
+														<div className="grid grid-cols-3 gap-2">
+															<div className="flex flex-col p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/50 dark:border-white/5">
+																<span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Sets</span>
+																<span className="text-lg font-black text-slate-900 dark:text-white">{activeRecurringDjData.totalSets}</span>
+															</div>
+															<div className="flex flex-col p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/50 dark:border-white/5">
+																<span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Média</span>
+																<span className="text-lg font-black text-purple-600 dark:text-purple-400">{activeRecurringDjData.avgRating}</span>
+															</div>
+															<div className="flex flex-col p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/50 dark:border-white/5">
+																<span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Melhor</span>
+																<span className="text-lg font-black text-amber-500 dark:text-amber-400">{activeRecurringDjData.maxRating}</span>
+															</div>
+														</div>
+													</div>
+
+													{/* Gráfico de Evolução (8 colunas) */}
+													<div className="lg:col-span-8">
+														{activeRecurringDjChartData.length > 0 ? (
+															<div style={{ width: '100%', height: '200px' }}>
+																<ResponsiveContainer width="100%" height="100%">
+																	<AreaChart data={activeRecurringDjChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+																		<defs>
+																			<linearGradient id="festivalDjEvolutionGradient" x1="0" y1="0" x2="0" y2="1">
+																				<stop offset="0%" stopColor="#a855f7" stopOpacity={0.4} />
+																				<stop offset="100%" stopColor="#a855f7" stopOpacity={0.0} />
+																			</linearGradient>
+																		</defs>
+																		<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} vertical={false} />
+																		<XAxis
+																			dataKey="exibicao"
+																			tick={{ fill: darkMode ? '#94a3b8' : '#475569', fontSize: 10 }}
+																			axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)' }}
+																			tickLine={false}
+																		/>
+																		<YAxis
+																			domain={[0, 10]}
+																			tick={{ fill: darkMode ? '#94a3b8' : '#475569', fontSize: 10 }}
+																			axisLine={{ stroke: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)' }}
+																			tickLine={false}
+																		/>
+																		<Tooltip
+																			contentStyle={{
+																				backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+																				borderColor: darkMode ? '#334155' : '#e2e8f0',
+																				borderRadius: '12px',
+																				color: darkMode ? '#fff' : '#0f172a',
+																				fontSize: '11px',
+																				boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+																			}}
+																			formatter={(value) => [`${value} / 10`, 'Nota']}
+																			labelFormatter={(label, items) => {
+																				const payload = items[0]?.payload
+																				if (!payload) return label
+																				const specialText = payload.especial ? ` (${payload.nomeEspecial || 'Especial'})` : ''
+																				return `${payload.data || ''} ${payload.hora ? `às ${payload.hora}` : ''}${specialText}`
+																			}}
+																		/>
+																		<Area
+																			type="monotone"
+																			dataKey="avaliacao"
+																			name="Nota"
+																			stroke="#a855f7"
+																			strokeWidth={2.5}
+																			fill="url(#festivalDjEvolutionGradient)"
+																			dot={{ fill: '#a855f7', stroke: darkMode ? '#0f172a' : '#ffffff', strokeWidth: 2, r: 4 }}
+																			activeDot={{ r: 6, strokeWidth: 0 }}
+																		/>
+																	</AreaChart>
+																</ResponsiveContainer>
+															</div>
+														) : (
+															<div className="flex flex-col items-center justify-center py-8 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+																<Info className="w-6 h-6 text-slate-400 dark:text-slate-500" />
+																<p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Sets sem avaliação registada</p>
+																<p className="text-[11px] text-slate-500 max-w-xs">
+																	Adiciona notas aos sets de {activeRecurringDjData.dj.nome} neste festival para ver o gráfico de evolução.
+																</p>
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+											<TrendingUp className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Sem DJs recorrentes registados</p>
+											<p className="text-xs text-slate-500 max-w-sm">
+												Quando assistires a 2 ou mais sets de um mesmo DJ neste festival, poderás acompanhar aqui a sua evolução de notas ao longo do tempo.
+											</p>
+										</div>
+									)}
+								</section>
+
+								{/* Linha 3 do Grid: Histórico de Atuações (Tabela Completa) */}
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+									<div>
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<Calendar className="text-purple-500 dark:text-purple-400 w-5 h-5" />
+											Histórico Completo de Atuações
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Lista de todos os sets assistidos associados a este festival.
+										</p>
+									</div>
+
+									{festivalHistorySets.length > 0 ? (
+										<div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5">
+											<table className="w-full text-left text-sm border-collapse">
+												<thead>
+													<tr className="bg-slate-100/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-white/10">
+														<th className="py-3 px-4">Edição/Ano</th>
+														<th className="py-3 px-4">Data e Hora</th>
+														<th className="py-3 px-4">DJ</th>
+														<th className="py-3 px-4 text-center">Avaliação</th>
+													</tr>
+												</thead>
+												<tbody className="divide-y divide-slate-200/60 dark:divide-white/5 text-slate-700 dark:text-slate-300">
+													{festivalHistorySets.map((s) => {
+														const dj = djs.find((d) => String(d.id) === String(s.djId))
+														const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
+														return (
+															<tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
+																<td className="py-3.5 px-4 text-purple-600 dark:text-purple-300 font-semibold">
+																	{s.data ? s.data.substring(0, 4) : '—'}
+																</td>
+																<td className="py-3.5 px-4">
+																	{s.data ? s.data.split('-').reverse().join('/') : 'Sem data'}
+																	{s.hora && <span className="text-slate-500 font-normal"> às {s.hora}</span>}
+																</td>
+																<td className="py-3.5 px-4 text-slate-900 dark:text-white font-medium">
+																	<div className="flex items-center gap-2">
+																		<span>{dj ? (dj2 ? `${dj.nome} B2B ${dj2.nome}` : dj.nome) : 'Desconhecido'}</span>
+																		{s.especial && (
+																			<span className="rounded-md bg-purple-500/15 px-1.5 py-0.5 text-[9px] font-bold text-purple-600 dark:text-purple-400 border border-purple-500/20">
+																				{s.nomeEspecial || s.nome_especial || 'Especial'}
+																			</span>
+																		)}
+																	</div>
+																</td>
+																<td className="py-3.5 px-4 text-center">
+																	{getRatingBadge(s.avaliacao)}
+																</td>
+															</tr>
+														)
+													})}
+												</tbody>
+											</table>
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+											<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Nenhum set registado</p>
+											<p className="text-xs text-slate-500 max-w-xs">
+												Não existem sets gravados para este festival no histórico.
+											</p>
+										</div>
+									)}
+								</section>
 							</>
 						) : (
 							/* Estado Inicial Vazio */
