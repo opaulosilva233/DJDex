@@ -505,30 +505,35 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const modalStats = useMemo(() => {
 		if (!modalDjData || modalSets.length === 0) return { count: 0, avg: '—' }
 		const count = modalSets.length
-		const ratedSets = modalSets.filter((s) => s.avaliacao !== null)
+		const ratedSets = modalSets.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
 		const avg = ratedSets.length > 0
-			? (ratedSets.reduce((acc, s) => acc + s.avaliacao, 0) / ratedSets.length).toFixed(1)
+			? (ratedSets.reduce((acc, s) => acc + Number(s.avaliacao), 0) / ratedSets.length).toFixed(1)
 			: '—'
 		return { count, avg }
 	}, [modalSets, modalDjData])
 
 	const getRatingBadge = (rating) => {
-		if (rating === null || rating === undefined) {
+		if (rating === null || rating === undefined || rating === '') {
+			return <span className="text-slate-500 font-medium">—</span>
+		}
+
+		const num = Number(rating)
+		if (isNaN(num)) {
 			return <span className="text-slate-500 font-medium">—</span>
 		}
 
 		let colorClasses = "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
-		if (rating >= 9.0) {
+		if (num >= 9.0) {
 			colorClasses = "bg-amber-400/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
-		} else if (rating >= 7.5) {
+		} else if (num >= 7.5) {
 			colorClasses = "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20"
-		} else if (rating >= 5.0) {
+		} else if (num >= 5.0) {
 			colorClasses = "bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20"
 		}
 
 		return (
 			<span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${colorClasses}`}>
-				{rating.toFixed(1)}/10
+				{num.toFixed(1)}/10
 			</span>
 		)
 	}
