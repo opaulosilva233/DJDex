@@ -21,7 +21,7 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
-import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation, Star, ChevronDown, ChevronUp, ChevronRight, Trophy, Award, Sparkles, History, Crown, PieChart as LucidePieChart } from 'lucide-react'
+import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation, Star, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, Trophy, Award, Sparkles, History, Crown, PieChart as LucidePieChart } from 'lucide-react'
 
 const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1', '#f59e0b', '#8b5cf6', '#3b82f6']
 
@@ -394,6 +394,14 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const [genreChartMode, setGenreChartMode] = useState('ranking') // 'ranking' | 'donut'
 	const [showAllGenreBars, setShowAllGenreBars] = useState(false)
 	const [hoveredDonutGenre, setHoveredDonutGenre] = useState(null)
+	const hallOfFameScrollRef = useRef(null)
+
+	const scrollHallOfFame = (direction) => {
+		if (hallOfFameScrollRef.current) {
+			const offset = direction === 'left' ? -340 : 340
+			hallOfFameScrollRef.current.scrollBy({ left: offset, behavior: 'smooth' })
+		}
+	}
 	const [estatisticas, setEstatisticas] = useState(null)
 	const [loadingEst, setLoadingEst] = useState(true)
 
@@ -646,7 +654,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		}
 	}, [sets])
 
-	// 3. Hall da Fama: Os Melhores Sets de Sempre (Top 5 com maior nota)
+	// 3. Hall da Fama: Os Melhores Sets de Sempre (Top 10 com maior nota)
 	const hallOfFameSets = useMemo(() => {
 		return sets
 			.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
@@ -655,20 +663,29 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 				const dj1 = djs.find((d) => String(d.id) === String(s.djId))
 				const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
 				const djName = dj1 ? (dj2 ? `${dj1.nome} B2B ${dj2.nome}` : dj1.nome) : 'DJ Desconhecido'
-				const ano = s.data ? s.data.substring(0, 4) : ''
+				const ano = s.data ? s.data.substring(0, 4) : (s.ano || '')
+				const djGenres = dj1
+					? generos
+							.filter((g) => dj1.generoIds?.includes(g.id))
+							.map((g) => g.nome)
+							.slice(0, 2)
+							.join(' · ')
+					: ''
+
 				return {
 					...s,
 					dj: dj1,
 					dj2,
 					djName,
+					djGenres,
 					festivalNome: festival ? festival.nome : (s.especial || 'Set Especial'),
 					ano,
 					numRating: Number(s.avaliacao),
 				}
 			})
 			.sort((a, b) => b.numRating - a.numRating || (b.data || '').localeCompare(a.data || ''))
-			.slice(0, 5)
-	}, [sets, festivais, djs])
+			.slice(0, 10)
+	}, [sets, festivais, djs, generos])
 
 	// List of DJs sorted by number of sets
 	const topDjsList = useMemo(() => {
@@ -1206,300 +1223,11 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							</div>
 						</div>
 
-						{/* Fila 2: Termómetro de Satisfação & Hall da Fama */}
+						{/* Grid Principal Original de duas colunas */}
 						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 							
-							{/* Termómetro Global de Avaliações (5 colunas) */}
-							<div className="lg:col-span-5 flex flex-col gap-6">
-								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-5 h-full">
-									<div>
-										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-											<Star className="text-amber-500 dark:text-amber-400 w-5 h-5 fill-amber-400/20" />
-											Média Global &amp; Satisfação
-										</h2>
-										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-											Desempenho qualitativo e distribuição de notas dos sets assistidos.
-										</p>
-									</div>
-
-									{/* Card de Destaque da Nota Geral */}
-									<div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-cyan-500/10 border border-amber-500/20">
-										<div className="flex flex-col">
-											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-												Nota Média Geral
-											</span>
-											<div className="flex items-baseline gap-1.5 mt-0.5">
-												<span className="text-3xl font-black text-amber-500 dark:text-amber-400">
-													{ratingOverview.avg}
-												</span>
-												<span className="text-xs font-semibold text-slate-400">/ 10</span>
-											</div>
-										</div>
-										<div className="text-right">
-											<span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-												{ratingOverview.totalRated} {ratingOverview.totalRated === 1 ? 'set avaliado' : 'sets avaliados'}
-											</span>
-											<p className="text-[10px] text-slate-500 dark:text-slate-400">na tua coleção</p>
-										</div>
-									</div>
-
-									{/* Patamares de Satisfação */}
-									<div className="flex flex-col gap-3.5">
-										{/* Sets de Ouro */}
-										<div className="flex flex-col gap-1.5">
-											<div className="flex items-center justify-between text-xs">
-												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-													<span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
-													Sets de Ouro (9.0 - 10)
-												</span>
-												<span className="font-bold text-amber-600 dark:text-amber-400">
-													{ratingOverview.gold.count} ({ratingOverview.gold.percentage}%)
-												</span>
-											</div>
-											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
-												<div
-													className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-500"
-													style={{ width: `${ratingOverview.gold.percentage}%` }}
-												/>
-											</div>
-										</div>
-
-										{/* Sets Excelentes */}
-										<div className="flex flex-col gap-1.5">
-											<div className="flex items-center justify-between text-xs">
-												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-													<span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.6)]" />
-													Sets Muito Bons (7.5 - 8.9)
-												</span>
-												<span className="font-bold text-cyan-600 dark:text-cyan-400">
-													{ratingOverview.excellent.count} ({ratingOverview.excellent.percentage}%)
-												</span>
-											</div>
-											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
-												<div
-													className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-cyan-300 transition-all duration-500"
-													style={{ width: `${ratingOverview.excellent.percentage}%` }}
-												/>
-											</div>
-										</div>
-
-										{/* Sets Regulares */}
-										<div className="flex flex-col gap-1.5">
-											<div className="flex items-center justify-between text-xs">
-												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-													<span className="h-2 w-2 rounded-full bg-purple-400" />
-													Sets Regulares (&lt; 7.5)
-												</span>
-												<span className="font-bold text-purple-600 dark:text-purple-400">
-													{ratingOverview.regular.count} ({ratingOverview.regular.percentage}%)
-												</span>
-											</div>
-											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
-												<div
-													className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-300 transition-all duration-500"
-													style={{ width: `${ratingOverview.regular.percentage}%` }}
-												/>
-											</div>
-										</div>
-									</div>
-								</section>
-							</div>
-
-							{/* Hall da Fama: Melhores Sets de Sempre (7 colunas) */}
-							<div className="lg:col-span-7 flex flex-col gap-6">
-								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4 h-full">
-									<div className="flex items-center justify-between">
-										<div>
-											<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-												<Crown className="text-amber-500 dark:text-amber-400 w-5 h-5" />
-												Hall da Fama: Melhores Sets
-											</h2>
-											<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-												As atuações com as pontuações mais elevadas de sempre na tua história.
-											</p>
-										</div>
-										<div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/20 shrink-0">
-											<Trophy className="w-4 h-4" />
-										</div>
-									</div>
-
-									{hallOfFameSets.length > 0 ? (
-										<div className="flex flex-col gap-2.5 max-h-[300px] overflow-y-auto pr-1">
-											{hallOfFameSets.map((set, idx) => {
-												const mainDj = set.dj || (set.djId ? djs.find((d) => String(d.id) === String(set.djId)) : null)
-												const formattedDate = set.data ? set.data.split('-').reverse().slice(0, 2).join('/') : ''
-
-												return (
-													<div
-														key={set.id}
-														onClick={() => {
-															if (mainDj) {
-																setModalDjData(mainDj)
-																setIsModalOpen(true)
-															}
-														}}
-														className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-white/5 transition-all border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 cursor-pointer"
-													>
-														<div className="flex items-center gap-3 min-w-0">
-															<span
-																className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
-																	idx === 0
-																		? 'bg-amber-400 text-amber-950 shadow-[0_0_12px_rgba(251,191,36,0.5)]'
-																		: idx === 1
-																		? 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
-																		: idx === 2
-																		? 'bg-amber-700/30 text-amber-700 dark:text-amber-300'
-																		: 'bg-slate-100 dark:bg-white/5 text-slate-500'
-																}`}
-															>
-																{idx + 1}
-															</span>
-															<div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-xs font-bold text-slate-700 dark:text-white ring-1 ring-slate-200 dark:ring-white/10">
-																{getDjAvatar(mainDj)}
-															</div>
-															<div className="min-w-0">
-																<p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-																	{set.djName}
-																</p>
-																<p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-																	{set.festivalNome} {set.ano && `· ${set.ano}`} {formattedDate && `(${formattedDate})`}
-																</p>
-															</div>
-														</div>
-
-														<div className="shrink-0 ml-3">
-															{getRatingBadge(set.avaliacao)}
-														</div>
-													</div>
-												)
-											})}
-										</div>
-									) : (
-										<div className="flex flex-col items-center justify-center py-8 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20 flex-1">
-											<Award className="w-8 h-8 text-slate-400 dark:text-slate-500" />
-											<p className="text-xs text-slate-500">Adiciona avaliações aos teus sets para ver o Hall da Fama.</p>
-										</div>
-									)}
-								</section>
-							</div>
-						</div>
-
-						{/* Fila 3: Evolução Temporal & Frequência de Festivais */}
-						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-							
-							{/* Evolução de Sets por Ano (6 colunas) */}
+							{/* Bloco Top 10 DJs Interativo (6 colunas) */}
 							<div className="lg:col-span-6 flex flex-col gap-6">
-								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 h-full">
-									<div>
-										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-											<TrendingUp className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
-											Evolução de Sets por Ano
-										</h2>
-										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-											Crescimento do número de atuações assistidas ao longo dos anos.
-										</p>
-									</div>
-
-									{timelineData.length > 0 ? (
-										<div style={{ width: '100%', height: '300px' }}>
-											<ResponsiveContainer width="100%" height="100%">
-												<AreaChart data={timelineData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
-													<defs>
-														<linearGradient id="timelineAreaGradient" x1="0" y1="0" x2="0" y2="1">
-															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.5} />
-															<stop offset="100%" stopColor="#a855f7" stopOpacity={0.02} />
-														</linearGradient>
-													</defs>
-													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} vertical={false} />
-													<XAxis dataKey="ano" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} />
-													<YAxis allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-													<Tooltip
-														contentStyle={{
-															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-															borderColor: darkMode ? '#334155' : '#e2e8f0',
-															borderRadius: '12px',
-															color: darkMode ? '#fff' : '#0f172a',
-															fontSize: '11px',
-															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
-														}}
-														formatter={(value) => [`${value} ${value === 1 ? 'set assistido' : 'sets assistidos'}`, 'Atividade']}
-														labelFormatter={(label) => `Ano de ${label}`}
-													/>
-													<Area
-														type="monotone"
-														dataKey="sets"
-														name="Sets"
-														stroke="#06b6d4"
-														strokeWidth={3}
-														fill="url(#timelineAreaGradient)"
-														dot={{ fill: '#06b6d4', stroke: darkMode ? '#0f172a' : '#ffffff', strokeWidth: 2, r: 5 }}
-														activeDot={{ r: 7, stroke: '#a855f7', strokeWidth: 2 }}
-													/>
-												</AreaChart>
-											</ResponsiveContainer>
-										</div>
-									) : (
-										<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20 flex-1">
-											<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
-											<p className="text-xs text-slate-500">Adiciona datas aos teus sets para ver a evolução temporal.</p>
-										</div>
-									)}
-								</section>
-							</div>
-
-							{/* Bloco Frequência de Festivais (6 colunas) */}
-							<div className="lg:col-span-6 flex flex-col gap-6">
-								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
-									<div>
-										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-											<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
-											Frequência de Festivais
-										</h2>
-										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-											Frequência de atuações assistidas em cada festival (Top 10).
-										</p>
-									</div>
-
-									{festivalFreqData.length > 0 ? (
-										<div style={{ width: '100%', height: '300px' }}>
-											<ResponsiveContainer width="100%" height="100%">
-												<BarChart data={festivalFreqData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-													<defs>
-														<linearGradient id="festivalCountGradient" x1="0" y1="0" x2="1" y2="0">
-															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.8} />
-															<stop offset="100%" stopColor="#0891b2" stopOpacity={0.15} />
-														</linearGradient>
-													</defs>
-													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} horizontal={false} />
-													<XAxis type="number" allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-													<YAxis dataKey="name" type="category" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
-													<Tooltip
-														contentStyle={{
-															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-															borderColor: darkMode ? '#334155' : '#e2e8f0',
-															borderRadius: '12px',
-															color: darkMode ? '#fff' : '#0f172a',
-															fontSize: '11px',
-															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
-														}}
-														cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}
-													/>
-													<Bar dataKey="quantidade" name="Sets" fill="url(#festivalCountGradient)" radius={[0, 4, 4, 0]} barSize={16} />
-												</BarChart>
-											</ResponsiveContainer>
-										</div>
-									) : (
-										<p className="text-xs text-slate-500 italic text-center py-10">Nenhum festival registado com sets.</p>
-									)}
-								</section>
-							</div>
-						</div>
-
-						{/* Fila 4: Top DJs */}
-						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-							
-							{/* Bloco Top DJs Registados (12 colunas) */}
-							<div className="lg:col-span-12 flex flex-col gap-6">
 								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
 									<div>
 										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
@@ -1511,7 +1239,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 										</p>
 									</div>
 
-									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[420px] overflow-y-auto pr-1">
+									<div className="flex flex-col gap-2 max-h-[480px] overflow-y-auto pr-1">
 										{displayedTopDjs.length > 0 ? (
 											displayedTopDjs.map((dj, index) => {
 												const djGenres = generos
@@ -1558,7 +1286,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 												)
 											})
 										) : (
-											<p className="text-xs text-slate-500 italic text-center py-8 col-span-full">Nenhum set registado na base de dados.</p>
+											<p className="text-xs text-slate-500 italic text-center py-8">Nenhum set registado na base de dados.</p>
 										)}
 									</div>
 
@@ -1574,7 +1302,56 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 								</section>
 							</div>
 
-							{/* Bloco DJs por Género (12 colunas) - Redesenhado e Altamente Percetível */}
+							{/* Bloco Frequência de Festivais (6 colunas) */}
+							<div className="lg:col-span-6 flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+									<div>
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
+											Frequência de Festivais
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Frequência de atuações assistidas em cada festival (Top 10).
+										</p>
+									</div>
+
+									{festivalFreqData.length > 0 ? (
+										<div style={{ width: '100%', height: '340px' }}>
+											<ResponsiveContainer width="100%" height="100%">
+												<BarChart data={festivalFreqData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+													<defs>
+														<linearGradient id="festivalCountGradient" x1="0" y1="0" x2="1" y2="0">
+															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.8} />
+															<stop offset="100%" stopColor="#0891b2" stopOpacity={0.15} />
+														</linearGradient>
+													</defs>
+													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} horizontal={false} />
+													<XAxis type="number" allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+													<YAxis dataKey="name" type="category" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+													<Tooltip
+														contentStyle={{
+															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+															borderColor: darkMode ? '#334155' : '#e2e8f0',
+															borderRadius: '12px',
+															color: darkMode ? '#fff' : '#0f172a',
+															fontSize: '11px',
+															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+														}}
+														cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}
+													/>
+													<Bar dataKey="quantidade" name="Sets" fill="url(#festivalCountGradient)" radius={[0, 4, 4, 0]} barSize={16} />
+												</BarChart>
+											</ResponsiveContainer>
+										</div>
+									) : (
+										<p className="text-xs text-slate-500 italic text-center py-10">Nenhum festival registado com sets.</p>
+									)}
+								</section>
+							</div>
+						</div>
+
+						{/* Bloco DJs por Género (12 colunas) - Redesenhado e Altamente Percetível */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 							<div className="lg:col-span-12">
 								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 md:p-8 shadow-xl flex flex-col gap-6">
 									
@@ -1840,6 +1617,328 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 											<p className="text-xs text-slate-500 max-w-xs">
 												Adiciona géneros musicais aos DJs para ver a distribuição visual.
 											</p>
+										</div>
+									)}
+								</section>
+							</div>
+						</div>
+
+						{/* ── Novas Estatísticas no Fundo da Página ── */}
+
+						{/* Fila 4: Hall da Fama (12 colunas com Scroll Horizontal de Cards Interativos) */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+							<div className="lg:col-span-12">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 md:p-7 shadow-xl flex flex-col gap-5">
+									{/* Header com Título e Botões de Scroll */}
+									<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-white/5 pb-4">
+										<div className="flex items-center gap-3">
+											<div className="p-2.5 bg-gradient-to-br from-amber-500/20 via-purple-500/20 to-cyan-500/20 rounded-xl border border-amber-500/30 text-amber-500">
+												<Crown className="w-5 h-5" />
+											</div>
+											<div>
+												<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+													Hall da Fama: Melhores Sets
+													<span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+														Top {hallOfFameSets.length}
+													</span>
+												</h2>
+												<p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+													As atuações com as pontuações mais altas da tua história (desliza para ver todos os sets).
+												</p>
+											</div>
+										</div>
+
+										{/* Botões de Navegação Horizontal */}
+										{hallOfFameSets.length > 0 && (
+											<div className="flex items-center gap-2 self-end sm:self-auto">
+												<button
+													type="button"
+													onClick={() => scrollHallOfFame('left')}
+													className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
+													title="Rolar para a esquerda"
+												>
+													<ChevronLeft className="w-4 h-4" />
+												</button>
+												<button
+													type="button"
+													onClick={() => scrollHallOfFame('right')}
+													className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
+													title="Rolar para a direita"
+												>
+													<ChevronRight className="w-4 h-4" />
+												</button>
+											</div>
+										)}
+									</div>
+
+									{/* Scroll Horizontal de Cards */}
+									{hallOfFameSets.length > 0 ? (
+										<div
+											ref={hallOfFameScrollRef}
+											className="flex gap-4 overflow-x-auto pb-3 pt-1 snap-x snap-mandatory scroll-smooth scrollbar-thin scrollbar-thumb-purple-500/20 hover:scrollbar-thumb-purple-500/40"
+										>
+											{hallOfFameSets.map((set, idx) => {
+												const mainDj = set.dj || (set.djId ? djs.find((d) => String(d.id) === String(set.djId)) : null)
+												const formattedDate = set.data ? set.data.split('-').reverse().join('/') : ''
+												const isFirst = idx === 0
+												const isSecond = idx === 1
+												const isThird = idx === 2
+
+												return (
+													<div
+														key={set.id}
+														onClick={() => {
+															if (mainDj) {
+																setModalDjData(mainDj)
+																setIsModalOpen(true)
+															}
+														}}
+														className={`w-[290px] sm:w-[320px] shrink-0 snap-start rounded-2xl p-5 border transition-all duration-300 flex flex-col justify-between group cursor-pointer relative overflow-hidden ${
+															isFirst
+																? 'bg-gradient-to-b from-amber-500/10 via-white/70 to-white/90 dark:from-amber-500/15 dark:via-slate-900/80 dark:to-slate-900/90 border-amber-500/30 hover:border-amber-400 hover:shadow-amber-500/10 shadow-lg'
+																: isSecond
+																? 'bg-gradient-to-b from-slate-400/10 via-white/70 to-white/90 dark:from-slate-400/15 dark:via-slate-900/80 dark:to-slate-900/90 border-slate-300 dark:border-slate-700 hover:border-slate-400 shadow-md'
+																: isThird
+																? 'bg-gradient-to-b from-amber-700/10 via-white/70 to-white/90 dark:from-amber-700/15 dark:via-slate-900/80 dark:to-slate-900/90 border-amber-700/30 hover:border-amber-600 shadow-md'
+																: 'bg-white/60 dark:bg-slate-900/60 border-slate-200/70 dark:border-white/5 hover:border-purple-500/40 shadow-sm'
+														} hover:-translate-y-1.5 hover:shadow-xl`}
+													>
+														{/* Linha de Topo: Rank Badge & Rating Badge */}
+														<div className="flex items-center justify-between gap-2 mb-4">
+															<div className="flex items-center gap-1.5">
+																<span
+																	className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black shadow-sm ${
+																		isFirst
+																			? 'bg-amber-400 text-amber-950 ring-1 ring-amber-400/50 shadow-[0_0_12px_rgba(251,191,36,0.4)]'
+																			: isSecond
+																			? 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 ring-1 ring-slate-400/40'
+																			: isThird
+																			? 'bg-amber-700/30 text-amber-700 dark:text-amber-300 ring-1 ring-amber-600/40'
+																			: 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+																	}`}
+																>
+																	{isFirst && <Crown className="w-3.5 h-3.5 fill-amber-950/30" />}
+																	<span>#{idx + 1}</span>
+																</span>
+																<span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
+																	{isFirst ? 'Melhor Set' : isSecond ? '2º Lugar' : isThird ? '3º Lugar' : 'Top Set'}
+																</span>
+															</div>
+
+															<div className="shrink-0">
+																{getRatingBadge(set.avaliacao)}
+															</div>
+														</div>
+
+														{/* Bloco Central: DJ Info com Avatar */}
+														<div className="flex items-center gap-3.5 my-1">
+															<div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-md ${
+																isFirst
+																	? 'ring-2 ring-amber-400 bg-gradient-to-br from-amber-400/30 to-purple-500/30'
+																	: 'ring-1 ring-slate-200 dark:ring-white/10 bg-gradient-to-br from-purple-500/20 to-cyan-400/20'
+															} text-sm font-black text-slate-800 dark:text-white`}>
+																{getDjAvatar(mainDj)}
+															</div>
+															<div className="min-w-0 flex-1">
+																<h3 className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+																	{set.djName}
+																</h3>
+																{set.djGenres ? (
+																	<p className="text-[11px] text-purple-600 dark:text-purple-400 font-medium truncate mt-0.5">
+																		{set.djGenres}
+																	</p>
+																) : (
+																	<p className="text-[11px] text-slate-400 truncate mt-0.5">
+																		DJ Dex
+																	</p>
+																)}
+															</div>
+														</div>
+
+														{/* Bloco Inferior: Detalhes do Set & Festival */}
+														<div className="mt-4 pt-3.5 border-t border-slate-200/60 dark:border-white/5 flex flex-col gap-1.5">
+															<div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 min-w-0">
+																<Ticket className="w-3.5 h-3.5 text-pink-500 shrink-0" />
+																<span className="truncate">{set.festivalNome}</span>
+															</div>
+															<div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+																<span className="flex items-center gap-1.5">
+																	<Calendar className="w-3 h-3 text-cyan-500 shrink-0" />
+																	{formattedDate || `Ano de ${set.ano}`}
+																</span>
+																<span className="font-semibold text-purple-600 dark:text-purple-400 group-hover:translate-x-0.5 transition-transform">
+																	Ver DJ →
+																</span>
+															</div>
+														</div>
+													</div>
+												)
+											})}
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-10 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+											<Award className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-xs text-slate-500">Adiciona avaliações aos teus sets para ver o Hall da Fama.</p>
+										</div>
+									)}
+								</section>
+							</div>
+						</div>
+
+						{/* Fila 5: Média Global & Satisfação + Evolução Temporal */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+							
+							{/* Termómetro Global de Avaliações (5 colunas) */}
+							<div className="lg:col-span-5 flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-5 h-full">
+									<div>
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<Star className="text-amber-500 dark:text-amber-400 w-5 h-5 fill-amber-400/20" />
+											Média Global &amp; Satisfação
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Desempenho qualitativo e distribuição de notas dos sets assistidos.
+										</p>
+									</div>
+
+									{/* Card de Destaque da Nota Geral */}
+									<div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-cyan-500/10 border border-amber-500/20">
+										<div className="flex flex-col">
+											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+												Nota Média Geral
+											</span>
+											<div className="flex items-baseline gap-1.5 mt-0.5">
+												<span className="text-3xl font-black text-amber-500 dark:text-amber-400">
+													{ratingOverview.avg}
+												</span>
+												<span className="text-xs font-semibold text-slate-400">/ 10</span>
+											</div>
+										</div>
+										<div className="text-right">
+											<span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+												{ratingOverview.totalRated} {ratingOverview.totalRated === 1 ? 'set avaliado' : 'sets avaliados'}
+											</span>
+											<p className="text-[10px] text-slate-500 dark:text-slate-400">na tua coleção</p>
+										</div>
+									</div>
+
+									{/* Patamares de Satisfação */}
+									<div className="flex flex-col gap-3.5">
+										{/* Sets de Ouro */}
+										<div className="flex flex-col gap-1.5">
+											<div className="flex items-center justify-between text-xs">
+												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+													<span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
+													Sets de Ouro (9.0 - 10)
+												</span>
+												<span className="font-bold text-amber-600 dark:text-amber-400">
+													{ratingOverview.gold.count} ({ratingOverview.gold.percentage}%)
+												</span>
+											</div>
+											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+												<div
+													className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-500"
+													style={{ width: `${ratingOverview.gold.percentage}%` }}
+												/>
+											</div>
+										</div>
+
+										{/* Sets Excelentes */}
+										<div className="flex flex-col gap-1.5">
+											<div className="flex items-center justify-between text-xs">
+												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+													<span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.6)]" />
+													Sets Muito Bons (7.5 - 8.9)
+												</span>
+												<span className="font-bold text-cyan-600 dark:text-cyan-400">
+													{ratingOverview.excellent.count} ({ratingOverview.excellent.percentage}%)
+												</span>
+											</div>
+											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+												<div
+													className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-cyan-300 transition-all duration-500"
+													style={{ width: `${ratingOverview.excellent.percentage}%` }}
+												/>
+											</div>
+										</div>
+
+										{/* Sets Regulares */}
+										<div className="flex flex-col gap-1.5">
+											<div className="flex items-center justify-between text-xs">
+												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+													<span className="h-2 w-2 rounded-full bg-purple-400" />
+													Sets Regulares (&lt; 7.5)
+												</span>
+												<span className="font-bold text-purple-600 dark:text-purple-400">
+													{ratingOverview.regular.count} ({ratingOverview.regular.percentage}%)
+												</span>
+											</div>
+											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+												<div
+													className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-300 transition-all duration-500"
+													style={{ width: `${ratingOverview.regular.percentage}%` }}
+												/>
+											</div>
+										</div>
+									</div>
+								</section>
+							</div>
+
+							{/* Evolução de Sets por Ano (7 colunas) */}
+							<div className="lg:col-span-7 flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 h-full">
+									<div>
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<TrendingUp className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
+											Evolução de Sets por Ano
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Crescimento do número de atuações assistidas ao longo dos anos.
+										</p>
+									</div>
+
+									{timelineData.length > 0 ? (
+										<div style={{ width: '100%', height: '300px' }}>
+											<ResponsiveContainer width="100%" height="100%">
+												<AreaChart data={timelineData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
+													<defs>
+														<linearGradient id="timelineAreaGradient" x1="0" y1="0" x2="0" y2="1">
+															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.5} />
+															<stop offset="100%" stopColor="#a855f7" stopOpacity={0.02} />
+														</linearGradient>
+													</defs>
+													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} vertical={false} />
+													<XAxis dataKey="ano" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} />
+													<YAxis allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+													<Tooltip
+														contentStyle={{
+															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+															borderColor: darkMode ? '#334155' : '#e2e8f0',
+															borderRadius: '12px',
+															color: darkMode ? '#fff' : '#0f172a',
+															fontSize: '11px',
+															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+														}}
+														formatter={(value) => [`${value} ${value === 1 ? 'set assistido' : 'sets assistidos'}`, 'Atividade']}
+														labelFormatter={(label) => `Ano de ${label}`}
+													/>
+													<Area
+														type="monotone"
+														dataKey="sets"
+														name="Sets"
+														stroke="#06b6d4"
+														strokeWidth={3}
+														fill="url(#timelineAreaGradient)"
+														dot={{ fill: '#06b6d4', stroke: darkMode ? '#0f172a' : '#ffffff', strokeWidth: 2, r: 5 }}
+														activeDot={{ r: 7, stroke: '#a855f7', strokeWidth: 2 }}
+													/>
+												</AreaChart>
+											</ResponsiveContainer>
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20 flex-1">
+											<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-xs text-slate-500">Adiciona datas aos teus sets para ver a evolução temporal.</p>
 										</div>
 									)}
 								</section>
