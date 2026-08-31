@@ -66,6 +66,32 @@ function getDjAvatar(dj) {
 		.join('')
 }
 
+function getRatingBadge(rating) {
+	if (rating === null || rating === undefined || rating === '') {
+		return <span className="text-slate-500 font-medium">—</span>
+	}
+
+	const num = Number(rating)
+	if (isNaN(num)) {
+		return <span className="text-slate-500 font-medium">—</span>
+	}
+
+	let colorClasses = "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
+	if (num >= 9.0) {
+		colorClasses = "bg-amber-400/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+	} else if (num >= 7.5) {
+		colorClasses = "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20"
+	} else if (num >= 5.0) {
+		colorClasses = "bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20"
+	}
+
+	return (
+		<span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${colorClasses}`}>
+			{num.toFixed(1)}/10
+		</span>
+	)
+}
+
 // ──────────────────────────────────────────────
 // Aba Locais — Análise Geográfica dos Festivais
 // ──────────────────────────────────────────────
@@ -491,6 +517,16 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		})
 	}, [festivais, festivalSearchTerm])
 
+	// DJ selecionado e cor temática
+	const selectedDj = useMemo(() => {
+		return djs.find((dj) => String(dj.id) === String(selectedDjId))
+	}, [djs, selectedDjId])
+
+	const selectedDjColor = useMemo(() => {
+		const idx = djs.findIndex((dj) => String(dj.id) === String(selectedDjId))
+		return idx !== -1 ? pieColors[idx % pieColors.length] : '#a855f7'
+	}, [djs, selectedDjId])
+
 	// Calculations for the "Geral" dashboard
 	const kpis = useMemo(() => {
 		const totalSets = sets.length
@@ -747,32 +783,6 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		return { count, avg }
 	}, [modalSets, modalDjData])
 
-	const getRatingBadge = (rating) => {
-		if (rating === null || rating === undefined || rating === '') {
-			return <span className="text-slate-500 font-medium">—</span>
-		}
-
-		const num = Number(rating)
-		if (isNaN(num)) {
-			return <span className="text-slate-500 font-medium">—</span>
-		}
-
-		let colorClasses = "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
-		if (num >= 9.0) {
-			colorClasses = "bg-amber-400/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
-		} else if (num >= 7.5) {
-			colorClasses = "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20"
-		} else if (num >= 5.0) {
-			colorClasses = "bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20"
-		}
-
-		return (
-			<span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${colorClasses}`}>
-				{num.toFixed(1)}/10
-			</span>
-		)
-	}
-
 	// Festival frequency data for the bar chart
 	const festivalFreqData = useMemo(() => {
 		const counts = {}
@@ -950,16 +960,6 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			lastSeen,
 		}
 	}, [selectedDjId, selectedDj, sets, festivais, ratingOverview])
-
-	// Obter DJ selecionado
-	const selectedDj = useMemo(() => {
-		return djs.find((dj) => String(dj.id) === String(selectedDjId))
-	}, [djs, selectedDjId])
-
-	const selectedDjColor = useMemo(() => {
-		const idx = djs.findIndex((dj) => String(dj.id) === String(selectedDjId))
-		return idx !== -1 ? pieColors[idx % pieColors.length] : '#a855f7'
-	}, [djs, selectedDjId])
 
 	// Histórico e Rastreio do DJ selecionado
 	const djHistoryData = useMemo(() => {
