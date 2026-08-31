@@ -21,9 +21,9 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts'
-import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation, Star, ChevronDown, ChevronRight, Trophy, Award, Sparkles, History } from 'lucide-react'
+import { User, Calendar, MapPin, BarChart2, TrendingUp, Info, Search, X, LayoutDashboard, Music, Sliders, Headphones, Ticket, Users, Flame, Building2, Navigation, Star, ChevronDown, ChevronUp, ChevronRight, Trophy, Award, Sparkles, History, Crown, PieChart as LucidePieChart } from 'lucide-react'
 
-const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1']
+const pieColors = ['#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f43f5e', '#14b8a6', '#6366f1', '#f59e0b', '#8b5cf6', '#3b82f6']
 
 function getFestivalLocalAndYear(festival) {
 	if (!festival) return { local: 'Local desconhecido', ano: 'Ano por definir' }
@@ -391,6 +391,9 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 	const festivalDropdownRef = useRef(null)
 	const [selectedRecurringDjId, setSelectedRecurringDjId] = useState('')
 	const [selectedGenreId, setSelectedGenreId] = useState('')
+	const [genreChartMode, setGenreChartMode] = useState('ranking') // 'ranking' | 'donut'
+	const [showAllGenreBars, setShowAllGenreBars] = useState(false)
+	const [hoveredDonutGenre, setHoveredDonutGenre] = useState(null)
 	const [estatisticas, setEstatisticas] = useState(null)
 	const [loadingEst, setLoadingEst] = useState(true)
 
@@ -540,6 +543,132 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 			topGenreName,
 		}
 	}, [sets, djs, generos, estatisticas])
+
+	// Estatísticas de DJs por Género calculadas e ordenadas para visualização premium
+	const djsPorGeneroSorted = useMemo(() => {
+		if (!estatisticas?.djs_por_genero) return []
+		return [...estatisticas.djs_por_genero].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0) || a.name.localeCompare(b.name, 'pt'))
+	}, [estatisticas])
+
+	const totalDjsInGenres = useMemo(() => {
+		return djsPorGeneroSorted.reduce((acc, item) => acc + (Number(item.value) || 0), 0)
+	}, [djsPorGeneroSorted])
+
+	const maxGenreDjValue = useMemo(() => {
+		if (djsPorGeneroSorted.length === 0) return 1
+		return Math.max(...djsPorGeneroSorted.map((g) => Number(g.value) || 0), 1)
+	}, [djsPorGeneroSorted])
+
+	// Dados otimizados para Donut Chart (Top 6 + Outros agrupados para clareza máxima)
+	const donutGenreData = useMemo(() => {
+		if (djsPorGeneroSorted.length <= 7) return djsPorGeneroSorted
+		const top6 = djsPorGeneroSorted.slice(0, 6)
+		const othersCount = djsPorGeneroSorted.slice(6).reduce((acc, item) => acc + (Number(item.value) || 0), 0)
+		return [
+			...top6,
+			{ name: 'Outros Géneros', value: othersCount, isOther: true, countOthers: djsPorGeneroSorted.length - 6 }
+		]
+	}, [djsPorGeneroSorted])
+
+	const displayedGenreBars = showAllGenreBars ? djsPorGeneroSorted : djsPorGeneroSorted.slice(0, 8)
+
+	const handleSelectGenreByName = (genreName) => {
+		if (!genreName || genreName === 'Outros Géneros') return
+		const found = generos.find(
+			(g) => g.nome?.toLowerCase() === genreName.toLowerCase() || genreName.toLowerCase().includes(g.nome?.toLowerCase())
+		)
+		if (found) {
+			setSelectedGenreId(String(found.id))
+			setActiveTab('generos')
+		}
+	}
+
+	// 1. Linha do Tempo: Evolução de Sets ao Longo dos Anos
+	const timelineData = useMemo(() => {
+		const yearMap = {}
+		sets.forEach((s) => {
+			if (!s.data) return
+			const ano = s.data.substring(0, 4)
+			if (/^\d{4}$/.test(ano)) {
+				yearMap[ano] = (yearMap[ano] || 0) + 1
+			}
+		})
+		const sortedYears = Object.keys(yearMap).sort((a, b) => Number(a) - Number(b))
+		return sortedYears.map((ano) => ({
+			ano,
+			sets: yearMap[ano],
+		}))
+	}, [sets])
+
+	// 2. Termómetro Global de Avaliações & Distribuição de Satisfação
+	const ratingOverview = useMemo(() => {
+		const ratedSets = sets.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
+		const totalRated = ratedSets.length
+		if (totalRated === 0) {
+			return {
+				avg: '—',
+				totalRated: 0,
+				gold: { count: 0, percentage: 0 },
+				excellent: { count: 0, percentage: 0 },
+				regular: { count: 0, percentage: 0 },
+			}
+		}
+
+		const sum = ratedSets.reduce((acc, s) => acc + Number(s.avaliacao), 0)
+		const avg = (sum / totalRated).toFixed(1)
+
+		let goldCount = 0 // 9.0 - 10
+		let excellentCount = 0 // 7.5 - 8.9
+		let regularCount = 0 // < 7.5
+
+		ratedSets.forEach((s) => {
+			const val = Number(s.avaliacao)
+			if (val >= 9.0) goldCount++
+			else if (val >= 7.5) excellentCount++
+			else regularCount++
+		})
+
+		return {
+			avg,
+			totalRated,
+			gold: {
+				count: goldCount,
+				percentage: Math.round((goldCount / totalRated) * 100),
+			},
+			excellent: {
+				count: excellentCount,
+				percentage: Math.round((excellentCount / totalRated) * 100),
+			},
+			regular: {
+				count: regularCount,
+				percentage: Math.round((regularCount / totalRated) * 100),
+			},
+		}
+	}, [sets])
+
+	// 3. Hall da Fama: Os Melhores Sets de Sempre (Top 5 com maior nota)
+	const hallOfFameSets = useMemo(() => {
+		return sets
+			.filter((s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== '')
+			.map((s) => {
+				const festival = festivais.find((f) => String(f.id) === String(s.festivalId))
+				const dj1 = djs.find((d) => String(d.id) === String(s.djId))
+				const dj2 = s.dj2Id ? djs.find((d) => String(d.id) === String(s.dj2Id)) : null
+				const djName = dj1 ? (dj2 ? `${dj1.nome} B2B ${dj2.nome}` : dj1.nome) : 'DJ Desconhecido'
+				const ano = s.data ? s.data.substring(0, 4) : ''
+				return {
+					...s,
+					dj: dj1,
+					dj2,
+					djName,
+					festivalNome: festival ? festival.nome : (s.especial || 'Set Especial'),
+					ano,
+					numRating: Number(s.avaliacao),
+				}
+			})
+			.sort((a, b) => b.numRating - a.numRating || (b.data || '').localeCompare(a.data || ''))
+			.slice(0, 5)
+	}, [sets, festivais, djs])
 
 	// List of DJs sorted by number of sets
 	const topDjsList = useMemo(() => {
@@ -1077,11 +1206,300 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 							</div>
 						</div>
 
-						{/* Grid Principal de duas colunas */}
+						{/* Fila 2: Termómetro de Satisfação & Hall da Fama */}
 						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 							
-							{/* Bloco Top 10 DJs Interativo (6 colunas) */}
+							{/* Termómetro Global de Avaliações (5 colunas) */}
+							<div className="lg:col-span-5 flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-5 h-full">
+									<div>
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<Star className="text-amber-500 dark:text-amber-400 w-5 h-5 fill-amber-400/20" />
+											Média Global &amp; Satisfação
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Desempenho qualitativo e distribuição de notas dos sets assistidos.
+										</p>
+									</div>
+
+									{/* Card de Destaque da Nota Geral */}
+									<div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-cyan-500/10 border border-amber-500/20">
+										<div className="flex flex-col">
+											<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+												Nota Média Geral
+											</span>
+											<div className="flex items-baseline gap-1.5 mt-0.5">
+												<span className="text-3xl font-black text-amber-500 dark:text-amber-400">
+													{ratingOverview.avg}
+												</span>
+												<span className="text-xs font-semibold text-slate-400">/ 10</span>
+											</div>
+										</div>
+										<div className="text-right">
+											<span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+												{ratingOverview.totalRated} {ratingOverview.totalRated === 1 ? 'set avaliado' : 'sets avaliados'}
+											</span>
+											<p className="text-[10px] text-slate-500 dark:text-slate-400">na tua coleção</p>
+										</div>
+									</div>
+
+									{/* Patamares de Satisfação */}
+									<div className="flex flex-col gap-3.5">
+										{/* Sets de Ouro */}
+										<div className="flex flex-col gap-1.5">
+											<div className="flex items-center justify-between text-xs">
+												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+													<span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
+													Sets de Ouro (9.0 - 10)
+												</span>
+												<span className="font-bold text-amber-600 dark:text-amber-400">
+													{ratingOverview.gold.count} ({ratingOverview.gold.percentage}%)
+												</span>
+											</div>
+											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+												<div
+													className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-500"
+													style={{ width: `${ratingOverview.gold.percentage}%` }}
+												/>
+											</div>
+										</div>
+
+										{/* Sets Excelentes */}
+										<div className="flex flex-col gap-1.5">
+											<div className="flex items-center justify-between text-xs">
+												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+													<span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.6)]" />
+													Sets Muito Bons (7.5 - 8.9)
+												</span>
+												<span className="font-bold text-cyan-600 dark:text-cyan-400">
+													{ratingOverview.excellent.count} ({ratingOverview.excellent.percentage}%)
+												</span>
+											</div>
+											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+												<div
+													className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-cyan-300 transition-all duration-500"
+													style={{ width: `${ratingOverview.excellent.percentage}%` }}
+												/>
+											</div>
+										</div>
+
+										{/* Sets Regulares */}
+										<div className="flex flex-col gap-1.5">
+											<div className="flex items-center justify-between text-xs">
+												<span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+													<span className="h-2 w-2 rounded-full bg-purple-400" />
+													Sets Regulares (&lt; 7.5)
+												</span>
+												<span className="font-bold text-purple-600 dark:text-purple-400">
+													{ratingOverview.regular.count} ({ratingOverview.regular.percentage}%)
+												</span>
+											</div>
+											<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+												<div
+													className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-300 transition-all duration-500"
+													style={{ width: `${ratingOverview.regular.percentage}%` }}
+												/>
+											</div>
+										</div>
+									</div>
+								</section>
+							</div>
+
+							{/* Hall da Fama: Melhores Sets de Sempre (7 colunas) */}
+							<div className="lg:col-span-7 flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4 h-full">
+									<div className="flex items-center justify-between">
+										<div>
+											<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+												<Crown className="text-amber-500 dark:text-amber-400 w-5 h-5" />
+												Hall da Fama: Melhores Sets
+											</h2>
+											<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+												As atuações com as pontuações mais elevadas de sempre na tua história.
+											</p>
+										</div>
+										<div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/20 shrink-0">
+											<Trophy className="w-4 h-4" />
+										</div>
+									</div>
+
+									{hallOfFameSets.length > 0 ? (
+										<div className="flex flex-col gap-2.5 max-h-[300px] overflow-y-auto pr-1">
+											{hallOfFameSets.map((set, idx) => {
+												const mainDj = set.dj || (set.djId ? djs.find((d) => String(d.id) === String(set.djId)) : null)
+												const formattedDate = set.data ? set.data.split('-').reverse().slice(0, 2).join('/') : ''
+
+												return (
+													<div
+														key={set.id}
+														onClick={() => {
+															if (mainDj) {
+																setModalDjData(mainDj)
+																setIsModalOpen(true)
+															}
+														}}
+														className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-white/5 transition-all border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 cursor-pointer"
+													>
+														<div className="flex items-center gap-3 min-w-0">
+															<span
+																className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
+																	idx === 0
+																		? 'bg-amber-400 text-amber-950 shadow-[0_0_12px_rgba(251,191,36,0.5)]'
+																		: idx === 1
+																		? 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
+																		: idx === 2
+																		? 'bg-amber-700/30 text-amber-700 dark:text-amber-300'
+																		: 'bg-slate-100 dark:bg-white/5 text-slate-500'
+																}`}
+															>
+																{idx + 1}
+															</span>
+															<div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500/25 to-cyan-400/25 text-xs font-bold text-slate-700 dark:text-white ring-1 ring-slate-200 dark:ring-white/10">
+																{getDjAvatar(mainDj)}
+															</div>
+															<div className="min-w-0">
+																<p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+																	{set.djName}
+																</p>
+																<p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+																	{set.festivalNome} {set.ano && `· ${set.ano}`} {formattedDate && `(${formattedDate})`}
+																</p>
+															</div>
+														</div>
+
+														<div className="shrink-0 ml-3">
+															{getRatingBadge(set.avaliacao)}
+														</div>
+													</div>
+												)
+											})}
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-8 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20 flex-1">
+											<Award className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-xs text-slate-500">Adiciona avaliações aos teus sets para ver o Hall da Fama.</p>
+										</div>
+									)}
+								</section>
+							</div>
+						</div>
+
+						{/* Fila 3: Evolução Temporal & Frequência de Festivais */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+							
+							{/* Evolução de Sets por Ano (6 colunas) */}
 							<div className="lg:col-span-6 flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6 h-full">
+									<div>
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<TrendingUp className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
+											Evolução de Sets por Ano
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Crescimento do número de atuações assistidas ao longo dos anos.
+										</p>
+									</div>
+
+									{timelineData.length > 0 ? (
+										<div style={{ width: '100%', height: '300px' }}>
+											<ResponsiveContainer width="100%" height="100%">
+												<AreaChart data={timelineData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
+													<defs>
+														<linearGradient id="timelineAreaGradient" x1="0" y1="0" x2="0" y2="1">
+															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.5} />
+															<stop offset="100%" stopColor="#a855f7" stopOpacity={0.02} />
+														</linearGradient>
+													</defs>
+													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} vertical={false} />
+													<XAxis dataKey="ano" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} />
+													<YAxis allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+													<Tooltip
+														contentStyle={{
+															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+															borderColor: darkMode ? '#334155' : '#e2e8f0',
+															borderRadius: '12px',
+															color: darkMode ? '#fff' : '#0f172a',
+															fontSize: '11px',
+															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+														}}
+														formatter={(value) => [`${value} ${value === 1 ? 'set assistido' : 'sets assistidos'}`, 'Atividade']}
+														labelFormatter={(label) => `Ano de ${label}`}
+													/>
+													<Area
+														type="monotone"
+														dataKey="sets"
+														name="Sets"
+														stroke="#06b6d4"
+														strokeWidth={3}
+														fill="url(#timelineAreaGradient)"
+														dot={{ fill: '#06b6d4', stroke: darkMode ? '#0f172a' : '#ffffff', strokeWidth: 2, r: 5 }}
+														activeDot={{ r: 7, stroke: '#a855f7', strokeWidth: 2 }}
+													/>
+												</AreaChart>
+											</ResponsiveContainer>
+										</div>
+									) : (
+										<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20 flex-1">
+											<Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-xs text-slate-500">Adiciona datas aos teus sets para ver a evolução temporal.</p>
+										</div>
+									)}
+								</section>
+							</div>
+
+							{/* Bloco Frequência de Festivais (6 colunas) */}
+							<div className="lg:col-span-6 flex flex-col gap-6">
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+									<div>
+										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+											<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
+											Frequência de Festivais
+										</h2>
+										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+											Frequência de atuações assistidas em cada festival (Top 10).
+										</p>
+									</div>
+
+									{festivalFreqData.length > 0 ? (
+										<div style={{ width: '100%', height: '300px' }}>
+											<ResponsiveContainer width="100%" height="100%">
+												<BarChart data={festivalFreqData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+													<defs>
+														<linearGradient id="festivalCountGradient" x1="0" y1="0" x2="1" y2="0">
+															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.8} />
+															<stop offset="100%" stopColor="#0891b2" stopOpacity={0.15} />
+														</linearGradient>
+													</defs>
+													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} horizontal={false} />
+													<XAxis type="number" allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+													<YAxis dataKey="name" type="category" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+													<Tooltip
+														contentStyle={{
+															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+															borderColor: darkMode ? '#334155' : '#e2e8f0',
+															borderRadius: '12px',
+															color: darkMode ? '#fff' : '#0f172a',
+															fontSize: '11px',
+															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+														}}
+														cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}
+													/>
+													<Bar dataKey="quantidade" name="Sets" fill="url(#festivalCountGradient)" radius={[0, 4, 4, 0]} barSize={16} />
+												</BarChart>
+											</ResponsiveContainer>
+										</div>
+									) : (
+										<p className="text-xs text-slate-500 italic text-center py-10">Nenhum festival registado com sets.</p>
+									)}
+								</section>
+							</div>
+						</div>
+
+						{/* Fila 4: Top DJs */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+							
+							{/* Bloco Top DJs Registados (12 colunas) */}
+							<div className="lg:col-span-12 flex flex-col gap-6">
 								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
 									<div>
 										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
@@ -1093,7 +1511,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 										</p>
 									</div>
 
-									<div className="flex flex-col gap-2 max-h-[480px] overflow-y-auto pr-1">
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[420px] overflow-y-auto pr-1">
 										{displayedTopDjs.length > 0 ? (
 											displayedTopDjs.map((dj, index) => {
 												const djGenres = generos
@@ -1140,7 +1558,7 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 												)
 											})
 										) : (
-											<p className="text-xs text-slate-500 italic text-center py-8">Nenhum set registado na base de dados.</p>
+											<p className="text-xs text-slate-500 italic text-center py-8 col-span-full">Nenhum set registado na base de dados.</p>
 										)}
 									</div>
 
@@ -1156,101 +1574,274 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 								</section>
 							</div>
 
-							{/* Bloco Frequência de Festivais (6 colunas) */}
-							<div className="lg:col-span-6 flex flex-col gap-6">
-								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
-									<div>
-										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-											<BarChart2 className="text-cyan-500 dark:text-cyan-400 w-5 h-5" />
-											Frequência de Festivais
-										</h2>
-										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-											Frequência de atuações assistidas em cada festival (Top 10).
-										</p>
-									</div>
-
-									{festivalFreqData.length > 0 ? (
-										<div style={{ width: '100%', height: '340px' }}>
-											<ResponsiveContainer width="100%" height="100%">
-												<BarChart data={festivalFreqData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-													<defs>
-														<linearGradient id="festivalCountGradient" x1="0" y1="0" x2="1" y2="0">
-															<stop offset="0%" stopColor="#06b6d4" stopOpacity={0.8} />
-															<stop offset="100%" stopColor="#0891b2" stopOpacity={0.15} />
-														</linearGradient>
-													</defs>
-													<CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={darkMode ? 0.2 : 0.4} horizontal={false} />
-													<XAxis type="number" allowDecimals={false} tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-													<YAxis dataKey="name" type="category" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
-													<Tooltip
-														contentStyle={{
-															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-															borderColor: darkMode ? '#334155' : '#e2e8f0',
-															borderRadius: '12px',
-															color: darkMode ? '#fff' : '#0f172a',
-															fontSize: '11px',
-															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
-														}}
-														cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }}
-													/>
-													<Bar dataKey="quantidade" name="Sets" fill="url(#festivalCountGradient)" radius={[0, 4, 4, 0]} barSize={16} />
-												</BarChart>
-											</ResponsiveContainer>
-										</div>
-									) : (
-										<p className="text-xs text-slate-500 italic text-center py-10">Nenhum festival registado com sets.</p>
-									)}
-								</section>
-							</div>
-
-							{/* Bloco DJs por Género (12 colunas) */}
+							{/* Bloco DJs por Género (12 colunas) - Redesenhado e Altamente Percetível */}
 							<div className="lg:col-span-12">
-								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row gap-8 items-center">
-									<div className="flex flex-col gap-2 md:w-1/3">
-										<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-											<Flame className="text-purple-500 dark:text-purple-400 w-5 h-5" />
-											Distribuição de DJs por Género
-										</h2>
-										<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-											Visualização da contagem de DJs associados a cada género musical na base de dados (emojis removidos).
-										</p>
+								<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 md:p-8 shadow-xl flex flex-col gap-6">
+									
+									{/* Cabeçalho do Card com Título e Switcher de Visualização */}
+									<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-white/5 pb-4">
+										<div className="flex items-center gap-3">
+											<div className="p-2.5 bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-xl border border-purple-500/30 text-purple-600 dark:text-purple-400">
+												<Flame className="w-5 h-5" />
+											</div>
+											<div>
+												<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+													Distribuição de DJs por Género
+												</h2>
+												<p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+													Contagem e representatividade de cada género musical na coleção de DJs.
+												</p>
+											</div>
+										</div>
+
+										{/* Seletor de Modo: Ranking vs Donut */}
+										<div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-100/80 dark:bg-white/5 p-1 rounded-xl border border-slate-200/60 dark:border-white/10">
+											<button
+												type="button"
+												onClick={() => setGenreChartMode('ranking')}
+												className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+													genreChartMode === 'ranking'
+														? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-sm'
+														: 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+												}`}
+											>
+												<BarChart2 className="w-3.5 h-3.5" />
+												<span>Ranking</span>
+											</button>
+											<button
+												type="button"
+												onClick={() => setGenreChartMode('donut')}
+												className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+													genreChartMode === 'donut'
+														? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-sm'
+														: 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+												}`}
+											>
+												<LucidePieChart className="w-3.5 h-3.5" />
+												<span>Donut Interativo</span>
+											</button>
+										</div>
 									</div>
 
-									<div className="flex-1 w-full h-[300px]">
-										{estatisticas?.djs_por_genero && estatisticas.djs_por_genero.length > 0 ? (
-											<ResponsiveContainer width="100%" height="100%">
-												<PieChart>
-													<Pie
-														data={estatisticas.djs_por_genero}
-														cx="50%"
-														cy="50%"
-														labelLine={true}
-														label={({ name, value }) => `${name}: ${value}`}
-														outerRadius={80}
-														dataKey="value"
-													>
-														{estatisticas.djs_por_genero.map((entry, index) => (
-															<Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-														))}
-													</Pie>
-													<Tooltip
-														contentStyle={{
-															backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-															borderColor: darkMode ? '#334155' : '#e2e8f0',
-															borderRadius: '12px',
-															color: darkMode ? '#fff' : '#0f172a',
-															fontSize: '11px',
-															boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
-														}}
-													/>
-												</PieChart>
-											</ResponsiveContainer>
-										) : (
-											<div className="flex h-full items-center justify-center text-xs text-slate-500 italic">
-												Sem dados de géneros registados.
+									{/* Conteúdo Principal do Gráfico */}
+									{djsPorGeneroSorted.length > 0 ? (
+										genreChartMode === 'ranking' ? (
+											/* ── MODO 1: RANKING POR BARRAS HORIZONTAIS ── */
+											<div className="flex flex-col gap-5">
+												<div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5">
+													{displayedGenreBars.map((genre, idx) => {
+														const count = Number(genre.value) || 0
+														const percentage = totalDjsInGenres > 0 ? ((count / totalDjsInGenres) * 100).toFixed(1) : '0.0'
+														const widthPercent = Math.max(6, Math.round((count / maxGenreDjValue) * 100))
+														const color = pieColors[idx % pieColors.length]
+														const isTop3 = idx < 3
+
+														return (
+															<div
+																key={genre.name}
+																onClick={() => handleSelectGenreByName(genre.name)}
+																className="group flex flex-col gap-1.5 p-2.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-slate-200/50 dark:hover:border-white/5"
+																title={`Clica para explorar ${genre.name} na aba de Géneros`}
+															>
+																{/* Linha do Nome e Valores */}
+																<div className="flex items-center justify-between text-xs">
+																	<div className="flex items-center gap-2 min-w-0">
+																		<span
+																			className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${
+																				idx === 0
+																					? 'bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/40'
+																					: idx === 1
+																					? 'bg-slate-300/30 text-slate-700 dark:text-slate-300 border border-slate-400/40'
+																					: idx === 2
+																					? 'bg-amber-600/20 text-amber-700 dark:text-amber-400 border border-amber-600/40'
+																					: 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+																			}`}
+																		>
+																			{idx + 1}
+																		</span>
+																		<span className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
+																			{genre.name}
+																		</span>
+																	</div>
+																	<div className="flex items-center gap-2 shrink-0 ml-2">
+																		<span className="font-semibold text-slate-500 dark:text-slate-400 text-[11px]">
+																			{percentage}%
+																		</span>
+																		<span
+																			className="font-bold text-xs px-2.5 py-0.5 rounded-md border"
+																			style={{
+																				backgroundColor: `${color}15`,
+																				borderColor: `${color}35`,
+																				color: color,
+																			}}
+																		>
+																			{count} {count === 1 ? 'DJ' : 'DJs'}
+																		</span>
+																	</div>
+																</div>
+
+																{/* Barra de Progresso Estilizada */}
+																<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+																	<div
+																		className="h-full rounded-full transition-all duration-500 ease-out group-hover:brightness-110"
+																		style={{
+																			width: `${widthPercent}%`,
+																			backgroundColor: color,
+																			boxShadow: isTop3 ? `0 0 8px ${color}55` : 'none',
+																		}}
+																	/>
+																</div>
+															</div>
+														)
+													})}
+												</div>
+
+												{/* Botão para Expandir Todos os Géneros se houver mais de 8 */}
+												{djsPorGeneroSorted.length > 8 && (
+													<div className="flex justify-center pt-2">
+														<button
+															type="button"
+															onClick={() => setShowAllGenreBars(!showAllGenreBars)}
+															className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 transition-all cursor-pointer"
+														>
+															<span>
+																{showAllGenreBars
+																	? 'Mostrar menos'
+																	: `Ver todos os ${djsPorGeneroSorted.length} géneros (${djsPorGeneroSorted.length - 8} adicionais)`}
+															</span>
+															{showAllGenreBars ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+														</button>
+													</div>
+												)}
 											</div>
-										)}
-									</div>
+										) : (
+											/* ── MODO 2: DONUT CHART MODERNO (TOP 6 + OUTROS AGRUPADOS) ── */
+											<div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+												{/* Donut Chart com Centro Informativo */}
+												<div className="md:col-span-5 relative flex items-center justify-center h-[260px]">
+													<ResponsiveContainer width="100%" height="100%">
+														<PieChart>
+															<Pie
+																data={donutGenreData}
+																cx="50%"
+																cy="50%"
+																innerRadius={70}
+																outerRadius={100}
+																paddingAngle={3}
+																cornerRadius={5}
+																dataKey="value"
+																onMouseEnter={(_, index) => setHoveredDonutGenre(donutGenreData[index])}
+																onMouseLeave={() => setHoveredDonutGenre(null)}
+															>
+																{donutGenreData.map((entry, index) => {
+																	const color = entry.isOther ? (darkMode ? '#64748b' : '#94a3b8') : pieColors[index % pieColors.length]
+																	return (
+																		<Cell
+																			key={`cell-${index}`}
+																			fill={color}
+																			stroke={darkMode ? '#0f172a' : '#ffffff'}
+																			strokeWidth={2}
+																			style={{
+																				outline: 'none',
+																				filter: hoveredDonutGenre?.name === entry.name ? 'brightness(1.2) drop-shadow(0 0 6px rgba(168,85,247,0.4))' : 'none',
+																				cursor: entry.isOther ? 'default' : 'pointer',
+																			}}
+																		/>
+																	)
+																})}
+															</Pie>
+															<Tooltip
+																contentStyle={{
+																	backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+																	borderColor: darkMode ? '#334155' : '#e2e8f0',
+																	borderRadius: '12px',
+																	color: darkMode ? '#fff' : '#0f172a',
+																	fontSize: '11px',
+																	boxShadow: darkMode ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : '0 10px 25px -5px rgba(0, 0, 0, 0.08)',
+																}}
+																formatter={(value, name) => [
+																	`${value} DJs (${((value / (totalDjsInGenres || 1)) * 100).toFixed(1)}%)`,
+																	name,
+																]}
+															/>
+														</PieChart>
+													</ResponsiveContainer>
+
+													{/* Texto Flutuante no Centro do Donut */}
+													<div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
+														<span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate max-w-[120px]">
+															{hoveredDonutGenre ? hoveredDonutGenre.name : 'Total Registado'}
+														</span>
+														<span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+															{hoveredDonutGenre ? hoveredDonutGenre.value : totalDjsInGenres}
+														</span>
+														<span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+															{hoveredDonutGenre
+																? `${((hoveredDonutGenre.value / (totalDjsInGenres || 1)) * 100).toFixed(1)}%`
+																: `${djsPorGeneroSorted.length} Géneros`}
+														</span>
+													</div>
+												</div>
+
+												{/* Legenda Lateral Interativa */}
+												<div className="md:col-span-7 flex flex-col gap-2">
+													<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+														{donutGenreData.map((item, idx) => {
+															const count = Number(item.value) || 0
+															const percentage = totalDjsInGenres > 0 ? ((count / totalDjsInGenres) * 100).toFixed(1) : '0.0'
+															const color = item.isOther ? (darkMode ? '#64748b' : '#94a3b8') : pieColors[idx % pieColors.length]
+															const isHovered = hoveredDonutGenre?.name === item.name
+
+															return (
+																<div
+																	key={item.name}
+																	onMouseEnter={() => setHoveredDonutGenre(item)}
+																	onMouseLeave={() => setHoveredDonutGenre(null)}
+																	onClick={() => !item.isOther && handleSelectGenreByName(item.name)}
+																	className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+																		isHovered
+																			? 'bg-purple-500/10 border-purple-500/40 shadow-sm'
+																			: 'bg-slate-100/40 dark:bg-white/5 border-transparent hover:border-slate-200 dark:hover:border-white/10'
+																	} ${item.isOther ? 'cursor-default' : 'cursor-pointer'}`}
+																>
+																	<div className="flex items-center gap-2.5 min-w-0">
+																		<span
+																			className="h-3 w-3 rounded-full shrink-0 shadow-sm"
+																			style={{ backgroundColor: color }}
+																		/>
+																		<span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+																			{item.name}
+																			{item.isOther && (
+																				<span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 block">
+																					({item.countOthers} estilos restantes)
+																				</span>
+																			)}
+																		</span>
+																	</div>
+																	<div className="flex items-center gap-1.5 shrink-0 ml-2 text-right">
+																		<span className="text-xs font-black text-slate-900 dark:text-white">
+																			{count}
+																		</span>
+																		<span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+																			({percentage}%)
+																		</span>
+																	</div>
+																</div>
+															)
+														})}
+													</div>
+												</div>
+											</div>
+										)
+									) : (
+										<div className="flex flex-col items-center justify-center py-12 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+											<Info className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+											<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Sem dados de géneros registados</p>
+											<p className="text-xs text-slate-500 max-w-xs">
+												Adiciona géneros musicais aos DJs para ver a distribuição visual.
+											</p>
+										</div>
+									)}
 								</section>
 							</div>
 						</div>
