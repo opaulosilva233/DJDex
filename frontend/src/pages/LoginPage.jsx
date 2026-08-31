@@ -41,7 +41,12 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img 
+            src="/logo.png" 
+            alt="DJDex Logo" 
+            className="w-20 h-20 object-contain drop-shadow-xl mb-4 hover:scale-105 transition-transform duration-300" 
+          />
           <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-300 bg-clip-text text-transparent">
             Área de Administração
           </h1>

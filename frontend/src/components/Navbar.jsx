@@ -213,12 +213,21 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 
 	return (
 		<nav style={resolvedSidebarStyle}>
-			<div style={{ marginBottom: '20px', padding: '0 4px' }}>
-				<div style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.04em' }}>DJDex</div>
-				<p style={{ margin: '6px 0 0', color: isDark ? 'rgba(148, 163, 184, 0.9)' : 'rgba(71, 85, 105, 0.9)', fontSize: '0.82rem' }}>
-					Painel de gestão musical
-				</p>
-			</div>
+			<NavLink to="/" className="flex items-center gap-3 mb-6 px-1 group no-underline">
+				<img
+					src="/logo.png"
+					alt="DJDex Logo"
+					className="w-10 h-10 object-contain rounded-xl drop-shadow-md shrink-0 transition-transform duration-300 group-hover:scale-105"
+				/>
+				<div className="flex flex-col min-w-0">
+					<div className="text-lg font-black tracking-tight bg-gradient-to-r from-purple-400 via-fuchsia-400 to-indigo-400 bg-clip-text text-transparent leading-tight">
+						DJDex
+					</div>
+					<p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
+						Digital Pocket DJ
+					</p>
+				</div>
+			</NavLink>
 
 			<div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
 				<section>
@@ -264,56 +273,50 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 				</section>
 
 				<section style={{ marginTop: 'auto' }}>
-					<h2 className={sectionTitleStyle}>SISTEMA</h2>
 					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-						<div className="flex flex-col gap-1.5 px-1">
-							<span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-								Crossfade (Tema)
-							</span>
-							<div className="flex items-center gap-2.5">
-								<Sun
-									size={15}
+						<div className="flex items-center gap-2.5 px-1">
+							<Sun
+								size={15}
+								className={[
+									'transition-colors duration-300 shrink-0',
+									darkMode ? 'text-slate-600' : 'text-amber-500 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]',
+								].join(' ')}
+							/>
+							<button
+								type="button"
+								onClick={(event) => toggleDarkMode(event)}
+								aria-label={darkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+								className="flex-1 h-7 rounded-lg bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 relative flex items-center px-1.5 focus:outline-none transition-all cursor-pointer"
+							>
+								{/* Track line */}
+								<div className="absolute inset-x-3 h-0.5 bg-slate-300/80 dark:bg-slate-800/80 rounded-full" />
+								{/* Center notch */}
+								<div className="absolute left-1/2 -translate-x-1/2 w-0.5 h-2 bg-slate-300/80 dark:bg-slate-700/80" />
+								
+								{/* Fader knob */}
+								<div
 									className={[
-										'transition-colors duration-300',
-										darkMode ? 'text-slate-600' : 'text-amber-500 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]',
+										'absolute w-8 h-5 rounded bg-white dark:bg-slate-700 shadow-md border flex items-center justify-center transition-all duration-300 ease-out',
+										darkMode ? 'border-purple-500/35 bg-purple-500/5' : 'border-slate-300 bg-white',
 									].join(' ')}
-								/>
-								<button
-									type="button"
-									onClick={(event) => toggleDarkMode(event)}
-									aria-label={darkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
-									className="flex-1 h-7 rounded-lg bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 relative flex items-center px-1.5 focus:outline-none transition-all cursor-pointer"
+									style={{
+										left: darkMode ? 'calc(100% - 38px)' : '6px',
+									}}
 								>
-									{/* Track line */}
-									<div className="absolute inset-x-3 h-0.5 bg-slate-300/80 dark:bg-slate-800/80 rounded-full" />
-									{/* Center notch */}
-									<div className="absolute left-1/2 -translate-x-1/2 w-0.5 h-2 bg-slate-300/80 dark:bg-slate-700/80" />
-									
-									{/* Fader knob */}
-									<div
-										className={[
-											'absolute w-8 h-5 rounded bg-white dark:bg-slate-700 shadow-md border flex items-center justify-center transition-all duration-300 ease-out',
-											darkMode ? 'border-purple-500/35 bg-purple-500/5' : 'border-slate-300 bg-white',
-										].join(' ')}
-										style={{
-											left: darkMode ? 'calc(100% - 38px)' : '6px',
-										}}
-									>
-										<div className="flex gap-0.5">
-											<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
-											<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
-											<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
-										</div>
+									<div className="flex gap-0.5">
+										<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
+										<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
+										<span className="h-2 w-px bg-slate-300 dark:bg-slate-500" />
 									</div>
-								</button>
-								<Moon
-									size={15}
-									className={[
-										'transition-colors duration-300',
-										darkMode ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]' : 'text-slate-400',
-									].join(' ')}
-								/>
-							</div>
+								</div>
+							</button>
+							<Moon
+								size={15}
+								className={[
+									'transition-colors duration-300 shrink-0',
+									darkMode ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]' : 'text-slate-400',
+								].join(' ')}
+							/>
 						</div>
 
 						{isAuthenticated ? (
@@ -364,6 +367,18 @@ export default function Navbar({ generos, djs, festivais, sets, handleImportAllD
 								<input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
 							</div>
 						)}
+
+						<div className="pt-2 text-center text-xs text-slate-400 dark:text-slate-500">
+							<span>Criado por </span>
+							<a
+								href="https://paulosilvadev.me/"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="font-medium text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline decoration-purple-500/40 underline-offset-2"
+							>
+								Paulo Silva
+							</a>
+						</div>
 					</div>
 				</section>
 			</div>
