@@ -14,7 +14,6 @@ const initialFormState = {
 export default function AddDjForm({ initialData, handleAddDj, handleEditDj, generos = [] }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [isCompressing, setIsCompressing] = useState(false)
-	const [selectedFile, setSelectedFile] = useState(null)
 	const fileInputRef = useRef(null)
 	const navigate = useNavigate()
 	const isEditing = Boolean(initialData)
@@ -32,12 +31,10 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 						? initialData.generos.map((genero) => genero.id).filter(Boolean)
 						: [],
 			})
-			setSelectedFile(null)
 			return
 		}
 
 		setFormData(initialFormState)
-		setSelectedFile(null)
 	}, [initialData])
 
 	function handleChange(event) {
@@ -67,7 +64,6 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 				...currentFormData,
 				imagem: '',
 			}))
-			setSelectedFile(null)
 			return
 		}
 
@@ -79,12 +75,6 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 				...currentFormData,
 				imagem: compressedImage,
 			}))
-
-			// Convert base64 data URL back to a File object for FormData upload
-			const res = await fetch(compressedImage)
-			const blob = await res.blob()
-			const compressedFile = new File([blob], file.name, { type: 'image/jpeg' })
-			setSelectedFile(compressedFile)
 		} catch (error) {
 			console.error("Erro a comprimir imagem:", error)
 		} finally {
@@ -97,7 +87,6 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 			...currentFormData,
 			imagem: '',
 		}))
-		setSelectedFile(null)
 
 		if (fileInputRef.current) {
 			fileInputRef.current.value = ''
@@ -116,13 +105,7 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 			formDataToSend.append('generoIds[]', id)
 		})
 
-		if (selectedFile) {
-			formDataToSend.append('imagem', selectedFile)
-		} else if (formData.imagem) {
-			formDataToSend.append('imagem', formData.imagem)
-		} else {
-			formDataToSend.append('imagem', '')
-		}
+		formDataToSend.append('imagem', formData.imagem || '')
 
 		if (isEditing) {
 			handleEditDj(formDataToSend, initialData.id)
@@ -131,7 +114,6 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 		}
 
 		setFormData(initialFormState)
-		setSelectedFile(null)
 		navigate('/djs')
 	}
 

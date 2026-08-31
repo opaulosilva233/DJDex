@@ -47,7 +47,6 @@ function formatDateValue(date) {
 export default function AddFestivalForm({ initialData, handleAddFestival, handleEditFestival, generos = [] }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [isCompressing, setIsCompressing] = useState(false)
-	const [selectedFile, setSelectedFile] = useState(null)
 	const fileInputRef = useRef(null)
 	const navigate = useNavigate()
 	const isEditing = Boolean(initialData)
@@ -93,13 +92,11 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 				website: initialData.website ?? '',
 			})
 			setEdicoes(Array.isArray(initialData.edicoes) ? initialData.edicoes : [])
-			setSelectedFile(null)
 			return
 		}
 
 		setFormData(initialFormState)
 		setEdicoes([])
-		setSelectedFile(null)
 	}, [initialData])
 
 	function handleChange(event) {
@@ -128,7 +125,6 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 				...currentFormData,
 				imagem: '',
 			}))
-			setSelectedFile(null)
 			return
 		}
 
@@ -140,12 +136,6 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 				...currentFormData,
 				imagem: compressedImage,
 			}))
-
-			// Convert base64 data URL back to a File object for FormData upload
-			const res = await fetch(compressedImage)
-			const blob = await res.blob()
-			const compressedFile = new File([blob], file.name, { type: 'image/jpeg' })
-			setSelectedFile(compressedFile)
 		} catch (error) {
 			console.error("Erro a comprimir imagem:", error)
 		} finally {
@@ -158,7 +148,6 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 			...currentFormData,
 			imagem: '',
 		}))
-		setSelectedFile(null)
 
 		if (fileInputRef.current) {
 			fileInputRef.current.value = ''
@@ -218,13 +207,7 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 			formDataToSend.append('generoIds[]', id)
 		})
 
-		if (selectedFile) {
-			formDataToSend.append('imagem', selectedFile)
-		} else if (formData.imagem) {
-			formDataToSend.append('imagem', formData.imagem)
-		} else {
-			formDataToSend.append('imagem', '')
-		}
+		formDataToSend.append('imagem', formData.imagem || '')
 
 		if (isEditing) {
 			handleEditFestival(formDataToSend, initialData.id)
@@ -234,7 +217,6 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 
 		setFormData(initialFormState)
 		setEdicoes([])
-		setSelectedFile(null)
 		navigate('/festivais')
 	}
 

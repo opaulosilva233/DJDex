@@ -68,15 +68,11 @@ class FestivalController extends Controller
 
         if ($request->hasFile('imagem')) {
             $file = $request->file('imagem');
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
-            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
-
-            $path = $file->storeAs('images/festivais/' . $festival->id, $fileName, 'public');
+            $mime = $file->getMimeType() ?: 'image/jpeg';
+            $base64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
 
             $festival->update([
-                'imagem' => $path,
+                'imagem' => $base64,
             ]);
         } elseif ($request->filled('imagem') && is_string($request->input('imagem'))) {
             $festival->update([
@@ -144,27 +140,13 @@ class FestivalController extends Controller
         ];
 
         if ($request->hasFile('imagem')) {
-            // Delete old file if exists
-            $oldImage = $festival->getRawOriginal('imagem');
-            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-                Storage::disk('public')->delete($oldImage);
-            }
-
             $file = $request->file('imagem');
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
-            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
-
-            $path = $file->storeAs('images/festivais/' . $festival->id, $fileName, 'public');
-            $festivalData['imagem'] = $path;
+            $mime = $file->getMimeType() ?: 'image/jpeg';
+            $base64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            $festivalData['imagem'] = $base64;
         } elseif ($request->has('imagem')) {
             $imagemInput = $request->input('imagem');
             if ($imagemInput === null || $imagemInput === '') {
-                $oldImage = $festival->getRawOriginal('imagem');
-                if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-                    Storage::disk('public')->delete($oldImage);
-                }
                 $festivalData['imagem'] = null;
             } elseif (is_string($imagemInput)) {
                 $festivalData['imagem'] = $imagemInput;

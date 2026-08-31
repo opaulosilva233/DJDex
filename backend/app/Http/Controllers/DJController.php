@@ -59,15 +59,11 @@ class DJController extends Controller
 
         if ($request->hasFile('imagem')) {
             $file = $request->file('imagem');
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
-            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
-
-            $path = $file->storeAs('images/djs/' . $dj->id, $fileName, 'public');
+            $mime = $file->getMimeType() ?: 'image/jpeg';
+            $base64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
 
             $dj->update([
-                'imagem' => $path,
+                'imagem' => $base64,
             ]);
         } elseif ($request->filled('imagem') && is_string($request->input('imagem'))) {
             $dj->update([
@@ -112,27 +108,13 @@ class DJController extends Controller
         ];
 
         if ($request->hasFile('imagem')) {
-            // Delete old file if exists
-            $oldImage = $dj->getRawOriginal('imagem');
-            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-                Storage::disk('public')->delete($oldImage);
-            }
-
             $file = $request->file('imagem');
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $sanitizedName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $originalName);
-            $fileName = $sanitizedName . '_' . time() . '.' . $extension;
-
-            $path = $file->storeAs('images/djs/' . $dj->id, $fileName, 'public');
-            $djData['imagem'] = $path;
+            $mime = $file->getMimeType() ?: 'image/jpeg';
+            $base64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            $djData['imagem'] = $base64;
         } elseif ($request->has('imagem')) {
             $imagemInput = $request->input('imagem');
             if ($imagemInput === null || $imagemInput === '') {
-                $oldImage = $dj->getRawOriginal('imagem');
-                if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-                    Storage::disk('public')->delete($oldImage);
-                }
                 $djData['imagem'] = null;
             } elseif (is_string($imagemInput)) {
                 $djData['imagem'] = $imagemInput;
@@ -153,12 +135,6 @@ class DJController extends Controller
     public function destroy($id): JsonResponse
     {
         $dj = DJ::findOrFail($id);
-
-        // Delete the DJ's image directory physically if it exists
-        if (Storage::disk('public')->exists("images/djs/{$id}")) {
-            Storage::disk('public')->deleteDirectory("images/djs/{$id}");
-        }
-
         $dj->delete();
 
         return response()->json(null, 204);
