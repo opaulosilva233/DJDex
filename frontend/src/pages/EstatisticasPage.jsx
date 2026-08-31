@@ -854,34 +854,102 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 		})).sort((a, b) => b.bpm - a.bpm)
 	}, [generos])
 
-	// 4. Perfil de Intensidade / Energia (Radar Data)
-	const radarData = useMemo(() => {
-		const data = [
-			{ subject: 'Intensidade' },
-			{ subject: 'BPM Médio' },
-			{ subject: 'Sets Registados' },
-		]
+	// 4. Raio-X & Destaques de Performance do DJ Selecionado
+	const djPerformanceSummary = useMemo(() => {
+		if (!selectedDjId || !selectedDj) return null
 
-		djs.forEach((dj) => {
-			const djGenres = generos.filter((g) => dj.generoIds?.some(gid => String(gid) === String(g.id)))
-			const avgIntensidade = djGenres.length > 0
-				? djGenres.reduce((acc, g) => acc + (Number(g.intensidade) || 5), 0) / djGenres.length
-				: 5
-			data[0][dj.id] = Number(avgIntensidade.toFixed(1))
+		const djSets = sets.filter(
+			(s) => String(s.djId) === String(selectedDjId) || String(s.dj2Id) === String(selectedDjId)
+		)
+		const totalSets = djSets.length
+		if (totalSets === 0) {
+			return {
+				totalSets: 0,
+				ratedSetsCount: 0,
+				avgRating: '—',
+				diffFromGlobal: null,
+				bestSet: null,
+				goldSetsCount: 0,
+				goldRate: 0,
+				topFestival: null,
+				firstSeen: null,
+				lastSeen: null,
+			}
+		}
 
-			const avgBpm = djGenres.length > 0
-				? djGenres.reduce((acc, g) => acc + (Number(g.bpm) || 120), 0) / djGenres.length
-				: 120
-			const normalizedBpm = Math.min(10, Math.max(0, ((avgBpm - 60) / 140) * 10))
-			data[1][dj.id] = Number(normalizedBpm.toFixed(1))
+		const ratedSets = djSets.filter(
+			(s) => s.avaliacao !== null && s.avaliacao !== undefined && s.avaliacao !== ''
+		)
+		const ratedCount = ratedSets.length
 
-			const djSets = sets.filter((s) => String(s.djId) === String(dj.id) || String(s.dj2Id) === String(dj.id))
-			const setsRating = Math.min(10, djSets.length * 2)
-			data[2][dj.id] = Number(setsRating.toFixed(1))
+		let avgRating = '—'
+		let diffFromGlobal = null
+		if (ratedCount > 0) {
+			const sum = ratedSets.reduce((acc, s) => acc + Number(s.avaliacao), 0)
+			avgRating = (sum / ratedCount).toFixed(1)
+			if (ratingOverview?.avg && ratingOverview.avg !== '—') {
+				const diff = (Number(avgRating) - Number(ratingOverview.avg)).toFixed(1)
+				diffFromGlobal = Number(diff) > 0 ? `+${diff}` : `${diff}`
+			}
+		}
+
+		// Melhor Set de Sempre deste DJ
+		let bestSet = null
+		if (ratedCount > 0) {
+			const sortedByRating = [...ratedSets].sort(
+				(a, b) => Number(b.avaliacao) - Number(a.avaliacao) || (b.data || '').localeCompare(a.data || '')
+			)
+			const top = sortedByRating[0]
+			const fest = festivais.find((f) => String(f.id) === String(top.festivalId))
+			bestSet = {
+				avaliacao: top.avaliacao,
+				festivalNome: fest ? fest.nome : (top.especial || 'Set Especial'),
+				ano: top.data ? top.data.substring(0, 4) : (top.ano || ''),
+				data: top.data ? top.data.split('-').reverse().join('/') : '',
+			}
+		}
+
+		// Taxa de Sets de Ouro (nota >= 9.0)
+		const goldSetsCount = ratedSets.filter((s) => Number(s.avaliacao) >= 9.0).length
+		const goldRate = ratedCount > 0 ? Math.round((goldSetsCount / ratedCount) * 100) : 0
+
+		// Festival mais frequente deste DJ
+		const festCounts = {}
+		djSets.forEach((s) => {
+			if (s.festivalId) {
+				festCounts[s.festivalId] = (festCounts[s.festivalId] || 0) + 1
+			}
+		})
+		let topFestival = null
+		let maxFestCount = 0
+		Object.entries(festCounts).forEach(([fid, count]) => {
+			if (count > maxFestCount) {
+				maxFestCount = count
+				const fest = festivais.find((f) => String(f.id) === String(fid))
+				if (fest) {
+					topFestival = { nome: fest.nome, count }
+				}
+			}
 		})
 
-		return data
-	}, [sets, djs, generos])
+		// Primeira e última atuação assistida
+		const datedSets = djSets.filter((s) => s.data).sort((a, b) => a.data.localeCompare(b.data))
+		const firstSeen = datedSets.length > 0 ? datedSets[0].data.split('-').reverse().join('/') : null
+		const lastSeen = datedSets.length > 0 ? datedSets[datedSets.length - 1].data.split('-').reverse().join('/') : null
+
+		return {
+			totalSets,
+			ratedSetsCount: ratedCount,
+			avgRating,
+			diffFromGlobal,
+			bestSet,
+			goldSetsCount,
+			goldRate,
+			topFestival,
+			firstSeen,
+			lastSeen,
+		}
+	}, [selectedDjId, selectedDj, sets, festivais, ratingOverview])
 
 	// Obter DJ selecionado
 	const selectedDj = useMemo(() => {
@@ -2012,47 +2080,133 @@ export default function EstatisticasPage({ sets = [], djs = [], festivais = [], 
 								</div>
 							</section>
 
-							{/* 2. Perfil de Intensidade / Energia por DJ */}
-							<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
+							{/* 2. Raio-X & Destaques de Performance por DJ */}
+							<section className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-5">
 								<div>
 									<h2 className="text-base font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
-										<BarChart2 className="text-purple-500 dark:text-purple-400 w-5 h-5" />
-										Perfil de Intensidade / Energia por DJ
+										<Sparkles className="text-amber-500 dark:text-amber-400 w-5 h-5" />
+										Raio-X de Performance: {selectedDj?.nome}
 									</h2>
-									<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-										Comparação de perfil baseada na Intensidade dos géneros, BPM e Sets registados.
+									<p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+										Métricas qualitativas, consistência e recordes pessoais deste artista na tua coleção.
 									</p>
 								</div>
 
-								<div style={{ width: '100%', height: '300px' }}>
-									<ResponsiveContainer width="100%" height="100%">
-										<RadarChart cx="50%" cy="50%" outerRadius="60%" data={radarData}>
-											<PolarGrid stroke={darkMode ? '#334155' : '#cbd5e1'} opacity={0.6} />
-											<PolarAngleAxis dataKey="subject" tick={{ fill: darkMode ? '#cbd5e1' : '#475569', fontSize: 12, fontWeight: 600, fontFamily: 'sans-serif' }} />
-											<PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fill: darkMode ? '#94a3b8' : '#475569' }} />
-											{selectedDj && (
-												<Radar
-													key={selectedDj.id}
-													name={selectedDj.nome}
-													dataKey={selectedDj.id}
-													stroke={selectedDjColor}
-													fill={selectedDjColor}
-													fillOpacity={0.15}
-												/>
+								{djPerformanceSummary && djPerformanceSummary.totalSets > 0 ? (
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+										{/* Card 1: Melhor Set de Sempre */}
+										<div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex flex-col justify-between gap-3 group hover:border-amber-500/40 transition-all">
+											<div className="flex items-center justify-between">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+													<Crown className="w-3.5 h-3.5 text-amber-500" />
+													Melhor Set de Sempre
+												</span>
+												{djPerformanceSummary.bestSet && getRatingBadge(djPerformanceSummary.bestSet.avaliacao)}
+											</div>
+											{djPerformanceSummary.bestSet ? (
+												<div>
+													<p className="text-sm font-black text-slate-900 dark:text-white truncate">
+														{djPerformanceSummary.bestSet.festivalNome}
+													</p>
+													<p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+														{djPerformanceSummary.bestSet.data || `Ano de ${djPerformanceSummary.bestSet.ano}`}
+													</p>
+												</div>
+											) : (
+												<p className="text-xs text-slate-400 italic">Sem sets avaliados</p>
 											)}
-											<Tooltip
-												contentStyle={{
-													backgroundColor: darkMode ? '#0f172a' : '#ffffff',
-													borderColor: darkMode ? '#334155' : '#e2e8f0',
-													borderRadius: '12px',
-													color: darkMode ? '#fff' : '#0f172a',
-												}}
-												itemStyle={{ color: darkMode ? '#fff' : '#0f172a' }}
-											/>
-											<Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'sans-serif', marginTop: '10px', color: darkMode ? '#cbd5e1' : '#475569' }} />
-										</RadarChart>
-									</ResponsiveContainer>
-								</div>
+										</div>
+
+										{/* Card 2: Nota Média vs Coleção */}
+										<div className="p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-transparent border border-cyan-500/20 flex flex-col justify-between gap-3 group hover:border-cyan-500/40 transition-all">
+											<div className="flex items-center justify-between">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+													<Star className="w-3.5 h-3.5 text-cyan-500" />
+													Média de Avaliação
+												</span>
+												{djPerformanceSummary.diffFromGlobal && (
+													<span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+														Number(djPerformanceSummary.diffFromGlobal) >= 0
+															? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+															: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+													}`}>
+														{djPerformanceSummary.diffFromGlobal} vs Coleção
+													</span>
+												)}
+											</div>
+											<div className="flex items-baseline gap-1.5">
+												<span className="text-2xl font-black text-cyan-600 dark:text-cyan-400">
+													{djPerformanceSummary.avgRating}
+												</span>
+												<span className="text-xs font-semibold text-slate-400">/ 10</span>
+												<span className="text-[11px] text-slate-500 dark:text-slate-400 ml-auto">
+													{djPerformanceSummary.ratedSetsCount} de {djPerformanceSummary.totalSets} avaliados
+												</span>
+											</div>
+										</div>
+
+										{/* Card 3: Taxa de Sets de Ouro */}
+										<div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20 flex flex-col justify-between gap-3 group hover:border-purple-500/40 transition-all">
+											<div className="flex items-center justify-between">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+													<Trophy className="w-3.5 h-3.5 text-purple-500" />
+													Sets de Ouro (9.0+)
+												</span>
+												<span className="text-xs font-bold text-purple-600 dark:text-purple-400">
+													{djPerformanceSummary.goldRate}%
+												</span>
+											</div>
+											<div className="flex flex-col gap-1.5">
+												<div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+													<div
+														className="h-full rounded-full bg-gradient-to-r from-purple-500 to-amber-400 transition-all duration-500"
+														style={{ width: `${djPerformanceSummary.goldRate}%` }}
+													/>
+												</div>
+												<span className="text-[10px] text-slate-500 dark:text-slate-400">
+													{djPerformanceSummary.goldSetsCount} {djPerformanceSummary.goldSetsCount === 1 ? 'atuação de topo' : 'atuações de topo'} registadas
+												</span>
+											</div>
+										</div>
+
+										{/* Card 4: Palco Favorito & Linha Temporal */}
+										<div className="p-4 rounded-xl bg-gradient-to-br from-pink-500/10 via-pink-500/5 to-transparent border border-pink-500/20 flex flex-col justify-between gap-3 group hover:border-pink-500/40 transition-all">
+											<div className="flex items-center justify-between">
+												<span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+													<Ticket className="w-3.5 h-3.5 text-pink-500" />
+													Palco Mais Frequente
+												</span>
+												{djPerformanceSummary.topFestival && (
+													<span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20">
+														{djPerformanceSummary.topFestival.count}x
+													</span>
+												)}
+											</div>
+											{djPerformanceSummary.topFestival ? (
+												<div>
+													<p className="text-sm font-black text-slate-900 dark:text-white truncate">
+														{djPerformanceSummary.topFestival.nome}
+													</p>
+													<p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+														{djPerformanceSummary.firstSeen === djPerformanceSummary.lastSeen
+															? `Assistido em ${djPerformanceSummary.firstSeen}`
+															: `${djPerformanceSummary.firstSeen} → ${djPerformanceSummary.lastSeen}`}
+													</p>
+												</div>
+											) : (
+												<p className="text-xs text-slate-400 italic">Sem festivais registados</p>
+											)}
+										</div>
+									</div>
+								) : (
+									<div className="flex flex-col items-center justify-center py-8 text-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl bg-slate-100/50 dark:bg-slate-950/20">
+										<Info className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+										<p className="text-sm text-slate-700 dark:text-slate-400 font-medium">Sem sets registados</p>
+										<p className="text-xs text-slate-500 max-w-xs">
+											Adiciona sets a este DJ para desbloquear o Raio-X de performance.
+										</p>
+									</div>
+								)}
 							</section>
 
 							{/* 3. Gráfico Interativo de Avaliações do DJ Selecionado */}
