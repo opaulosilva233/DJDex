@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, Disc3, MapPin, Plus, Search, Trash2, UploadCloud, X } from 'lucide-react'
+import { Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, ClipboardPaste, Disc3, MapPin, Plus, Search, Trash2, UploadCloud, X } from 'lucide-react'
 
 import { compressImage } from '../utils/imageHelper'
 
@@ -47,6 +47,7 @@ function formatDateValue(date) {
 export default function AddFestivalForm({ initialData, handleAddFestival, handleEditFestival, generos = [] }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [isCompressing, setIsCompressing] = useState(false)
+	const [isDragging, setIsDragging] = useState(false)
 	const fileInputRef = useRef(null)
 	const navigate = useNavigate()
 	const isEditing = Boolean(initialData)
@@ -99,6 +100,46 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 		setEdicoes([])
 	}, [initialData])
 
+	async function processImageFile(file) {
+		if (!file) return
+
+		setIsCompressing(true)
+
+		try {
+			const compressedImage = await compressImage(file)
+			setFormData((currentFormData) => ({
+				...currentFormData,
+				imagem: compressedImage,
+			}))
+		} catch (error) {
+			console.error("Erro a processar imagem:", error)
+		} finally {
+			setIsCompressing(false)
+		}
+	}
+
+	// Suporte para colar imagens diretamente da área de transferência (Ctrl + V)
+	useEffect(() => {
+		function handlePaste(e) {
+			const items = e.clipboardData?.items
+			if (!items) return
+
+			for (let i = 0; i < items.length; i++) {
+				if (items[i].type.indexOf('image') !== -1) {
+					const file = items[i].getAsFile()
+					if (file) {
+						e.preventDefault()
+						processImageFile(file)
+						return
+					}
+				}
+			}
+		}
+
+		window.addEventListener('paste', handlePaste)
+		return () => window.removeEventListener('paste', handlePaste)
+	}, [])
+
 	function handleChange(event) {
 		const { name, value } = event.target
 		setFormData((currentFormData) => ({
@@ -119,27 +160,31 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 
 	async function handleFileChange(event) {
 		const file = event.target.files?.[0]
-
-		if (!file) {
-			setFormData((currentFormData) => ({
-				...currentFormData,
-				imagem: '',
-			}))
-			return
+		if (file) {
+			await processImageFile(file)
 		}
+	}
 
-		setIsCompressing(true)
+	function handleDragOver(e) {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(true)
+	}
 
-		try {
-			const compressedImage = await compressImage(file)
-			setFormData((currentFormData) => ({
-				...currentFormData,
-				imagem: compressedImage,
-			}))
-		} catch (error) {
-			console.error("Erro a comprimir imagem:", error)
-		} finally {
-			setIsCompressing(false)
+	function handleDragLeave(e) {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(false)
+	}
+
+	function handleDrop(e) {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(false)
+
+		const file = e.dataTransfer?.files?.[0]
+		if (file && file.type.startsWith('image/')) {
+			processImageFile(file)
 		}
 	}
 
@@ -435,12 +480,36 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 				</div>
 
 				{/* Cartaz/Logo (Direita - 5 Colunas) */}
-				<div className="lg:col-span-5 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-between min-h-[300px]">
-					<span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 self-start">
-						Logótipo / Cartaz Fixo
-					</span>
+				<div
+					onDragOver={handleDragOver}
+					onDragLeave={handleDragLeave}
+					onDrop={handleDrop}
+					className={`lg:col-span-5 backdrop-blur-md border rounded-2xl p-6 shadow-xl flex flex-col items-center justify-between min-h-[300px] transition-all duration-300 ${
+						isDragging
+							? 'bg-purple-600/10 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.3)] ring-2 ring-purple-500/40'
+							: 'bg-white/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-white/10'
+					}`}
+				>
+					<div className="w-full flex items-center justify-between">
+						<span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+							Logótipo / Cartaz Fixo
+						</span>
+						<span className="text-[10px] text-purple-400/80 font-medium flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+							<ClipboardPaste className="h-3 w-3" />
+							Ctrl + V para colar
+						</span>
+					</div>
 
-					<div className="w-full aspect-[4/3] rounded-xl overflow-hidden border-2 relative flex items-center justify-center transition-all duration-500 my-4 max-h-[160px] md:max-h-none h-full bg-slate-950/40 border-slate-700/50">
+					<div
+						onClick={() => fileInputRef.current?.click()}
+						className={`w-full aspect-[4/3] rounded-xl overflow-hidden border-2 relative flex items-center justify-center transition-all duration-500 my-4 max-h-[180px] md:max-h-none h-full bg-slate-950/40 cursor-pointer group ${
+							isDragging
+								? 'border-purple-400 scale-[1.02] shadow-[0_0_25px_rgba(168,85,247,0.4)]'
+								: formData.imagem
+									? 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
+									: 'border-slate-700/50 hover:border-purple-500/50'
+						}`}
+					>
 						{formData.imagem ? (
 							<img
 								src={formData.imagem}
@@ -448,37 +517,43 @@ export default function AddFestivalForm({ initialData, handleAddFestival, handle
 								className="w-full h-full object-cover animate-[fadeIn_300ms_ease-out]"
 							/>
 						) : (
-							<div className="flex flex-col items-center gap-2 text-slate-600 dark:text-slate-500">
-								<MapPin className="h-10 w-10 opacity-40" />
-								<span className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Sem Imagem</span>
+							<div className="flex flex-col items-center gap-2 text-slate-600 dark:text-slate-500 group-hover:text-purple-400 transition-colors">
+								<MapPin className="h-10 w-10 opacity-40 group-hover:opacity-80 transition-opacity" />
+								<span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+									{isDragging ? 'Largar Imagem Aqui' : 'Sem Imagem'}
+								</span>
 							</div>
 						)}
 
 						{isCompressing && (
-							<div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm rounded-xl">
+							<div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm rounded-xl z-10">
 								<div className="flex flex-col items-center gap-2">
 									<Disc3 className="h-6 w-6 text-purple-400 animate-spin" />
-									<span className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300">A comprimir...</span>
+									<span className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300">A processar...</span>
 								</div>
 							</div>
 						)}
 					</div>
 
+					<p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mb-3">
+						Arrasta uma imagem, escolhe um ficheiro ou cola com <strong>Ctrl+V</strong>
+					</p>
+
 					<div className="flex items-center gap-3 w-full justify-between">
 						<button
 							type="button"
 							onClick={() => fileInputRef.current?.click()}
-							className="flex-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 font-bold py-2 px-3 rounded-xl text-xs border border-purple-500/30 transition-all text-center cursor-pointer flex items-center justify-center gap-2"
+							className="flex-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 font-bold py-2 px-3 rounded-xl text-xs border border-purple-500/30 transition-all text-center cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 active:scale-[0.98]"
 						>
 							<UploadCloud className="h-4.5 w-4.5" />
-							Carregar Logo
+							{formData.imagem ? 'Trocar Logo' : 'Carregar Logo'}
 						</button>
 
 						{formData.imagem && (
 							<button
 								type="button"
 								onClick={handleRemoveImage}
-								className="text-xs font-bold uppercase tracking-wider text-rose-500/70 hover:text-rose-400 transition-colors px-2 py-2"
+								className="text-xs font-bold uppercase tracking-wider text-rose-500/70 hover:text-rose-400 transition-colors px-2 py-2 cursor-pointer"
 							>
 								Remover
 							</button>

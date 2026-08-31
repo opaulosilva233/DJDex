@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Disc3, Search, Trash2, UploadCloud, User, X } from 'lucide-react'
+import { Check, Disc3, Search, Trash2, UploadCloud, User, X, ClipboardPaste } from 'lucide-react'
 
 import { compressImage } from '../utils/imageHelper'
 
@@ -14,6 +14,7 @@ const initialFormState = {
 export default function AddDjForm({ initialData, handleAddDj, handleEditDj, generos = [] }) {
 	const [formData, setFormData] = useState(initialFormState)
 	const [isCompressing, setIsCompressing] = useState(false)
+	const [isDragging, setIsDragging] = useState(false)
 	const fileInputRef = useRef(null)
 	const navigate = useNavigate()
 	const isEditing = Boolean(initialData)
@@ -37,6 +38,46 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 		setFormData(initialFormState)
 	}, [initialData])
 
+	async function processImageFile(file) {
+		if (!file) return
+
+		setIsCompressing(true)
+
+		try {
+			const compressedImage = await compressImage(file)
+			setFormData((currentFormData) => ({
+				...currentFormData,
+				imagem: compressedImage,
+			}))
+		} catch (error) {
+			console.error("Erro a processar imagem:", error)
+		} finally {
+			setIsCompressing(false)
+		}
+	}
+
+	// Suporte para colar imagens diretamente da área de transferência (Ctrl + V)
+	useEffect(() => {
+		function handlePaste(e) {
+			const items = e.clipboardData?.items
+			if (!items) return
+
+			for (let i = 0; i < items.length; i++) {
+				if (items[i].type.indexOf('image') !== -1) {
+					const file = items[i].getAsFile()
+					if (file) {
+						e.preventDefault()
+						processImageFile(file)
+						return
+					}
+				}
+			}
+		}
+
+		window.addEventListener('paste', handlePaste)
+		return () => window.removeEventListener('paste', handlePaste)
+	}, [])
+
 	function handleChange(event) {
 		const { name, value } = event.target
 		setFormData((currentFormData) => ({
@@ -58,27 +99,31 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 
 	async function handleFileChange(event) {
 		const file = event.target.files?.[0]
-
-		if (!file) {
-			setFormData((currentFormData) => ({
-				...currentFormData,
-				imagem: '',
-			}))
-			return
+		if (file) {
+			await processImageFile(file)
 		}
+	}
 
-		setIsCompressing(true)
+	function handleDragOver(e) {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(true)
+	}
 
-		try {
-			const compressedImage = await compressImage(file)
-			setFormData((currentFormData) => ({
-				...currentFormData,
-				imagem: compressedImage,
-			}))
-		} catch (error) {
-			console.error("Erro a comprimir imagem:", error)
-		} finally {
-			setIsCompressing(false)
+	function handleDragLeave(e) {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(false)
+	}
+
+	function handleDrop(e) {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(false)
+
+		const file = e.dataTransfer?.files?.[0]
+		if (file && file.type.startsWith('image/')) {
+			processImageFile(file)
 		}
 	}
 
@@ -252,19 +297,37 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 				{/* ════════════════════════════════════════════════════
 				    COLUNA DIREITA — Painel de Imagem (5 colunas)
 				   ════════════════════════════════════════════════════ */}
-				<div className="lg:col-span-5 flex flex-col items-center justify-between bg-white/5 dark:bg-slate-900/30 backdrop-blur-md border border-slate-200/20 dark:border-white/5 rounded-2xl p-6 h-full min-h-[400px]">
+				<div
+					onDragOver={handleDragOver}
+					onDragLeave={handleDragLeave}
+					onDrop={handleDrop}
+					className={`lg:col-span-5 flex flex-col items-center justify-between backdrop-blur-md border rounded-2xl p-6 h-full min-h-[400px] transition-all duration-300 ${
+						isDragging
+							? 'bg-purple-600/10 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.3)] ring-2 ring-purple-500/40'
+							: 'bg-white/5 dark:bg-slate-900/30 border-slate-200/20 dark:border-white/5'
+					}`}
+				>
 					{/* Rótulo */}
-					<p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 self-start">
-						Imagem do DJ
-					</p>
+					<div className="w-full flex items-center justify-between">
+						<p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+							Imagem do DJ
+						</p>
+						<span className="text-[10px] text-purple-400/80 font-medium flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+							<ClipboardPaste className="h-3 w-3" />
+							Ctrl + V para colar
+						</span>
+					</div>
 
 					{/* Moldura Circular Premium */}
-					<div className="flex flex-col items-center gap-4 flex-1 justify-center">
+					<div className="flex flex-col items-center gap-4 flex-1 justify-center my-4">
 						<div
-							className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-2 relative flex items-center justify-center transition-all duration-500 ${
-								formData.imagem
-									? 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] bg-slate-950/40'
-									: 'border-slate-700/50 shadow-[0_0_20px_rgba(168,85,247,0.08)] bg-slate-950/40'
+							onClick={() => fileInputRef.current?.click()}
+							className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-2 relative flex items-center justify-center transition-all duration-500 cursor-pointer group ${
+								isDragging
+									? 'border-purple-400 scale-105 shadow-[0_0_30px_rgba(168,85,247,0.5)]'
+									: formData.imagem
+										? 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] bg-slate-950/40'
+										: 'border-slate-700/50 shadow-[0_0_20px_rgba(168,85,247,0.08)] bg-slate-950/40 hover:border-purple-500/50'
 							}`}
 						>
 							{formData.imagem ? (
@@ -274,26 +337,31 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 									className="w-full h-full object-cover animate-[fadeIn_300ms_ease-out]"
 								/>
 							) : (
-								<div className="flex flex-col items-center gap-2 text-slate-600 dark:text-slate-500">
-									<User className="h-12 w-12 opacity-40" />
-									<p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Sem imagem</p>
+								<div className="flex flex-col items-center gap-2 text-slate-600 dark:text-slate-500 group-hover:text-purple-400 transition-colors">
+									<User className="h-12 w-12 opacity-40 group-hover:opacity-80 transition-opacity" />
+									<p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+										{isDragging ? 'Largar Imagem Aqui' : 'Sem imagem'}
+									</p>
 								</div>
 							)}
 
 							{/* Overlay de compressão */}
 							{isCompressing && (
-								<div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm rounded-full">
+								<div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm rounded-full z-10">
 									<div className="flex flex-col items-center gap-2">
 										<Disc3 className="h-6 w-6 text-purple-400 animate-spin" />
-										<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300">A comprimir...</p>
+										<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300">A processar...</p>
 									</div>
 								</div>
 							)}
 						</div>
+						<p className="text-[11px] text-slate-400 dark:text-slate-500 text-center">
+							Arrasta uma imagem, escolhe um ficheiro ou cola com <strong>Ctrl+V</strong>
+						</p>
 					</div>
 
 					{/* Botões de Ação Verticais */}
-					<div className="flex flex-col gap-3 w-full mt-4">
+					<div className="flex flex-col gap-3 w-full mt-2">
 						<button
 							type="button"
 							onClick={() => fileInputRef.current?.click()}
@@ -301,16 +369,15 @@ export default function AddDjForm({ initialData, handleAddDj, handleEditDj, gene
 						>
 							<span className="inline-flex items-center justify-center gap-2">
 								<UploadCloud className="h-4 w-4" />
-								Carregar Nova Imagem
+								{formData.imagem ? 'Trocar Imagem' : 'Carregar Nova Imagem'}
 							</span>
 						</button>
-
 
 						{formData.imagem && (
 							<button
 								type="button"
 								onClick={handleRemoveImage}
-								className="text-xs font-bold uppercase tracking-wider text-rose-500/70 hover:text-rose-400 transition-colors mt-2 self-center"
+								className="text-xs font-bold uppercase tracking-wider text-rose-500/70 hover:text-rose-400 transition-colors mt-1 self-center cursor-pointer"
 							>
 								Remover Imagem
 							</button>
